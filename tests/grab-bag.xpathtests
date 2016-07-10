@@ -1,0 +1,17 @@
+ABSOLUTE LOCATION PATH should find multiple grandchildren.
+/html/body/div
+<div>
+ first div
+</div>
+<div>
+ second div
+</div>
+-----
+ABBREVIATED ABSOLUTE LOCATION PATH should find all DIVs.
+//div
+<div>
+ first div
+</div>
+<div>
+ second div
+</div>

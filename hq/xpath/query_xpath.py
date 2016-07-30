@@ -4,7 +4,7 @@ from ..verbosity import verbose_print
 from .xpath_tokens import *
 
 
-axes = ['child', 'descendant']
+axes = ['child', 'descendant', 'parent']
 axis_pattern = '({0})'.format('|'.join(axes))
 token_pattern = re.compile('\s*(?:(//)|(/)|{0}::|(\w[\w]*))'.format(axis_pattern))
 
@@ -20,7 +20,7 @@ def tokenize(program):
         elif slash:
             yield SlashToken()
         elif axis:
-            yield Axis(axis)
+            yield AxisToken(axis)
         elif name_test:
             yield NameTestToken(name_test)
         else:

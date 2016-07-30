@@ -1,11 +1,12 @@
 import re
 
+
 from ..verbosity import verbose_print
+from .axis import Axis
 from .xpath_tokens import *
 
 
-axes = ['child', 'descendant', 'parent']
-axis_pattern = '({0})'.format('|'.join(axes))
+axis_pattern = '({0})'.format('|'.join([value.name for value in Axis]))
 token_pattern = re.compile('\s*(?:(//)|(/)|{0}::|(\w[\w]*))'.format(axis_pattern))
 
 

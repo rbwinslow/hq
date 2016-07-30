@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """hq - Beautiful HTML querying, filtering, slicing and dicing!
 
@@ -13,23 +14,29 @@ Options:
   -v            Be verbose.
   --version     Display the installed HQ version.
 
+HTML is read from stdin.
+
 """
+
 from sys import stdin
 
 from bs4 import BeautifulSoup
 from docopt import docopt
 
-import config
-from query_css import query_css
-from query_xpath import query_xpath
+from .config import settings
+from .query_css import query_css
+from .xpath.query_xpath import query_xpath
+
+
+__version__ = '0.0.1'
 
 
 def main():
     CSS, XPATH = range(2)
-    args = docopt(__doc__, version='HQ 0.1')
+    args = docopt(__doc__, version='HQ {0}'.format(__version__))
     print(args)
-    language = XPATH if args['-x'] else CSS
-    setattr(config, 'VERBOSE', bool(args['-v']))
+    language = XPATH if '-x' in args else CSS
+    setattr(settings, 'VERBOSE', bool('-v' in args))
 
     source = stdin.read()
     soup = BeautifulSoup(source, 'html.parser')

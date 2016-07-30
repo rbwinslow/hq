@@ -2,6 +2,31 @@
 from .xpath_expression_context import *
 
 
+class Axis:
+    lbp = 20
+
+    def __init__(self, value):
+        self.value = value.rstrip(':')
+
+    def led(self, left):
+        def axis(document):
+            if self.value == 'child':
+                return left(document)
+        return axis
+
+
+class DoubleSlashToken:
+    lbp = 10
+
+    def __repr__(self):
+        return '(double-slash)'
+
+    def nud(self):
+        def entire_document(document):
+            return XpathExpressionContext(ENTIRE_DOCUMENT)
+        return entire_document
+
+
 class EndToken:
     lbp = 0
 
@@ -29,18 +54,6 @@ class NameTestToken:
                         result.extend([child for child in item.children if child.name == self.value])
                 return XpathExpressionContext(NODES, result)
         return name_test
-
-
-class DoubleSlashToken:
-    lbp = 10
-
-    def __repr__(self):
-        return '(double-slash)'
-
-    def nud(self):
-        def entire_document(document):
-            return XpathExpressionContext(ENTIRE_DOCUMENT)
-        return entire_document
 
 
 class SlashToken:

@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup
 from docopt import docopt
 
 from .config import settings
-from .query_css import query_css
+from .css.query_css import query_css
 from .xpath.query_xpath import query_xpath
 
 

@@ -7,5 +7,5 @@ class Axis(Enum):
     descendant = 2
     parent = 3
 
-    def snakified(self):
-        return self.name.replace('-', '_')
+    def token(self):
+        return self.name.replace('_', '-')

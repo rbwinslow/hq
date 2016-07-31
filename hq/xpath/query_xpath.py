@@ -6,8 +6,9 @@ from .axis import Axis
 from .xpath_tokens import *
 
 
-axis_pattern = '({0})'.format('|'.join([value.name for value in Axis]))
-token_pattern = re.compile('\s*(?:(//)|(/)|{0}::|(\w[\w]*))'.format(axis_pattern))
+axis_pattern = '({0})'.format('|'.join([value.token() for value in Axis]))
+node_test_pattern = '(node|text)'
+token_pattern = re.compile('\s*(?:(//)|(/)|{0}::|{1}\(\)|(\w[\w]*))'.format(axis_pattern, node_test_pattern))
 
 
 def query_xpath(soup, xpath_expression):
@@ -15,13 +16,15 @@ def query_xpath(soup, xpath_expression):
 
 
 def tokenize(program):
-    for double_slash, slash, axis, name_test in token_pattern.findall(program):
+    for double_slash, slash, axis, node_test, name_test in token_pattern.findall(program):
         if double_slash:
             yield DoubleSlashToken()
         elif slash:
             yield SlashToken()
         elif axis:
             yield AxisToken(axis)
+        elif node_test:
+            yield NodeTestToken(node_test)
         elif name_test:
             yield NameTestToken(name_test)
         else:

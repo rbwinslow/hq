@@ -1,3 +1,4 @@
+from hq.xpath.node_test import NodeTest
 
 from .axis import Axis
 from .name_test import NameTest
@@ -51,6 +52,24 @@ class NameTestToken:
             ragged = [test.apply(context.axis, node, document) for node in context.nodes]
             return XpathExpressionContext(nodes=[item for sublist in ragged for item in sublist])
         return name_test
+
+
+class NodeTestToken:
+    lbp = 20
+
+    def __init__(self, value):
+        self.value = value.rstrip('()')
+
+    def __repr__(self):
+        return '(node_test "{0}()")'.format(self.value)
+
+    def led(self, left):
+        def node_test(document):
+            context = left(document)
+            test = NodeTest(self.value)
+            ragged = [test.apply(context.axis, node, document) for node in context.nodes]
+            return XpathExpressionContext(nodes=[item for sublist in ragged for item in sublist])
+        return node_test
 
 
 class SlashToken:

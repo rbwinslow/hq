@@ -1,6 +1,13 @@
 from textwrap import dedent
 
 from bs4 import BeautifulSoup
+from hq.output import soup_objects_to_text
+from hq.xpath.query_xpath import query_xpath
+
+
+def process_xpath_query(html_body, xpath):
+    raw_result = query_xpath(soup_with_body(html_body), xpath)
+    return soup_objects_to_text(raw_result)
 
 
 def soup_with_body(contents):

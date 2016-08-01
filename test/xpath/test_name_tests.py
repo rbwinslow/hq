@@ -28,6 +28,7 @@ def test_name_test_is_case_insensitive():
      three
     </span>""")
 
+
 def test_name_test_at_root_ignores_all_but_root_element():
     html = """
     <!DOCTYPE html>
@@ -39,3 +40,80 @@ def test_name_test_at_root_ignores_all_but_root_element():
     assert actual == expected_html("""
     <html id="root">
     </html>""")
+
+
+def test_child_axis_selects_only_immediate_children():
+    html_body = """
+    <p>uncle</p>
+    <div>
+        <p>niece</p>
+        <p>nephew</p>
+    </div>"""
+    actual = process_xpath_query(html_body, '/html/body/child::p')
+    assert actual == expected_html("""
+    <p>
+     uncle
+    </p>""")
+
+
+def test_descendant_axis_selects_from_descendants_not_ancestors():
+    html_body = """
+    <div id="grandma">
+        <section>
+            <div>uncle</div>
+            <aside>
+                <div>niece</div>
+            </aside>
+        </section>
+    </div>"""
+    actual = process_xpath_query(html_body, '/html/body/div/descendant::div')
+    assert actual == expected_html("""
+    <div>
+     uncle
+    </div>
+    <div>
+     niece
+    </div>""")
+
+
+def test_parent_axis_selects_only_the_immediate_parent():
+    html_body = """
+    <div id="grandma">
+        <div id="mom">
+            <p>daughter</p>
+        </div>
+    </div>"""
+    actual = process_xpath_query(html_body, '//p/parent::div')
+    assert actual == expected_html("""
+    <div id="mom">
+     <p>
+      daughter
+     </p>
+    </div>""")
+
+
+def test_ancestor_axis_selects_all_matching_ancestors():
+    html_body = """
+    <div>
+        <section>
+            <div>
+                <p>text</p>
+            </div>
+        </section>
+    </div>"""
+    actual = process_xpath_query(html_body, '//p/ancestor::div')
+    assert actual == expected_html("""
+    <div>
+     <p>
+      text
+     </p>
+    </div>
+    <div>
+     <section>
+      <div>
+       <p>
+        text
+       </p>
+      </div>
+     </section>
+    </div>""")

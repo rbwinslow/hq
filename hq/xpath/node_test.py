@@ -12,6 +12,14 @@ class NodeTest:
     def apply(self, axis, node, document):
         return getattr(self, 'apply_to_{0}'.format(axis.name))(node, document)
 
+    def apply_to_ancestor(self, node, document):
+        result = []
+        while node.parent is not None:
+            node = node.parent
+            if self.accept_fn(node):
+                result.append(node)
+        return result
+
     def apply_to_child(self, node, document):
         result = []
         if object_is_root(node):

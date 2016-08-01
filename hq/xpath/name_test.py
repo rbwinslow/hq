@@ -8,6 +8,16 @@ class NameTest:
     def apply(self, axis, node, document):
         return getattr(self, 'apply_to_{0}'.format(axis.name))(node, document)
 
+    def apply_to_ancestor(self, node, document):
+        result = []
+        while object_is_tag(node):
+            if node.parent is None:
+                break
+            node = node.parent
+            if node.name.lower() == self.value:
+                result.append(node)
+        return result
+
     def apply_to_child(self, node, document):
         result = []
         if object_is_root(node):

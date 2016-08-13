@@ -1,23 +1,28 @@
 import re
 
-
+from .tokens import *
 from ..verbosity import verbose_print
-from .axis import Axis
-from .xpath_tokens import *
 
 
 axis_pattern = '({0})'.format('|'.join([value.token() for value in Axis]))
 node_test_pattern = '(node|text)'
-all_tokens_pattern = r'\s*(?:(//)|(/)|(\[)|(\])|(\.\.)|(\.)|{0}::|{1}\(\)|(\w[\w]*))'
-token_pattern = re.compile(all_tokens_pattern.format(axis_pattern, node_test_pattern))
+all_tokens_pattern = r'\s*(?:(//)|(/)|(\[)|(\])|(\.\.)|(\.)|(!=|=)|{0}::|"([^"]*)"|{1}|{2}\(\)|(\w[\w]*))'
+token_pattern = re.compile(all_tokens_pattern.format(axis_pattern, "'([^']*)'", node_test_pattern))
 
 
 def query_xpath(soup, xpath_expression):
-    return parse(xpath_expression)(XpathExpressionContext(nodes=[soup])).nodes
+    verbose_print('PARSING XPATH', indent_after=True)
+    expression_fn = parse(xpath_expression)
+    verbose_print('EVALUATING XPATH', indent_after=True, outdent_before=True)
+    result = expression_fn(ExpressionContext(node=soup))
+    verbose_print('XPATH QUERY FINISHED', outdent_before=True)
+    return result
 
 
 def tokenize(program):
-    for double_slash, slash, left_brace, right_brace, double_dot, dot, axis, node_test, name_test in token_pattern.findall(program):
+    for double_slash, slash, left_brace, right_brace, double_dot, dot, equality_op, axis, dq_string, sq_string, \
+            node_test, name_test in \
+            token_pattern.findall(program):
         if double_slash:
             yield DoubleSlashToken()
         elif slash:
@@ -30,8 +35,14 @@ def tokenize(program):
             yield ParentNodeToken()
         elif dot:
             yield ContextNodeToken()
+        elif equality_op:
+            yield EqualityOperatorToken(equality_op)
         elif axis:
             yield AxisToken(axis)
+        elif dq_string:
+            yield LiteralStringToken(dq_string)
+        elif sq_string:
+            yield LiteralStringToken(sq_string)
         elif node_test:
             yield NodeTestToken(node_test)
         elif name_test:
@@ -60,5 +71,5 @@ def expression(rbp=0):
         verbose_print('continuing expression at {0}'.format(t))
         token = next()
         left = t.led(left, expression)
-    verbose_print('finished expression; parsed node is {0}'.format(left), outdent_before=True)
+    verbose_print('finished expression', outdent_before=True)
     return left

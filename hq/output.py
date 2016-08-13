@@ -1,9 +1,9 @@
 
-from .soup_util import is_text_object
+from .soup_util import is_text_node
 
 
 def soup_object_to_text(object):
-    if is_text_object(object):
+    if is_text_node(object):
         return str(object)
     else:
         return object.prettify().rstrip(' \t\n')

@@ -22,6 +22,7 @@ from sys import stdin
 
 from bs4 import BeautifulSoup
 from docopt import docopt
+from hq.output import result_object_to_text
 
 from .config import settings
 from .css.query_css import query_css
@@ -44,15 +45,15 @@ def main():
     expression = args['<expression>']
     if len(expression) > 0:
         if (language == CSS):
-            results = query_css(soup, expression)
+            result = query_css(soup, expression)
         else:
-            results = query_xpath(soup, expression)
+            result = query_xpath(soup, expression)
     else:
-        results = [soup]
+        result = [soup]
 
-    for tag in results:
-        print(str(tag) if args['-n'] else tag.prettify().rstrip(' \t\n'))
+    print(result_object_to_text(result, pretty=(not args['-n'])))
 
 
+main()
 if __name__ == '__main__':
     main()

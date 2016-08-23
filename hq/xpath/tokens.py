@@ -6,6 +6,7 @@ from hq.xpath.functions.core_numeric import number
 from hq.xpath.node_test import NodeTest
 from hq.xpath.object_type import is_node_set, make_node_set, string_value
 from hq.xpath.query_error import QueryError
+from hq.xpath.equality_operators import equals, not_equals
 
 from .axis import Axis
 from .expression_context import ExpressionContext
@@ -97,7 +98,7 @@ class EqualityOperatorToken(Token):
     lbp = LBP.equality_op
 
     def __repr__(self):
-        return '(relational-operator "{0}")'.format(self.value)
+        return '(equality-operator "{0}")'.format(self.value)
 
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
@@ -110,40 +111,12 @@ class EqualityOperatorToken(Token):
             right_value = right(context)
 
             verbose_print('Comparing values.', outdent_before=True)
-            equals = self._eval_equals(left_value, right_value)
-            result = equals if self.value == '=' else not equals
+            result = equals(left_value, right_value) if self.value == '=' else not_equals(left_value, right_value)
 
             verbose_print('EqualityOperatorToken ({0}) returning {1}'.format(self.value, result), outdent_before=True)
             return result
 
         return evaluate
-
-    @staticmethod
-    def _eval_equals(left_value, right_value):
-        if is_node_set(left_value):
-            if is_node_set(right_value):
-                return EqualityOperatorToken._compare_node_sets(left_value, right_value)
-            else:
-                raise NotImplementedError('comparison of node sets with other objects not yet implemented')
-        elif is_node_set(right_value):
-            raise NotImplementedError('comparison of node sets with other objects not yet implemented')
-        else:
-            return boolean(left_value == right_value)
-
-    @staticmethod
-    def _compare_node_sets(left_node_set, right_node_set):
-        left_values = set([string_value(node) for node in left_node_set])
-        right_values = set([string_value(node) for node in right_node_set])
-
-        msg = 'Comparing two nodes sets (size {0} and {1}).'
-        verbose_print(msg.format(len(left_values), len(right_values)), indent_after=True)
-
-        for left_value in left_values:
-            if left_value in right_values:
-                verbose_print('Found value "{0}" from left-hand node set in right-hand node set'.format(left_value))
-                return boolean(True)
-        verbose_print('Found no matching nodes between node sets.')
-        return boolean(False)
 
 
 class FunctionCallToken(Token):

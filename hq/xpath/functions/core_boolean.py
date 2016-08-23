@@ -24,3 +24,6 @@ class boolean:
 
     def __str__(self):
         return str(self.value).lower()
+
+    def __eq__(self, other):
+        return isinstance(other, boolean) and self.value == other.value

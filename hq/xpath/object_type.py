@@ -5,7 +5,14 @@ install_aliases()
 from collections import OrderedDict
 from itertools import filterfalse
 
-from hq.soup_util import is_any_node, is_tag_node
+from hq.soup_util import is_any_node, is_tag_node, is_text_node
+
+BOOLEAN, NODE_SET, NUMBER, STRING = range(4)
+TYPE_NAMES = ('BOOLEAN', 'NODE_SET', 'NUMBER', 'STRING')
+
+
+def is_boolean(obj):
+    return obj.__class__.__name__ == 'boolean'
 
 
 def is_node_set(obj):
@@ -13,7 +20,11 @@ def is_node_set(obj):
 
 
 def is_number(obj):
-    return isinstance(obj, int) or isinstance(obj, float)
+    return obj.__class__.__name__ == 'number'
+
+
+def is_string(obj):
+    return isinstance(obj, str)
 
 
 def make_node_set(node_set):
@@ -26,8 +37,31 @@ def make_node_set(node_set):
     return node_set
 
 
+def object_type(obj):
+    if is_boolean(obj):
+        return BOOLEAN
+    elif is_node_set(obj):
+        return NODE_SET
+    elif is_number(obj):
+        return NUMBER
+    elif is_string(obj):
+        return STRING
+    else:
+        return None
+
+
+def object_type_name(obj):
+    if isinstance(obj, int):
+        index = obj
+    else:
+        index = object_type(obj)
+    return TYPE_NAMES[index]
+
+
 def string_value(obj):
     if is_tag_node(obj):
         return ''.join(obj.stripped_strings)
+    elif is_text_node(obj) or is_number(obj):
+        return str(obj)
     else:
         raise NotImplementedError('string_value not yet implemented for type "{0}"'.format(obj.__class__.__name__))

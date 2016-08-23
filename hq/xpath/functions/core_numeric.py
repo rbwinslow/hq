@@ -1,5 +1,3 @@
-
-
 exports = ['number']
 
 
@@ -16,3 +14,6 @@ class number:
 
     def __add__(self, other):
         return number(self.value + other.value)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.value == other.value

@@ -38,7 +38,7 @@ def test_equals_operator_interprets_integer_and_fractional_numbers_correctly():
     assert actual == expected_result('false')
 
 
-def test_equals_operator_compares_text_node_contents_with_number():
+def test_equals_operator_compares_string_value_of_node_converted_to_numnber_with_number():
     actual = process_xpath_query('<p>042.0</p>', '//p = 42')
     assert actual == expected_result('true')
 

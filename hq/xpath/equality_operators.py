@@ -1,5 +1,6 @@
 from hq.verbosity import verbose_print
 from hq.xpath.functions.core_boolean import boolean
+from hq.xpath.functions.core_numeric import number
 from hq.xpath.object_type import object_type, string_value, object_type_name
 
 
@@ -23,7 +24,20 @@ def _eq_node_sets(left, right):
 
 
 def _eq_node_set_vs_number(nodes_val, num_val):
-    return _eq_node_set_vs_string(nodes_val, string_value(num_val))
+    verbose_print('(=) comparing number {0} to {1} nodes'.format(num_val, len(nodes_val)))
+
+    for node in nodes_val:
+        node_str_val = string_value(node)
+        node_num_val = number(node_str_val)
+        verbose_print('(=) node string value "{0}" is{1} equal to "{2}"'.format(
+            node_num_val,
+            (' not' if node_num_val == num_val else ''),
+            num_val))
+
+        if node_num_val == num_val:
+            return True
+
+    return False
 
 
 def _eq_node_set_vs_string(nodes_val, string_val):

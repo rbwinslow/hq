@@ -20,14 +20,14 @@ HTML is read from stdin.
 
 from sys import stdin
 
+import sys
 from bs4 import BeautifulSoup
 from docopt import docopt
 from hq.output import result_object_to_text
 
 from .config import settings
 from .css.query_css import query_css
-from .xpath.query_xpath import query_xpath
-
+from .xpath.query_xpath import query_xpath, QueryError
 
 __version__ = '0.0.1'
 
@@ -39,21 +39,23 @@ def main():
     language = XPATH if '-x' in args else CSS
     setattr(settings, 'VERBOSE', bool('-v' in args))
 
-    source = stdin.read()
-    soup = BeautifulSoup(source, 'html.parser')
+    try:
+        source = stdin.read()
+        soup = BeautifulSoup(source, 'html.parser')
 
-    expression = args['<expression>']
-    if len(expression) > 0:
-        if (language == CSS):
-            result = query_css(soup, expression)
+        expression = args['<expression>']
+        if len(expression) > 0:
+            if (language == CSS):
+                result = query_css(soup, expression)
+            else:
+                result = query_xpath(soup, expression)
         else:
-            result = query_xpath(soup, expression)
-    else:
-        result = [soup]
+            result = [soup]
 
-    print(result_object_to_text(result, pretty=(not args['-n'])))
+        print(result_object_to_text(result, pretty=(not args['-n'])))
+    except QueryError as error:
+        print('\nERROR! {0}\n'.format(str(error)), file=sys.stderr)
 
 
-main()
 if __name__ == '__main__':
     main()

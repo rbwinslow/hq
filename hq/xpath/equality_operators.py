@@ -23,6 +23,10 @@ def _eq_node_sets(left, right):
     return False
 
 
+def _eq_node_set_vs_bool(bool_val, nodes_val):
+    return bool_val == boolean(nodes_val)
+
+
 def _eq_node_set_vs_number(nodes_val, num_val):
     verbose_print('(=) comparing number {0} to {1} nodes'.format(num_val, len(nodes_val)))
 
@@ -58,11 +62,11 @@ def _eq_node_set_vs_string(nodes_val, string_val):
 
 
 equality_ops_table = (
-    # BOOLEAN,      NODE_SET,       NUMBER,                 STRING
-    (_eq_native,    None,           None,                   None),  # BOOLEAN
-    (None,          _eq_node_sets,  _eq_node_set_vs_number, _eq_node_set_vs_string),  # NODE_SET
-    (None,          None,           _eq_native,             None),  # NUMBER
-    (None,          None,           None,                   _eq_native),  # STRING
+    # BOOLEAN,      NODE_SET,               NUMBER,                 STRING
+    (_eq_native,    _eq_node_set_vs_bool,   None,                   None),  # BOOLEAN
+    (None,          _eq_node_sets,          _eq_node_set_vs_number, _eq_node_set_vs_string),  # NODE_SET
+    (None,          None,                   _eq_native,             None),  # NUMBER
+    (None,          None,                   None,                   _eq_native),  # STRING
 )
 
 

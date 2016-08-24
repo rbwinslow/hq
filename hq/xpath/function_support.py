@@ -3,6 +3,7 @@ from inspect import isclass, isfunction
 from pkgutil import walk_packages
 
 from hq.verbosity import verbose_print
+from hq.xpath.query_error import QueryError
 
 
 class FunctionSupport:
@@ -10,7 +11,10 @@ class FunctionSupport:
 
     def call_function(self, name, *args):
         self._load_all_functions()
-        fn = self.all_functions[name]
+        try:
+            fn = self.all_functions[name]
+        except KeyError:
+            raise QueryError('Unknown function name {0}'.format(name))
         return fn(*args)
 
     def _load_all_functions(self):

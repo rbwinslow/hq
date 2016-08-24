@@ -11,6 +11,7 @@ def test_boolean_function_converts_numbers_according_to_w3c_rules():
     assert process_xpath_query('', 'boolean(-0)') == expected_result('false')
     assert process_xpath_query('', 'boolean(1)') == expected_result('true')
     assert process_xpath_query('', 'boolean(-1)') == expected_result('true')
+    assert process_xpath_query('', 'false() = boolean(false())') == expected_result('true')
     # Restore when division is implemented:
     # assert process_xpath_query('', 'boolean(0/0)') == expected_result('false')
 
@@ -28,3 +29,10 @@ def test_boolean_function_converts_strings_according_to_w3c_rules():
 def test_number_function_converts_string_to_number():
     actual = process_xpath_query('', 'number("43") + number("-1")')
     assert actual == expected_result('42.0')
+
+
+def test_true_and_false_functions_return_expected_values():
+    assert process_xpath_query('', 'false()') == expected_result('false')
+    assert process_xpath_query('', 'true()') == expected_result('true')
+    assert process_xpath_query('', 'true() = false()') == expected_result('false')
+    assert process_xpath_query('', 'true() != false()') == expected_result('true')

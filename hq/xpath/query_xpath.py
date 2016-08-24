@@ -17,6 +17,7 @@ token_config = [
     (r'("[^"]*")', LiteralStringToken),
     (r"('[^']*')", LiteralStringToken),
     (r'(-?\d[\d\.]*)', LiteralNumberToken),
+    (r'(,)', CommaToken),
     (r'(\+|-)', PlusOrMinusToken),
     (r'(node|text)\(\)', NodeTestToken),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
@@ -34,6 +35,9 @@ class ParseInterface:
 
     def expression(self, rbp=0):
         return expression(rbp)
+
+    def peek(self):
+        return token
 
 
 def query_xpath(soup, xpath_expression):

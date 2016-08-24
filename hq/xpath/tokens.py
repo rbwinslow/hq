@@ -4,7 +4,7 @@ from hq.xpath.function_support import FunctionSupport
 from hq.xpath.functions.core_boolean import boolean
 from hq.xpath.functions.core_numeric import number
 from hq.xpath.node_test import NodeTest
-from hq.xpath.object_type import is_node_set, make_node_set, string_value
+from hq.xpath.object_type import is_node_set, make_node_set, string_value, object_type_name
 from hq.xpath.query_error import QueryError
 from hq.xpath.equality_operators import equals, not_equals
 
@@ -54,6 +54,13 @@ class CloseParenthesisToken(Token):
 
     def __repr__(self):
         return '(close-parenthesis)'
+
+
+class CommaToken(Token):
+    lbp = LBP.function_call
+
+    def __repr__(self):
+        return '(comma)'
 
 
 class ContextNodeToken(Token):
@@ -126,15 +133,22 @@ class FunctionCallToken(Token):
         return '(function call "{0}")'.format(self.value)
 
     def nud(self):
-        right = self.parse_interface.expression(self.lbp)
+        arg_generators = []
+
+        while (not isinstance(self.parse_interface.peek(), CloseParenthesisToken)):
+            arg_generators.append(self.parse_interface.expression(self.lbp))
+            if isinstance(self.parse_interface.peek(), CommaToken):
+                self.parse_interface.advance()
+
         right_paren = self.parse_interface.advance()
         if not isinstance(right_paren, CloseParenthesisToken):
             raise RuntimeError('FunctionCallToken expected right-hand parenthesis after argument(s)')
+
         def evaluate(context):
             verbose_print('FunctionCallToken evaluating argument list for function "{0}."'.format(self.value))
-            arguments = [right(context)]
-            verbose_print('FunctionCallToken calling function "{0}" with {1} arguments.'.format(self.value,
-                                                                                                len(arguments)))
+            arguments = [gen(context) for gen in arg_generators]
+            arg_types = ','.join(object_type_name(arg) for arg in arguments)
+            verbose_print('FunctionCallToken calling {0}({1}).'.format(self.value, arg_types))
             return function_support.call_function(self.value, *arguments)
         return evaluate
 

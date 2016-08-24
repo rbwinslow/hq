@@ -3,7 +3,7 @@ from math import isnan
 from hq.xpath.object_type import is_node_set, is_number
 
 
-exports = ['boolean']
+exports = ['boolean', 'false', 'true']
 
 
 class boolean:
@@ -28,3 +28,11 @@ class boolean:
 
     def __eq__(self, other):
         return isinstance(other, boolean) and self.value == other.value
+
+
+def false():
+    return boolean(False)
+
+
+def true():
+    return boolean(True)

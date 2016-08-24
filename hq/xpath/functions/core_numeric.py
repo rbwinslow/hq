@@ -17,3 +17,6 @@ class number:
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
+
+    def __float__(self):
+        return self.value

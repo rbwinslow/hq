@@ -12,7 +12,8 @@ class boolean:
         if is_node_set(obj):
             self.value = len(obj) > 0
         elif is_number(obj):
-            self.value = bool(obj) and not isnan(obj)
+            f = float(obj)
+            self.value = bool(f) and not isnan(f)
         else:
             self.value = bool(obj)
 

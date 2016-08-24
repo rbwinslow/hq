@@ -21,7 +21,7 @@ class LBP:
     (nothing, predicate, equality_op, add_or_subtract, function_call, location_step, node_test) = range(7)
 
 
-class Token:
+class Token(object):
     def __init__(self, parse_interface, value=None):
         self.parse_interface = parse_interface
         self.value = value
@@ -173,6 +173,9 @@ class LiteralNumberToken(Token):
 
 class LiteralStringToken(Token):
     lbp = LBP.nothing
+
+    def __init__(self, parse_interface, value):
+        super(LiteralStringToken, self).__init__(parse_interface, value[1:-1])
 
     def __repr__(self):
         return '(literal-string "{0}")'.format(self.value)

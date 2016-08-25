@@ -1,6 +1,6 @@
 from math import isnan
 
-from hq.xpath.object_type import is_node_set, is_number
+from hq.xpath.object_type import is_node_set, is_number, is_boolean
 
 
 exports = ['boolean', 'false', 'true']
@@ -27,7 +27,7 @@ class boolean:
         return str(self.value).lower()
 
     def __eq__(self, other):
-        return isinstance(other, boolean) and self.value == other.value
+        return is_boolean(other) and self.value == other.value
 
 
 def false():

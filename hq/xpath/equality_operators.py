@@ -4,6 +4,11 @@ from hq.xpath.functions.core_numeric import number
 from hq.xpath.object_type import object_type, string_value, object_type_name
 
 
+def _eq_bool_vs_primitive(bool_val, other_val):
+    verbose_print('Comparing boolean value {0} with non-node-set value {1} (coerced to {2})'.format(bool_val, other_val, boolean(other_val)))
+    return bool_val == boolean(other_val)
+
+
 def _eq_native(left, right):
     return left == right
 
@@ -61,12 +66,16 @@ def _eq_node_set_vs_string(nodes_val, string_val):
     return False
 
 
+def _eq_num_vs_string(num_val, string_val):
+    return num_val == number(string_val)
+
+
 equality_ops_table = (
     # BOOLEAN,      NODE_SET,               NUMBER,                 STRING
-    (_eq_native,    _eq_node_set_vs_bool,   None,                   None),  # BOOLEAN
-    (None,          _eq_node_sets,          _eq_node_set_vs_number, _eq_node_set_vs_string),  # NODE_SET
-    (None,          None,                   _eq_native,             None),  # NUMBER
-    (None,          None,                   None,                   _eq_native),  # STRING
+    (_eq_native,    _eq_node_set_vs_bool,   _eq_bool_vs_primitive,  _eq_bool_vs_primitive),     # BOOLEAN
+    (None,          _eq_node_sets,          _eq_node_set_vs_number, _eq_node_set_vs_string),    # NODE_SET
+    (None,          None,                   _eq_native,             _eq_num_vs_string),         # NUMBER
+    (None,          None,                   None,                   _eq_native),                # STRING
 )
 
 
@@ -75,9 +84,6 @@ def equals(left, right):
     right_type = object_type(right)
     reverse = left_type > right_type
     op = equality_ops_table[left_type if not reverse else right_type][right_type if not reverse else left_type]
-    if op is None:
-        raise NotImplementedError('{0} = {1} not yet implemented'.format(object_type_name(left_type),
-                                                                         object_type_name(right_type)))
     return boolean(op(left if not reverse else right, right if not reverse else left))
 
 

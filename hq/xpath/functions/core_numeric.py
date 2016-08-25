@@ -1,3 +1,5 @@
+from hq.xpath.object_type import is_number
+
 exports = ['number']
 
 
@@ -7,7 +9,10 @@ class number:
         if isinstance(obj, number):
             self.value = obj.value
         else:
-            self.value = float(obj)
+            try:
+                self.value = float(obj)
+            except ValueError:
+                self.value = float('nan')
 
     def __str__(self):
         return str(self.value)
@@ -16,7 +21,7 @@ class number:
         return number(self.value + other.value)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.value == other.value
+        return is_number(other) and self.value == other.value
 
     def __float__(self):
         return self.value

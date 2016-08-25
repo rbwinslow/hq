@@ -64,3 +64,16 @@ def test_equals_operator_compares_text_node_contents_with_string():
       two
      </p>
     </div>""")
+
+
+def test_equals_operator_converts_non_node_sets_to_boolean_when_comparing_to_a_boolean():
+    assert process_xpath_query('', '1 = true()') == expected_result('true')
+    assert process_xpath_query('', '0 != false()') == expected_result('false')
+    assert process_xpath_query('', '"" = false()') == expected_result('true')
+    assert process_xpath_query('', '" " = true()') == expected_result('true')
+
+
+def test_equals_operator_converts_non_node_sets_to_number_when_comparing_to_a_number():
+    assert process_xpath_query('', '0.1 = "0"') == expected_result('false')
+    assert process_xpath_query('', '"42" = 42.0') == expected_result('true')
+    assert process_xpath_query('', '"foo" = 0') == expected_result('false')  # It's NaN, not zero.

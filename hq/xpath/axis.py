@@ -7,6 +7,8 @@ class Axis(Enum):
     descendant = 2
     parent = 3
     ancestor = 4
+    following_sibling = 5
+    preceding_sibling = 6
 
     def token(self):
         return self.name.replace('_', '-')

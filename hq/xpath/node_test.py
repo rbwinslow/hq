@@ -34,8 +34,24 @@ class NodeTest:
             result = [tag for tag in node.descendants if self.accept_fn(tag)]
         return result
 
+    def apply_to_following_sibling(self, node):
+        result = []
+        while hasattr(node, 'next_sibling') and node.next_sibling is not None:
+            node = node.next_sibling
+            if self.accept_fn(node):
+                result.append(node)
+        return result
+
     def apply_to_parent(self, node):
         result = []
         if self.accept_fn(node.parent):
             result.append(node.parent)
+        return result
+
+    def apply_to_preceding_sibling(self, node):
+        result = []
+        while hasattr(node, 'previous_sibling') and node.previous_sibling is not None:
+            node = node.previous_sibling
+            if self.accept_fn(node):
+                result.append(node)
         return result

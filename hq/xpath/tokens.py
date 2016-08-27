@@ -91,7 +91,7 @@ class AxisToken(Token):
             node_count = len(node_set)
             if node_count > 0:
                 verbose_print('AxisToken evaluating node test on {0} nodes'.format(node_count))
-                ragged = [right(ExpressionContext(node), axis=Axis[self.value]) for node in node_set]
+                ragged = [right(ExpressionContext(node), axis=Axis[self.value.replace('-', '_')]) for node in node_set]
                 return make_node_set([item for sublist in ragged for item in sublist])
             else:
                 verbose_print('AxisToken doing nothing (empty node set)')
@@ -286,14 +286,14 @@ class NameTestToken(Token):
         def name_test(context, axis=Axis.child):
             node_set = left(context)
             QueryError.must_be_node_set(node_set)
-            verbose_print('NameTestToken "{0}" evaluating children of {1} node(s)'.format(self.value, len(node_set)))
+            verbose_print('NameTestToken "{0}" evaluating {1} from {2} node(s)'.format(self.value, axis, len(node_set)))
             return self._evaluate(node_set, axis)
         return name_test
 
     def nud(self):
         def name_test(context, axis=Axis.child):
-            msg_format = 'NameTestToken "{0}" evaluating children of context node {1}'
-            verbose_print(msg_format.format(self.value, debug_dump_node(context.node)))
+            msg_format = 'NameTestToken "{0}" evaluating {1} from context node {2}'
+            verbose_print(msg_format.format(self.value, axis, debug_dump_node(context.node)))
             return self._evaluate(make_node_set(context.node), axis)
         return name_test
 
@@ -309,19 +309,19 @@ class NodeTestToken(Token):
     lbp = LBP.node_test
 
     def __repr__(self):
-        return '(node-test "{0}()")'.format(self.value)
+        return '(node-test "{0}{1}")'.format(self.value, '()' if self.value != '*' else '')
 
     def led(self, left):
         def node_test(context, axis=Axis.child):
             node_set = left(context)
             QueryError.must_be_node_set(node_set)
-            verbose_print('NodeTestToken {0}() evaluating children of {1} node(s)'.format(self.value, len(node_set)))
+            verbose_print('NodeTestToken {0}() evaluating {1} from {2} node(s)'.format(self.value, axis, len(node_set)))
             return self._evaluate(node_set, axis)
         return node_test
 
     def nud(self):
         def node_test(context, axis=Axis.child):
-            verbose_print('NodeTestToken {0}() evaluating children of context node'.format(self.value))
+            verbose_print('NodeTestToken {0}() evaluating {1} from context node'.format(self.value, axis))
             return self._evaluate(make_node_set(context.node), axis)
         return node_test
 

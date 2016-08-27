@@ -34,8 +34,24 @@ class NameTest:
             result = node(self.value)
         return result
 
+    def apply_to_following_sibling(self, node):
+        result = []
+        while hasattr(node, 'next_sibling') and node.next_sibling is not None:
+            node = node.next_sibling
+            if is_tag_node(node) and node.name.lower() == self.value:
+                result.append(node)
+        return result
+
     def apply_to_parent(self, node):
         result = []
         if is_tag_node(node) and node.parent is not None and node.parent.name.lower() == self.value:
             result.append(node.parent)
+        return result
+
+    def apply_to_preceding_sibling(self, node):
+        result = []
+        while hasattr(node, 'previous_sibling') and node.previous_sibling is not None:
+            node = node.previous_sibling
+            if is_tag_node(node) and node.name.lower() == self.value:
+                result.append(node)
         return result

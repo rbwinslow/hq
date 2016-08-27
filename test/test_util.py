@@ -8,7 +8,7 @@ from hq.xpath.query_xpath import query_xpath
 def process_xpath_query(html_body, xpath, wrap_body=True):
     soup = soup_with_body(html_body) if wrap_body else BeautifulSoup(html_body, 'html.parser')
     raw_result = query_xpath(soup, xpath)
-    return result_object_to_text(raw_result)
+    return result_object_to_text(raw_result).strip()
 
 
 def soup_with_body(contents):

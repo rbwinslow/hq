@@ -29,9 +29,20 @@ def is_string(obj):
 
 
 def make_node_set(node_set):
+    ids = []
+    def is_unique_id(node):
+        node_id = id(node)
+        if node_id in ids:
+            return False
+        else:
+            ids.append(node_id)
+            return True
+
     if not isinstance(node_set, list):
         node_set = [node_set]
-    node_set = list(OrderedDict.fromkeys(node_set))
+
+    node_set = list(filter(is_unique_id, node_set))
+
     non_node_member = next(filterfalse(is_any_node, node_set), False)
     if non_node_member:
         format_str = 'Constructed node set that includes {0} object "{1}"'

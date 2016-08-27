@@ -4,7 +4,7 @@ from ..soup_util import is_root_node, is_tag_node, is_text_node
 
 class NodeTest:
     def __init__(self, value):
-        if value == 'node':
+        if value == 'node' or value == '*':
             self.accept_fn = is_tag_node
         elif value == 'text':
             self.accept_fn = is_text_node

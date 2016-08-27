@@ -4,12 +4,28 @@ from .tokens import *
 from ..verbosity import verbose_print
 
 
-def pick_token_for_div_or_mod(parse_interface, value, previous_token):
+def _pick_token_based_on_numeric_context(parse_interface, value, previous_token, numeric_class, other_class):
     numeric_predecessors = [LiteralNumberToken, CloseParenthesisToken]
     if any(isinstance(previous_token, token_class) for token_class in numeric_predecessors):
-        return DivOrModOperatorToken(parse_interface, value)
+        return numeric_class(parse_interface, value)
     else:
-        return NameTestToken(parse_interface, value)
+        return other_class(parse_interface, value)
+
+
+def _pick_token_for_asterisk(parse_interface, value, previous_token):
+    return _pick_token_based_on_numeric_context(parse_interface,
+                                                value,
+                                                previous_token,
+                                                MultiplyOperatorToken,
+                                                NodeTestToken)
+
+
+def _pick_token_for_div_or_mod(parse_interface, value, previous_token):
+    return _pick_token_based_on_numeric_context(parse_interface,
+                                                value,
+                                                previous_token,
+                                                DivOrModOperatorToken,
+                                                NameTestToken)
 
 
 token_config = [
@@ -26,9 +42,9 @@ token_config = [
     (r"('[^']*')", LiteralStringToken),
     (r'(-?\d[\d\.]*)', LiteralNumberToken),
     (r'(,)', CommaToken),
-    (r'(\*)', AsteriskToken),
-    (r'(\+|-)', PlusOrMinusToken),
-    (r'(div|mod)', pick_token_for_div_or_mod),
+    (r'(\*)', _pick_token_for_asterisk),
+    (r'(\+|-)', AddOrSubtractOperatorToken),
+    (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(node|text)\(\)', NodeTestToken),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\w[\w]*)', NameTestToken),

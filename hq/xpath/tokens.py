@@ -27,7 +27,32 @@ class Token(object):
         self.value = value
 
 
-class AsteriskToken(Token):
+class AddOrSubtractOperatorToken(Token):
+    lbp = LBP.add_or_subtract
+
+    def __repr__(self):
+        return '(plus)' if self.value == '+' else '(minus)'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate(context):
+            verbose_print('PlusOrMinusToken ({0}) evaluation...'.format(self.value), indent_after=True)
+            verbose_print('Evaluating left-hand side.', indent_after=True)
+            left_value = number(left(context))
+            verbose_print('Evaluating right-hand side.', outdent_before=True, indent_after=True)
+            right_value = number(right(context))
+
+            verbose_print('Calculating.', outdent_before=True)
+            result = left_value + right_value if self.value == '+' else left_value - right_value
+
+            verbose_print('PlusOrMinusToken ({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            return result
+
+        return evaluate
+
+
+class MultiplyOperatorToken(Token):
     lbp = LBP.mult_or_div
 
     def __repr__(self):
@@ -330,31 +355,6 @@ class ParentNodeToken(Token):
     def _perform_parent_node(self, node_set):
         QueryError.must_be_node_set(node_set)
         return make_node_set([node.parent for node in node_set])
-
-
-class PlusOrMinusToken(Token):
-    lbp = LBP.add_or_subtract
-
-    def __repr__(self):
-        return '(plus)' if self.value == '+' else '(minus)'
-
-    def led(self, left):
-        right = self.parse_interface.expression(self.lbp)
-
-        def evaluate(context):
-            verbose_print('PlusOrMinusToken ({0}) evaluation...'.format(self.value), indent_after=True)
-            verbose_print('Evaluating left-hand side.', indent_after=True)
-            left_value = number(left(context))
-            verbose_print('Evaluating right-hand side.', outdent_before=True, indent_after=True)
-            right_value = number(right(context))
-
-            verbose_print('Calculating.', outdent_before=True)
-            result = left_value + right_value if self.value == '+' else left_value - right_value
-
-            verbose_print('PlusOrMinusToken ({0}) returning {1}'.format(self.value, result), outdent_before=True)
-            return result
-
-        return evaluate
 
 
 class RightBraceToken(Token):

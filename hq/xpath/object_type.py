@@ -1,4 +1,5 @@
 from future.standard_library import install_aliases
+from hq.verbosity import verbose_print
 
 install_aliases()
 
@@ -24,7 +25,7 @@ def is_number(obj):
 
 
 def is_string(obj):
-    return isinstance(obj, str)
+    return isinstance(obj, str) or obj.__class__.__name__.endswith('unicode')
 
 
 def make_node_set(node_set):
@@ -48,6 +49,7 @@ def object_type(obj):
     elif is_string(obj):
         return STRING
     else:
+        verbose_print('UH-OH! Returning None from object_type({0})'.format(obj.__class__.__name__))
         return None
 
 
@@ -66,7 +68,7 @@ def string_value(obj):
         return str(obj);
     elif is_node_set(obj):
         return string_value(obj[0]) if len(obj) > 0 else ''
-    elif isinstance(obj, str):
+    elif is_string(obj):
         return obj
     else:
         raise NotImplementedError('string_value not yet implemented for type "{0}"'.format(obj.__class__.__name__))

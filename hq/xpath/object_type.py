@@ -33,7 +33,8 @@ def make_node_set(node_set):
     node_set = list(OrderedDict.fromkeys(node_set))
     non_node_member = next(filterfalse(is_any_node, node_set), False)
     if non_node_member:
-        raise RuntimeError('Constructed node set that includes non-node object "{0}"'.format(non_node_member))
+        format_str = 'Constructed node set that includes {0} object "{1}"'
+        raise RuntimeError(format_str.format(object_type_name(non_node_member), non_node_member))
     return node_set
 
 
@@ -62,6 +63,10 @@ def string_value(obj):
     if is_tag_node(obj):
         return ''.join(obj.stripped_strings)
     elif is_text_node(obj) or is_number(obj):
-        return str(obj)
+        return str(obj);
+    elif is_node_set(obj):
+        return string_value(obj[0]) if len(obj) > 0 else ''
+    elif isinstance(obj, str):
+        return obj
     else:
         raise NotImplementedError('string_value not yet implemented for type "{0}"'.format(obj.__class__.__name__))

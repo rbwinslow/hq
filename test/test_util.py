@@ -5,8 +5,9 @@ from hq.output import result_object_to_text
 from hq.xpath.query_xpath import query_xpath
 
 
-def process_xpath_query(html_body, xpath):
-    raw_result = query_xpath(soup_with_body(html_body), xpath)
+def process_xpath_query(html_body, xpath, wrap_body=True):
+    soup = soup_with_body(html_body) if wrap_body else BeautifulSoup(html_body, 'html.parser')
+    raw_result = query_xpath(soup, xpath)
     return result_object_to_text(raw_result)
 
 

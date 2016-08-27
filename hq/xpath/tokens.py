@@ -1,4 +1,4 @@
-from hq.soup_util import soup_from_any_tag
+from hq.soup_util import soup_from_any_tag, debug_dump_node
 from hq.verbosity import verbose_print
 from hq.xpath.function_support import FunctionSupport
 from hq.xpath.functions.core_boolean import boolean
@@ -18,13 +18,38 @@ function_support = FunctionSupport()
 
 class LBP:
     """Left-binding precendence values."""
-    (nothing, predicate, equality_op, add_or_subtract, function_call, location_step, node_test) = range(7)
+    (nothing, predicate, equality_op, add_or_subtract, mult_or_div, function_call, location_step, node_test) = range(8)
 
 
 class Token(object):
-    def __init__(self, parse_interface, value=None):
+    def __init__(self, parse_interface, value=None, **kwargs):
         self.parse_interface = parse_interface
         self.value = value
+
+
+class AsteriskToken(Token):
+    lbp = LBP.mult_or_div
+
+    def __repr__(self):
+        return '(times)'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate(context):
+            verbose_print('AsteriskToken ({0}) evaluation...'.format(self.value), indent_after=True)
+            verbose_print('Evaluating left-hand side.', indent_after=True)
+            left_value = number(left(context))
+            verbose_print('Evaluating right-hand side.', outdent_before=True, indent_after=True)
+            right_value = number(right(context))
+
+            verbose_print('Calculating.', outdent_before=True)
+            result = left_value * right_value
+
+            verbose_print('AsteriskToken ({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            return result
+
+        return evaluate
 
 
 class AxisToken(Token):
@@ -81,6 +106,31 @@ class ContextNodeToken(Token):
             verbose_print('ContextNodeToken passing along context node {0}'.format(context.node))
             return make_node_set(context.node)
         return context_node
+
+
+class DivOrModOperatorToken(Token):
+    lbp = LBP.mult_or_div
+
+    def __repr__(self):
+        return '(operator "{0}")'.format(self.value)
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate(context):
+            verbose_print('DivOrModOperatorToken ({0}) evaluation...'.format(self.value), indent_after=True)
+            verbose_print('Evaluating left-hand side.', indent_after=True)
+            left_value = number(left(context))
+            verbose_print('Evaluating right-hand side.', outdent_before=True, indent_after=True)
+            right_value = number(right(context))
+
+            verbose_print('Calculating.', outdent_before=True)
+            result = left_value / right_value if self.value == 'div' else left_value % right_value
+
+            verbose_print('DivOrModOperatorToken ({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            return result
+
+        return evaluate
 
 
 class DoubleSlashToken(Token):
@@ -188,8 +238,8 @@ class LiteralNumberToken(Token):
 class LiteralStringToken(Token):
     lbp = LBP.nothing
 
-    def __init__(self, parse_interface, value):
-        super(LiteralStringToken, self).__init__(parse_interface, value[1:-1])
+    def __init__(self, parse_interface, value, **kwargs):
+        super(LiteralStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
 
     def __repr__(self):
         return '(literal-string "{0}")'.format(self.value)
@@ -217,7 +267,8 @@ class NameTestToken(Token):
 
     def nud(self):
         def name_test(context, axis=Axis.child):
-            verbose_print('NameTestToken "{0}" evaluating children of context node'.format(self.value))
+            msg_format = 'NameTestToken "{0}" evaluating children of context node {1}'
+            verbose_print(msg_format.format(self.value, debug_dump_node(context.node)))
             return self._evaluate(make_node_set(context.node), axis)
         return name_test
 
@@ -239,7 +290,7 @@ class NodeTestToken(Token):
         def node_test(context, axis=Axis.child):
             node_set = left(context)
             QueryError.must_be_node_set(node_set)
-            verbose_print('NodeTestToken {0}() evaluating children of  {1} node(s)'.format(self.value, len(node_set)))
+            verbose_print('NodeTestToken {0}() evaluating children of {1} node(s)'.format(self.value, len(node_set)))
             return self._evaluate(node_set, axis)
         return node_test
 

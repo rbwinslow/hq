@@ -20,6 +20,21 @@ class number:
     def __add__(self, other):
         return number(self.value + other.value)
 
+    def __sub__(self, other):
+        return number(self.value - other.value)
+
+    def __mul__(self, other):
+        return number(self.value * other.value)
+
+    def __div__(self, other):
+        return number(self.value / other.value)
+
+    def __truediv__(self, other):
+        return number(self.value / other.value)
+
+    def __mod__(self, other):
+        return number(self.value % other.value)
+
     def __eq__(self, other):
         return is_number(other) and self.value == other.value
 

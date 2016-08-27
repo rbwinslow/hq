@@ -4,6 +4,14 @@ from .tokens import *
 from ..verbosity import verbose_print
 
 
+def pick_token_for_div_or_mod(parse_interface, value, previous_token):
+    numeric_predecessors = [LiteralNumberToken, CloseParenthesisToken]
+    if any(isinstance(previous_token, token_class) for token_class in numeric_predecessors):
+        return DivOrModOperatorToken(parse_interface, value)
+    else:
+        return NameTestToken(parse_interface, value)
+
+
 token_config = [
     (r'(//)', DoubleSlashToken),
     (r'(/)', SlashToken),
@@ -18,7 +26,9 @@ token_config = [
     (r"('[^']*')", LiteralStringToken),
     (r'(-?\d[\d\.]*)', LiteralNumberToken),
     (r'(,)', CommaToken),
+    (r'(\*)', AsteriskToken),
     (r'(\+|-)', PlusOrMinusToken),
+    (r'(div|mod)', pick_token_for_div_or_mod),
     (r'(node|text)\(\)', NodeTestToken),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\w[\w]*)', NameTestToken),
@@ -52,12 +62,15 @@ def query_xpath(soup, xpath_expression):
 def tokenize(program):
     parse_interface = ParseInterface()
     pattern = re.compile(r'\s*(?:{0})'.format('|'.join([pattern for pattern, _ in token_config])))
+    previous_token = None
 
     for matches in pattern.findall(program):
         index, value = next((i, group) for i, group in enumerate(list(matches)) if bool(group))
-        if index is None:
+        if value is None:
             raise SyntaxError("unknown token")
-        yield token_config[index][1](parse_interface, value=value)
+        this_token = token_config[index][1](parse_interface, value=value, previous_token=previous_token)
+        yield this_token
+        previous_token = this_token
 
     yield EndToken(parse_interface)
 

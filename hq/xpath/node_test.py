@@ -9,8 +9,10 @@ class NodeTest:
         elif value == 'text':
             self.accept_fn = is_text_node
 
+
     def apply(self, axis, node):
         return getattr(self, 'apply_to_{0}'.format(axis.name))(node)
+
 
     def apply_to_ancestor(self, node):
         result = []
@@ -20,6 +22,7 @@ class NodeTest:
                 result.append(node)
         return result
 
+
     def apply_to_child(self, node):
         result = []
         if is_root_node(node):
@@ -28,11 +31,13 @@ class NodeTest:
             result.extend(child for child in node.children if self.accept_fn(child))
         return result
 
+
     def apply_to_descendant(self, node):
         result = []
         if is_tag_node(node) or is_root_node(node):
             result = [tag for tag in node.descendants if self.accept_fn(tag)]
         return result
+
 
     def apply_to_following_sibling(self, node):
         result = []
@@ -42,11 +47,28 @@ class NodeTest:
                 result.append(node)
         return result
 
+
     def apply_to_parent(self, node):
         result = []
         if self.accept_fn(node.parent):
             result.append(node.parent)
         return result
+
+
+    def apply_to_preceding(self, node):
+        result = []
+        while is_tag_node(node):
+            while hasattr(node, 'previous_sibling') and node.previous_sibling is not None:
+                node = node.previous_sibling
+                if self.accept_fn(node):
+                    result.append(node)
+                descendant_query = self.apply_to_descendant(node)
+                descendant_query.reverse()
+                result.extend(descendant_query)
+            node = node.parent
+        result.reverse()
+        return result
+
 
     def apply_to_preceding_sibling(self, node):
         result = []

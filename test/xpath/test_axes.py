@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
@@ -148,3 +149,94 @@ def test_preceding_sibling_axis_works_with_node_test():
     <p>
      foo
     </p>""")
+
+
+def test_preceding_sibling_axis_returns_nodes_in_document_order():
+    "Node sets are unordered, but people really seem to like these being in document order."
+    html_body = """
+    <p>foo</p>
+    <p>bar</p>
+    <div></div>"""
+    assert process_xpath_query(html_body, '//div/preceding-sibling::p') == expected_result("""
+    <p>
+     foo
+    </p>
+    <p>
+     bar
+    </p>""")
+
+
+def test_following_axis_finds_all_following_nodes_that_match():
+    html_body = """
+    <section>
+        <p>moe</p>
+        <aside>
+            <p>larry</p>
+        </aside>
+        <div>
+            <p>curly</p>
+        </div>
+    </section>
+    <p>shemp</p>"""
+    assert process_xpath_query(html_body, '//aside/following::p') == expected_result("""
+    <p>
+     curly
+    </p>
+    <p>
+     shemp
+    </p>""")
+
+
+def test_preceding_axis_finds_all_preceding_nodes_that_match_node_test():
+    html_body = """
+    foo
+    <div>
+        <p>bar</p>
+    </div>
+    <span></span>"""
+    actual = process_xpath_query(html_body, '//span/preceding::text()')
+    actual = re.sub(r'\W+', ' ', actual)
+    assert actual == 'foo bar'
+
+
+def test_preceding_axis_finds_all_preceding_nodes_that_match():
+    html_body = """
+    <p>moe</p>
+    <section>
+        <div>
+            <p>larry</p>
+        </div>
+        <aside>
+            <p>curly</p>
+        </aside>
+        <p>shemp</p>
+    </section>"""
+    assert process_xpath_query(html_body, '//aside/preceding::p') == expected_result("""
+    <p>
+     moe
+    </p>
+    <p>
+     larry
+    </p>""")
+
+
+def test_preceding_axis_produces_results_in_document_order_and_also_works_with_node_test():
+    html_body = """
+    <p>moe</p>
+    <section>
+        <div>
+            <div>
+                <p>larry</p>
+            </div>
+        </div>
+        <aside>
+            <p>curly</p>
+        </aside>
+        <p>shemp</p>
+    </section>
+    <script></script>"""
+    assert process_xpath_query(html_body, '//script/preceding::p/text()') == expected_result("""
+    moe
+    larry
+    curly
+    shemp""")

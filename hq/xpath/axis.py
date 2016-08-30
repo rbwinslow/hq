@@ -11,6 +11,7 @@ class Axis(Enum):
     preceding_sibling = 6
     following = 7
     preceding = 8
+    attribute = 9
 
     def token(self):
         return self.name.replace('_', '-')

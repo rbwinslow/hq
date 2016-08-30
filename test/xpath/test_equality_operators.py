@@ -77,3 +77,10 @@ def test_equals_operator_converts_non_node_sets_to_number_when_comparing_to_a_nu
     assert process_xpath_query('', '0.1 = "0"') == expected_result('false')
     assert process_xpath_query('', '"42" = 42.0') == expected_result('true')
     assert process_xpath_query('', '"foo" = 0') == expected_result('false')  # It's NaN, not zero.
+
+
+def test_equals_operator_works_with_node_sets_containing_attributes():
+    html_body = """
+    <div id="one"></div>
+    <div id="two"></div>"""
+    assert process_xpath_query(html_body, '//div/attribute::id = "two"') == expected_result('true')

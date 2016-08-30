@@ -1,4 +1,17 @@
 
+class AttributeNode:
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return 'AttributeNode("{0}", "{1}")'.format(self.name, self.value)
+
+    def __str__(self):
+        return '{0}="{1}"'.format(self.name, self.value)
+
+
 def debug_dump_node(obj):
     if is_root_node(obj):
         return 'ROOT DOCUMENT'
@@ -11,7 +24,11 @@ def debug_dump_node(obj):
 
 
 def is_any_node(obj):
-    return is_root_node(obj) or is_tag_node(obj) or is_text_node(obj)
+    return is_root_node(obj) or is_tag_node(obj) or is_attribute_node(obj) or is_text_node(obj)
+
+
+def is_attribute_node(obj):
+    return isinstance(obj, AttributeNode)
 
 
 def is_root_node(obj):

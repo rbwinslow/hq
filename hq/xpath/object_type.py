@@ -3,10 +3,9 @@ from hq.verbosity import verbose_print
 
 install_aliases()
 
-from collections import OrderedDict
 from itertools import filterfalse
 
-from hq.soup_util import is_any_node, is_tag_node, is_text_node
+from hq.soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node
 
 BOOLEAN, NODE_SET, NUMBER, STRING = range(4)
 TYPE_NAMES = ('BOOLEAN', 'NODE_SET', 'NUMBER', 'STRING')
@@ -75,6 +74,8 @@ def object_type_name(obj):
 def string_value(obj):
     if is_tag_node(obj):
         return ''.join(obj.stripped_strings)
+    elif is_attribute_node(obj):
+        return obj.value
     elif is_text_node(obj) or is_number(obj):
         return str(obj);
     elif is_node_set(obj):

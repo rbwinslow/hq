@@ -1,4 +1,4 @@
-from ..soup_util import is_root_node, is_tag_node, root_tag_from_soup
+from ..soup_util import is_root_node, is_tag_node, root_tag_from_soup, AttributeNode
 
 
 class NameTest:
@@ -19,6 +19,13 @@ class NameTest:
             node = node.parent
             if node.name.lower() == self.value:
                 result.append(node)
+        return result
+
+
+    def apply_to_attribute(self, node):
+        result = []
+        if is_tag_node(node) and self.value in node.attrs:
+            result.append(AttributeNode(self.value, node[self.value]))
         return result
 
 

@@ -240,3 +240,12 @@ def test_preceding_axis_produces_results_in_document_order_and_also_works_with_n
     larry
     curly
     shemp""")
+
+
+def test_attribute_axis_produces_attribute_values():
+    html_body = """
+    <div id="one"></div>
+    <div id="two"></div>"""
+    assert process_xpath_query(html_body, '//div/attribute::id') == expected_result('''
+    id="one"
+    id="two"''')

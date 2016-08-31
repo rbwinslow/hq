@@ -10,7 +10,6 @@ from hq.xpath.equality_operators import equals, not_equals
 
 from .axis import Axis
 from .expression_context import ExpressionContext
-from .name_test import NameTest
 
 
 function_support = FunctionSupport()
@@ -298,7 +297,7 @@ class NameTestToken(Token):
         return name_test
 
     def _evaluate(self, node_set, axis):
-        test = NameTest(self.value)
+        test = NodeTest(self.value, name_test=True)
         ragged = [test.apply(axis, node) for node in node_set]
         result = make_node_set([item for sublist in ragged for item in sublist])
         verbose_print('NameTestToken evaluation produced {0} node(s)'.format(len(result)))

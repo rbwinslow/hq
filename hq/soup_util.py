@@ -11,6 +11,12 @@ class AttributeNode:
     def __str__(self):
         return '{0}="{1}"'.format(self.name, self.value)
 
+    @classmethod
+    def enumerate(cls, tag_node):
+        if hasattr(tag_node, 'attrs'):
+            for name, value in tag_node.attrs.items():
+                yield AttributeNode(name, value)
+
 
 def debug_dump_node(obj):
     if is_root_node(obj):

@@ -18,15 +18,17 @@ HTML is read from stdin.
 
 """
 
-from sys import stdin
+from __future__ import print_function
+
+from sys import stderr, stdin
 
 import sys
 from bs4 import BeautifulSoup
 from docopt import docopt
-from hq.output import result_object_to_text
 
 from .config import settings
 from .css.query_css import query_css
+from .output import result_object_to_text
 from .xpath.query_xpath import query_xpath, QueryError
 
 __version__ = '0.0.1'
@@ -54,7 +56,7 @@ def main():
 
         print(result_object_to_text(result, pretty=(not args['-n'])))
     except QueryError as error:
-        print('\nERROR! {0}\n'.format(str(error)), file=sys.stderr)
+        print('\nERROR! {0}\n'.format(str(error)), file=stderr)
 
 
 if __name__ == '__main__':

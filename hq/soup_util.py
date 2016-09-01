@@ -1,9 +1,11 @@
+from .verbosity import verbose_print
+
 
 class AttributeNode:
 
     def __init__(self, name, value):
         self.name = name
-        self.value = value
+        self.value = ' '.join(value) if isinstance(value, list) else value
 
     def __repr__(self):
         return 'AttributeNode("{0}", "{1}")'.format(self.name, self.value)
@@ -18,13 +20,25 @@ class AttributeNode:
                 yield AttributeNode(name, value)
 
 
+def debug_dump_long_string(s, length=50, one_line=True, suffix='...'):
+    if len(s) <= length:
+        result = s
+    else:
+        result = s[:length].rsplit(' ', 1)[0] + suffix
+    if one_line:
+        result = result.replace('\n', '\\n')
+    return result
+
+
 def debug_dump_node(obj):
     if is_root_node(obj):
         return 'ROOT DOCUMENT'
     elif is_tag_node(obj):
         return 'ELEMENT <{0}>'.format(obj.name)
+    elif is_attribute_node(obj):
+        return 'ATTRIBUTE {0}="{1}"'.format(obj.name, debug_dump_long_string(obj.value))
     elif is_text_node(obj):
-        return 'TEXT "{0}"'.format(_debug_dump_long_string(obj.string))
+        return 'TEXT "{0}"'.format(debug_dump_long_string(obj.string))
     else:
         return 'NODE type {0}'.format(obj.__class__.__name__)
 
@@ -59,9 +73,11 @@ def soup_from_any_tag(obj):
     return obj
 
 
-def _debug_dump_long_string(s, length=50, suffix='...'):
-    if len(s) <= length:
-        return s
-    else:
-        return s[:length].rsplit(' ', 1)[0] + suffix
+def visit_element_and_all_descendants(node, fn):
+    if is_root_node(node):
+        node = root_tag_from_soup(node)
+    if is_tag_node(node):
+        for child in node.children:
+            visit_element_and_all_descendants(child, fn)
+        fn(node)
 

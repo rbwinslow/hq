@@ -242,10 +242,26 @@ def test_preceding_axis_produces_results_in_document_order_and_also_works_with_n
     shemp""")
 
 
-def test_attribute_axis_produces_attribute_values():
+def test_attribute_axis_in_full_and_abbreviated_form_selects_named_attributes_or_all_attributes():
     html_body = """
     <div id="one"></div>
-    <div id="two"></div>"""
-    assert process_xpath_query(html_body, '//div/attribute::id') == expected_result('''
+    <div id="two" class="three"></div>"""
+    expected_ids_result = expected_result('''
     id="one"
     id="two"''')
+    expected_all_result = expected_result('''
+    id="one"
+    class="three"
+    id="two"''')
+    assert process_xpath_query(html_body, '//div/attribute::id') == expected_ids_result
+    assert process_xpath_query(html_body, '//div/@id') == expected_ids_result
+    assert process_xpath_query(html_body, '//attribute::*') == expected_all_result
+    assert process_xpath_query(html_body, '//@*') == expected_all_result
+
+
+def test_attribute_axis_matching_any_attribute_produces_attributes_from_each_element_in_alphabetical_order():
+    html_body = """
+    <span moe="3" LARRY="2" curly="1"></span>
+    <span BBB="5" aaa="4" ccc="6"></span>"""
+    actual = process_xpath_query(html_body, '//span/@*')
+    assert re.sub(r'\w+="(\d)"\n?', r'\1', actual) == '123456'

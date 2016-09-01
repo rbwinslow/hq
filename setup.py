@@ -13,7 +13,7 @@
 import re
 from setuptools import setup, find_packages
 
-version = re.search('^__version__\s*=\s*"(.*)"', open('hq/hq.py').read(), re.M).group(1)
+version = re.search("^__version__\s*=\s*'(.*)'", open('hq/hq.py').read(), re.M).group(1)
 
 
 with open('README.rst', 'rb') as f:

@@ -42,6 +42,7 @@ token_config = [
     (r"('[^']*')", LiteralStringToken),
     (r'(-?\d[\d\.]*)', LiteralNumberToken),
     (r'(,)', CommaToken),
+    (r'(@)', AxisToken),
     (r'(\*)', _pick_token_for_asterisk),
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),

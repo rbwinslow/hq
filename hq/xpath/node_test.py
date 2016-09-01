@@ -1,15 +1,27 @@
 from hq.verbosity import verbose_print
+from hq.xpath.axis import Axis
 
-from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node
+from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, debug_dump_node
+
+
+def _accept_name(value):
+    def evaluate(node, axis=None):
+        type_fn = is_attribute_node if axis == Axis.attribute else is_tag_node
+        return type_fn(node) and node.name.lower() == value
+    return evaluate
+
+
+def _accept_any(node, axis=None):
+    return is_attribute_node(node) if axis == Axis.attribute else is_tag_node(node)
 
 
 class NodeTest:
     def __init__(self, value, name_test=False):
         value = value.lower()
         if name_test:
-            self.accept_fn = lambda n: (is_tag_node(n) or is_attribute_node(n)) and (n.name.lower() == value)
+            self.accept_fn = _accept_name(value)
         elif value == 'node' or value == '*':
-            self.accept_fn = is_tag_node
+            self.accept_fn = _accept_any
         elif value == 'text':
             self.accept_fn = is_text_node
 
@@ -31,10 +43,9 @@ class NodeTest:
         result = []
         if hasattr(node, 'attrs'):
             for attr in AttributeNode.enumerate(node):
-                if self.accept_fn(attr):
+                if self.accept_fn(attr, axis=Axis.attribute):
                     result.append(attr)
-                    break
-        return result
+        return sorted(result, key=lambda attr: attr.name.lower())
 
 
     def apply_to_child(self, node):

@@ -1,11 +1,12 @@
 from future.standard_library import install_aliases
-from hq.verbosity import verbose_print
 
 install_aliases()
 
 from itertools import filterfalse
 
-from hq.soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node
+from ..verbosity import verbose_print
+from ..soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node
+
 
 BOOLEAN, NODE_SET, NUMBER, STRING = range(4)
 TYPE_NAMES = ('BOOLEAN', 'NODE_SET', 'NUMBER', 'STRING')
@@ -29,6 +30,7 @@ def is_string(obj):
 
 def make_node_set(node_set):
     ids = []
+
     def is_unique_id(node):
         node_id = id(node)
         if node_id in ids:

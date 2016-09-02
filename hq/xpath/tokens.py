@@ -10,7 +10,7 @@ from hq.xpath.query_error import XpathQueryError
 from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
-from .expression_context import ExpressionContext
+from .expression_context import ExpressionContext, peek_context, evaluate_across_contexts, evaluate_in_context
 
 function_support = FunctionSupport()
 
@@ -20,13 +20,45 @@ class LBP:
     (nothing, predicate, equality_op, add_or_subtract, mult_or_div, function_call, location_step, node_test) = range(8)
 
 
+
 class Token(object):
+
     def __init__(self, parse_interface, value=None, **kwargs):
         self.parse_interface = parse_interface
         self.value = value
 
-    def gab(self, msg, **kwargs):
+
+    def _default_node_set_to_context_and_describe(self, node_set_or_none):
+        if node_set_or_none is None:
+            node_set_or_none = [peek_context().node]
+            description = 'context node {0}'.format(debug_dump_node(node_set_or_none[0]))
+        else:
+            XpathQueryError.must_be_node_set(node_set_or_none)
+            description = '{0} node(s)'.format(len(node_set_or_none))
+        return node_set_or_none, description
+
+
+    def _evaluate_binary_operands(self,
+                                  left_generator,
+                                  right_generator,
+                                  constructor=lambda v: v,
+                                  type_name='xpath object'):
+        try:
+            self._gab('{0} evaluation...'.format(self), indent_after=True)
+            self._gab('evaluating left-hand side.', indent_after=True)
+            left_value = constructor(left_generator())
+            self._gab('evaluating right-hand side.', outdent_before=True, indent_after=True)
+            right_value = constructor(right_generator())
+            self._gab('argument evaluation complete', outdent_before=True)
+            self._gab('evaluating expression {0} {1} {2}'.format(left_value, self, right_value), outdent_before=True)
+            return left_value, right_value
+        except TypeError:
+            raise XpathSyntaxError('{0} evaluated against a non-{1} operand'.format(self, type_name))
+
+
+    def _gab(self, msg, **kwargs):
         verbose_print('{0} {1}'.format(self, msg), **kwargs)
+
 
 
 class AddOrSubtractOperatorToken(Token):
@@ -38,23 +70,14 @@ class AddOrSubtractOperatorToken(Token):
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            try:
-                self.gab('({0}) evaluation...'.format(self.value), indent_after=True)
-                self.gab('Evaluating left-hand side.', indent_after=True)
-                left_value = number(left(context))
-                self.gab('Evaluating right-hand side.', outdent_before=True, indent_after=True)
-                right_value = number(right(context))
-            except TypeError:
-                raise XpathSyntaxError('{0} evaluated against a non-numeric operand'.format(self))
-
-            self.gab('Calculating.', outdent_before=True)
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right, constructor=number, type_name='number')
             result = left_value + right_value if self.value == '+' else left_value - right_value
-
-            self.gab('({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            self._gab('{0} returning {1}'.format(self, result))
             return result
 
         return evaluate
+
 
 
 class AxisToken(Token):
@@ -68,24 +91,21 @@ class AxisToken(Token):
 
     def led(self, left=None):
         right = self.parse_interface.expression(self.lbp)
-        def node_test(context):
-            if left is None:
-                node_set = make_node_set(context.node)
-            else:
-                node_set = left(context)
-            XpathQueryError.must_be_node_set(node_set)
-            node_count = len(node_set)
-            if node_count > 0:
-                self.gab('evaluating node test on {0} nodes'.format(node_count))
-                ragged = [right(ExpressionContext(node), axis=Axis[self.value.replace('-', '_')]) for node in node_set]
-                return make_node_set([item for sublist in ragged for item in sublist])
-            else:
-                self.gab('doing nothing (empty node set)')
-                return make_node_set({})
+
+        def node_test():
+            return evaluate_across_contexts(left(), right, axis=Axis[self.value.replace('-', '_')])
+
         return node_test
 
     def nud(self):
-        return self.led()
+        right = self.parse_interface.expression(self.lbp)
+
+        def node_test():
+            self._gab('evaluating node test on context node {0}'.format(debug_dump_node(peek_context().node)))
+            return right(axis=Axis[self.value.replace('-', '_')])
+
+        return node_test
+
 
 
 class CloseParenthesisToken(Token):
@@ -95,11 +115,13 @@ class CloseParenthesisToken(Token):
         return '(close-parenthesis)'
 
 
+
 class CommaToken(Token):
     lbp = LBP.function_call
 
     def __str__(self):
         return '(comma)'
+
 
 
 class ContextNodeToken(Token):
@@ -109,17 +131,23 @@ class ContextNodeToken(Token):
         return '(context-node)'
 
     def led(self, left):
-        def identity(context):
-            result = left(context)
-            self.gab('passing along ({0})'.format(result))
+
+        def identity():
+            result = left()
+            self._gab('passing along {0}'.format(result))
             return result
+
         return identity
 
     def nud(self):
-        def context_node(context):
-            self.gab('passing along context node {0}'.format(context.node))
-            return make_node_set(context.node)
+
+        def context_node():
+            context_node = peek_context().node
+            self._gab('returning node set containing context node {0}'.format(context_node))
+            return make_node_set(context_node)
+
         return context_node
+
 
 
 class DivOrModOperatorToken(Token):
@@ -131,24 +159,19 @@ class DivOrModOperatorToken(Token):
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            self.gab('({0}) evaluation...'.format(self.value), indent_after=True)
-            self.gab('Evaluating left-hand side.', indent_after=True)
-            left_value = number(left(context))
-            self.gab('Evaluating right-hand side.', outdent_before=True, indent_after=True)
-            right_value = number(right(context))
-
-            self.gab('Calculating.', outdent_before=True)
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right, constructor=number, type_name='number')
             result = left_value / right_value if self.value == 'div' else left_value % right_value
-
-            self.gab('({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            self._gab('{0} returning {1}'.format(self, result))
             return result
 
         return evaluate
 
 
+
 class DoubleSlashToken(Token):
     lbp = LBP.location_step
+    evaluating_message = 'evaluating remainder of path for node "{0}" and all of its descendants.'
 
     def __str__(self):
         return '(double-slash)'
@@ -156,35 +179,37 @@ class DoubleSlashToken(Token):
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            node_set = left(context)
-            self.gab('iterating over {0} nodes from path so far.'.format(len(node_set)), indent_after=True)
-            msg_format = 'evaluating remainder of path for node "{0}" and all of its descendants.'
-            results = []
-            for node in node_set:
-                self.gab(msg_format.format(debug_dump_node(node)))
-                preorder_traverse_node_tree(node, lambda n: results.extend(right(ExpressionContext(n))))
-            results = make_node_set(results)
-            self.gab('evaluation finished; returning {0} nodes.'.format(len(results)), outdent_before=True)
-            return results
+        def evaluate():
+            return self._evaluate(right, node_set=left())
 
         return evaluate
 
     def nud(self):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            msg_format = 'evaluating remainder of path for context node "{0}" and all of its descendants.'
-            self.gab(msg_format.format(context.node.name))
-            results = []
-            preorder_traverse_node_tree(context.node, lambda n: results.extend(right(ExpressionContext(n))))
-            return make_node_set(results)
+        def evaluate():
+            return self._evaluate(right)
 
         return evaluate
+
+    def _evaluate(self, expression_fn, node_set=None):
+        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        self._gab('evaluating for {0}'.format(input_desc), indent_after=True)
+
+        results = []
+        for node in node_set:
+            self._gab(self.evaluating_message.format(debug_dump_node(node)))
+            preorder_traverse_node_tree(node, lambda n: results.extend(evaluate_in_context(n, expression_fn)))
+        results = make_node_set(results)
+
+        self._gab('evaluation finished; returning {0} nodes.'.format(len(results)), outdent_before=True)
+        return results
+
 
 
 class EndToken(Token):
     lbp = LBP.nothing
+
 
 
 class EqualityOperatorToken(Token):
@@ -196,20 +221,14 @@ class EqualityOperatorToken(Token):
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            self.gab('({0}) evaluation...'.format(self.value), indent_after=True)
-            self.gab('Evaluating left-hand side.', indent_after=True)
-            left_value = left(context)
-            self.gab('Evaluating right-hand side.', outdent_before=True, indent_after=True)
-            right_value = right(context)
-
-            self.gab('Comparing values.', outdent_before=True)
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right)
             result = equals(left_value, right_value) if self.value == '=' else not_equals(left_value, right_value)
-
-            self.gab('({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            self._gab('{0} returning {1}'.format(self, result))
             return result
 
         return evaluate
+
 
 
 class FunctionCallToken(Token):
@@ -230,13 +249,15 @@ class FunctionCallToken(Token):
         if not isinstance(right_paren, CloseParenthesisToken):
             raise RuntimeError('FunctionCallToken expected right-hand parenthesis after argument(s)')
 
-        def evaluate(context):
-            self.gab('evaluating argument list for function "{0}."'.format(self.value))
-            arguments = [gen(context) for gen in arg_generators]
+        def evaluate():
+            self._gab('evaluating argument list for function "{0}."'.format(self.value))
+            arguments = [gen() for gen in arg_generators]
             arg_types = ','.join(object_type_name(arg) for arg in arguments)
-            self.gab('calling {0}({1}).'.format(self.value, arg_types))
+            self._gab('calling {0}({1}).'.format(self.value, arg_types))
             return function_support.call_function(self.value, *arguments)
+
         return evaluate
+
 
 
 class LeftBraceToken(Token):
@@ -247,15 +268,21 @@ class LeftBraceToken(Token):
 
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
-        def evaluate(context):
-            node_set = left(context)
-            XpathQueryError.must_be_node_set(node_set)
-            self.gab('evaluating predicate for {0} nodes'.format(len(node_set)), indent_after=True)
-            result = make_node_set([node for node in node_set if boolean(right(ExpressionContext(node)))])
-            self.gab('(predicate) evaluation returning {0} nodes'.format(len(result)),
-                          outdent_before=True)
+
+        def context_node_if_selected():
+            context_node = peek_context().node
+            return [context_node] if boolean(right()) else []
+
+        def evaluate():
+            node_set = left()
+            self._gab('evaluating predicate for {0} nodes'.format(len(node_set)), indent_after=True)
+
+            result = evaluate_across_contexts(node_set, context_node_if_selected)
+            self._gab('evaluation returning {0} nodes'.format(len(result)), outdent_before=True)
             return result
+
         return evaluate
+
 
 
 class LiteralNumberToken(Token):
@@ -265,10 +292,8 @@ class LiteralNumberToken(Token):
         return '(literal-number {0})'.format(self.value)
 
     def nud(self):
-        def value(context):
-            self.gab('returning value {0}'.format(self.value))
-            return number(self.value)
-        return value
+        return lambda: number(self.value)
+
 
 
 class LiteralStringToken(Token):
@@ -281,10 +306,8 @@ class LiteralStringToken(Token):
         return '(literal-string "{0}")'.format(self.value)
 
     def nud(self):
-        def value(context):
-            self.gab('returning value "{0}"'.format(self.value))
-            return self.value
-        return value
+        return lambda: self.value
+
 
 
 class MultiplyOperatorToken(Token):
@@ -296,77 +319,90 @@ class MultiplyOperatorToken(Token):
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
-        def evaluate(context):
-            self.gab('evaluating left-hand side.', indent_after=True)
-            left_value = number(left(context))
-            self.gab('evaluating right-hand side.', outdent_before=True, indent_after=True)
-            right_value = number(right(context))
-
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right, constructor=number, type_name='number')
             result = left_value * right_value
-            self.gab('({0}) returning {1}'.format(self.value, result), outdent_before=True)
+            self._gab('{0} returning {1}'.format(self, result))
             return result
 
         return evaluate
 
 
+
 class NameTestToken(Token):
     lbp = LBP.node_test
+
+    def __init__(self, *args, **kwargs):
+        super(NameTestToken, self).__init__(*args, **kwargs)
+        self.test = NodeTest(self.value, name_test=True)
 
     def __str__(self):
         return '(name-test "{0}")'.format(self.value)
 
     def led(self, left):
-        def name_test(context, axis=Axis.child):
-            node_set = left(context)
+
+        def name_test(axis=Axis.child):
+            node_set = left()
             XpathQueryError.must_be_node_set(node_set)
-            self.gab('evaluating {0} from {1} node(s)'.format(axis, len(node_set)))
-            return self._evaluate(node_set, axis)
+            return self._evaluate(axis, node_set)
+
         return name_test
 
     def nud(self):
-        def name_test(context, axis=Axis.child):
-            msg_format = 'evaluating {0} from context node {1}'
-            self.gab(msg_format.format(axis, debug_dump_node(context.node)))
-            return self._evaluate(make_node_set(context.node), axis)
+
+        def name_test(axis=Axis.child):
+            return self._evaluate(axis)
+
         return name_test
 
-    def _evaluate(self, node_set, axis):
-        test = NodeTest(self.value, name_test=True)
-        ragged = [test.apply(axis, node) for node in node_set]
-        result = make_node_set([item for sublist in ragged for item in sublist])
-        self.gab('evaluation produced {0} node(s)'.format(len(result)))
+    def _evaluate(self, axis, node_set=None):
+        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        self._gab('evaluating {0}::{1} from {2}'.format(axis, self.value, input_desc))
+
+        result = evaluate_across_contexts(node_set, lambda: make_node_set(self.test.apply(axis, peek_context().node)))
+        self._gab('evaluation produced {0} node(s)'.format(len(result)))
         return result
+
 
 
 class NodeTestToken(Token):
     lbp = LBP.node_test
 
+    def __init__(self, *args, **kwargs):
+        super(NodeTestToken, self).__init__(*args, **kwargs)
+        self.test = NodeTest(self.value)
+
     def __str__(self):
         return '(node-test "{0}")'.format(self._dump_value())
 
     def led(self, left):
-        def node_test(context, axis=Axis.child):
-            node_set = left(context)
+
+        def node_test(axis=Axis.child):
+            node_set = left()
             XpathQueryError.must_be_node_set(node_set)
-            self.gab('evaluating {0} from {1} node(s)'.format(axis, len(node_set)))
-            return self._evaluate(node_set, axis)
+            return self._evaluate(axis, node_set)
+
         return node_test
 
     def nud(self):
-        def node_test(context, axis=Axis.child):
-            self.gab('evaluating {0} from context node {1}'.format(axis, debug_dump_long_string(str(context.node))))
-            return self._evaluate(make_node_set(context.node), axis)
+
+        def node_test(axis=Axis.child):
+            return self._evaluate(axis)
+
         return node_test
 
     def _dump_value(self):
         return '{0}{1}'.format(self.value, '()' if self.value != '*' else '')
 
-    def _evaluate(self, node_set, axis):
-        test = NodeTest(self.value)
-        ragged = [test.apply(axis, node) for node in node_set]
-        result = make_node_set([item for sublist in ragged for item in sublist])
-        self.gab('evaluation produced {0} node(s)'.format(len(result)))
+    def _evaluate(self, axis, node_set=None):
+        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        self._gab('evaluating {0}::{1} from {2}'.format(axis, self._dump_value(), input_desc))
+
+        result = evaluate_across_contexts(node_set,
+                                          lambda: make_node_set(self.test.apply(axis, peek_context().node)))
+        self._gab('evaluation produced {0} node(s)'.format(len(result)))
         return result
+
 
 
 class ParentNodeToken(Token):
@@ -376,21 +412,20 @@ class ParentNodeToken(Token):
         return '(parent-node)'
 
     def led(self, left):
-        def parent_node(context):
-            node_set = left(context)
-            self.gab('returning parent(s) of {0} nodes'.format(len(node_set)))
-            return self._perform_parent_node(node_set)
+        def parent_node():
+            return self._evaluate(left())
         return parent_node
 
     def nud(self):
-        def parent_node(context):
-            self.gab('returning parent of context node')
-            return self._perform_parent_node(make_node_set(context.node))
+        def parent_node():
+            return self._evaluate()
         return parent_node
 
-    def _perform_parent_node(self, node_set):
-        XpathQueryError.must_be_node_set(node_set)
+    def _evaluate(self, node_set=None):
+        node_set, from_what = self._default_node_set_to_context_and_describe(node_set)
+        self._gab('returning parent(s) of {0}'.format(from_what))
         return make_node_set([node.parent for node in node_set])
+
 
 
 class RightBraceToken(Token):
@@ -403,6 +438,7 @@ class RightBraceToken(Token):
         return left
 
 
+
 class SlashToken(Token):
     lbp = LBP.location_step
 
@@ -413,7 +449,7 @@ class SlashToken(Token):
         return left
 
     def nud(self):
-        def root(context):
-            self.gab('returning document root as start of absolute path')
-            return make_node_set(soup_from_any_tag(context.node))
+        def root():
+            self._gab('returning document root as start of absolute path')
+            return make_node_set(soup_from_any_tag(peek_context().node))
         return root

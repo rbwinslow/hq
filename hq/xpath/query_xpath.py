@@ -1,5 +1,7 @@
 import re
 
+from hq.xpath.expression_context import evaluate_in_context
+
 from .tokens import *
 from ..verbosity import verbose_print
 
@@ -68,10 +70,10 @@ class ParseInterface:
 
 
 def query_xpath(soup, xpath_expression):
-    verbose_print('PARSING XPATH', indent_after=True)
+    verbose_print('PARSING XPATH "{0}"'.format(debug_dump_long_string(xpath_expression)), indent_after=True)
     expression_fn = parse(xpath_expression)
     verbose_print('EVALUATING XPATH', indent_after=True, outdent_before=True)
-    result = expression_fn(ExpressionContext(node=soup))
+    result = evaluate_in_context(soup, expression_fn)
     verbose_print('XPATH QUERY FINISHED', outdent_before=True)
     return result
 

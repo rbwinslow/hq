@@ -79,9 +79,7 @@ def make_soup(source):
         counter[0] += 1
         if is_tag_node(node):
             attr_names = sorted(node.attrs.keys(), key=lambda name: name.lower())
-            verbose_print('///// Attaching .hq_attrs to node {0}'.format(debug_dump_node(node)))
             node.hq_attrs = [AttributeNode(name, node.attrs[name]) for name in attr_names]
-            verbose_print('///// New .hq_attrs has {0} items on node {1}'.format(len(node.hq_attrs), debug_dump_node(node)))
             for attr in node.hq_attrs:
                 visit_node(attr)
 
@@ -94,7 +92,6 @@ def preorder_traverse_node_tree(node, fn, filter=lambda n: is_tag_node(n) or is_
     if filter(node):
         fn(node)
         if hasattr(node, 'hq_attrs') and _isnt_root_with_odd_ghost_hq_attrs_on_it_for_reasons_i_dont_understand(node):
-            verbose_print('----- Found .hq_attrs {0} on node {1}'.format(node.hq_attrs, debug_dump_node(node)))
             for attr in node.hq_attrs:
                 preorder_traverse_node_tree(attr, fn, filter)
         if hasattr(node, 'children'):

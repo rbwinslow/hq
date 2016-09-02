@@ -22,7 +22,8 @@ class FunctionSupport:
         if self.all_functions is None:
             self.all_functions = dict()
             my_package = '{0}/__init__.py'.format(os.path.dirname(__file__))
-            verbose_print('FunctionSupport loading all XPath function modules near {0}.'.format(my_package), indent_after=True)
+            verbose_print('FunctionSupport loading all XPath function modules near {0}.'.format(my_package),
+                          indent_after=True)
             for importer, modname, ispkg in walk_packages(my_package):
                 if not ispkg and modname.startswith('hq.xpath.functions.'):
                     verbose_print('Found candidate module {0} -- loading.'.format(modname))

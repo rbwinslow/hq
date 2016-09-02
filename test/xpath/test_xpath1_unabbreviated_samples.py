@@ -227,16 +227,16 @@ def test_selects_all_the_item_elements_that_have_an_olist_parent_and_that_are_in
     </item>""")
 
 
-# def test_selects_the_first_para_child_of_the_context_node():
-#     html = """
-#     <context>
-#         <para>selected</para>
-#         <para>not selected</para>
-#     </context>"""
-#     assert query_context_node(html, 'child::para[position()=1]') == expected_result("""
-#     <para>
-#      selected
-#     </para>""")
+def test_selects_the_first_para_child_of_the_context_node():
+    html = """
+    <context>
+        <para>selected</para>
+        <para>not selected</para>
+    </context>"""
+    assert query_context_node(html, 'child::para[position()=1]') == expected_result("""
+    <para>
+     selected
+    </para>""")
 
 
 # def test_selects_the_last_para_child_of_the_context_node():

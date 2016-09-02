@@ -6,7 +6,8 @@ from hq.xpath.functions.core_boolean import boolean
 from hq.xpath.functions.core_numeric import number
 from hq.xpath.node_test import NodeTest
 from hq.xpath.object_type import make_node_set, object_type_name
-from hq.xpath.query_error import QueryError
+from hq.xpath.query_error import XpathQueryError
+from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
 from .expression_context import ExpressionContext
@@ -25,24 +26,27 @@ class Token(object):
         self.value = value
 
     def gab(self, msg, **kwargs):
-        verbose_print('{0} {1}'.format(repr(self), msg), **kwargs)
+        verbose_print('{0} {1}'.format(self, msg), **kwargs)
 
 
 class AddOrSubtractOperatorToken(Token):
     lbp = LBP.add_or_subtract
 
-    def __repr__(self):
+    def __str__(self):
         return '(plus)' if self.value == '+' else '(minus)'
 
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
         def evaluate(context):
-            self.gab('({0}) evaluation...'.format(self.value), indent_after=True)
-            self.gab('Evaluating left-hand side.', indent_after=True)
-            left_value = number(left(context))
-            self.gab('Evaluating right-hand side.', outdent_before=True, indent_after=True)
-            right_value = number(right(context))
+            try:
+                self.gab('({0}) evaluation...'.format(self.value), indent_after=True)
+                self.gab('Evaluating left-hand side.', indent_after=True)
+                left_value = number(left(context))
+                self.gab('Evaluating right-hand side.', outdent_before=True, indent_after=True)
+                right_value = number(right(context))
+            except TypeError:
+                raise XpathSyntaxError('{0} evaluated against a non-numeric operand'.format(self))
 
             self.gab('Calculating.', outdent_before=True)
             result = left_value + right_value if self.value == '+' else left_value - right_value
@@ -59,7 +63,7 @@ class AxisToken(Token):
     def __init__(self, parse_interface, value, **kwargs):
         super(AxisToken, self).__init__(parse_interface, value if value != '@' else 'attribute', **kwargs)
 
-    def __repr__(self):
+    def __str__(self):
         return '(axis "{0}")'.format(self.value)
 
     def led(self, left=None):
@@ -69,7 +73,7 @@ class AxisToken(Token):
                 node_set = make_node_set(context.node)
             else:
                 node_set = left(context)
-            QueryError.must_be_node_set(node_set)
+            XpathQueryError.must_be_node_set(node_set)
             node_count = len(node_set)
             if node_count > 0:
                 self.gab('evaluating node test on {0} nodes'.format(node_count))
@@ -87,21 +91,21 @@ class AxisToken(Token):
 class CloseParenthesisToken(Token):
     lbp = LBP.function_call
 
-    def __repr__(self):
+    def __str__(self):
         return '(close-parenthesis)'
 
 
 class CommaToken(Token):
     lbp = LBP.function_call
 
-    def __repr__(self):
+    def __str__(self):
         return '(comma)'
 
 
 class ContextNodeToken(Token):
     lbp = LBP.node_test
 
-    def __repr__(self):
+    def __str__(self):
         return '(context-node)'
 
     def led(self, left):
@@ -121,7 +125,7 @@ class ContextNodeToken(Token):
 class DivOrModOperatorToken(Token):
     lbp = LBP.mult_or_div
 
-    def __repr__(self):
+    def __str__(self):
         return '(operator "{0}")'.format(self.value)
 
     def led(self, left):
@@ -146,7 +150,7 @@ class DivOrModOperatorToken(Token):
 class DoubleSlashToken(Token):
     lbp = LBP.location_step
 
-    def __repr__(self):
+    def __str__(self):
         return '(double-slash)'
 
     def led(self, left):
@@ -186,7 +190,7 @@ class EndToken(Token):
 class EqualityOperatorToken(Token):
     lbp = LBP.equality_op
 
-    def __repr__(self):
+    def __str__(self):
         return '(equality-operator "{0}")'.format(self.value)
 
     def led(self, left):
@@ -211,7 +215,7 @@ class EqualityOperatorToken(Token):
 class FunctionCallToken(Token):
     lbp = LBP.function_call
 
-    def __repr__(self):
+    def __str__(self):
         return '(function call "{0}")'.format(self.value)
 
     def nud(self):
@@ -238,14 +242,14 @@ class FunctionCallToken(Token):
 class LeftBraceToken(Token):
     lbp = LBP.predicate
 
-    def __repr__(self):
+    def __str__(self):
         return '(left-brace)'
 
     def led(self, left):
         right = self.parse_interface.expression(self.lbp)
         def evaluate(context):
             node_set = left(context)
-            QueryError.must_be_node_set(node_set)
+            XpathQueryError.must_be_node_set(node_set)
             self.gab('evaluating predicate for {0} nodes'.format(len(node_set)), indent_after=True)
             result = make_node_set([node for node in node_set if boolean(right(ExpressionContext(node)))])
             self.gab('(predicate) evaluation returning {0} nodes'.format(len(result)),
@@ -257,7 +261,7 @@ class LeftBraceToken(Token):
 class LiteralNumberToken(Token):
     lbp = LBP.nothing
 
-    def __repr__(self):
+    def __str__(self):
         return '(literal-number {0})'.format(self.value)
 
     def nud(self):
@@ -273,7 +277,7 @@ class LiteralStringToken(Token):
     def __init__(self, parse_interface, value, **kwargs):
         super(LiteralStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
 
-    def __repr__(self):
+    def __str__(self):
         return '(literal-string "{0}")'.format(self.value)
 
     def nud(self):
@@ -286,7 +290,7 @@ class LiteralStringToken(Token):
 class MultiplyOperatorToken(Token):
     lbp = LBP.mult_or_div
 
-    def __repr__(self):
+    def __str__(self):
         return '(times)'
 
     def led(self, left):
@@ -308,13 +312,13 @@ class MultiplyOperatorToken(Token):
 class NameTestToken(Token):
     lbp = LBP.node_test
 
-    def __repr__(self):
+    def __str__(self):
         return '(name-test "{0}")'.format(self.value)
 
     def led(self, left):
         def name_test(context, axis=Axis.child):
             node_set = left(context)
-            QueryError.must_be_node_set(node_set)
+            XpathQueryError.must_be_node_set(node_set)
             self.gab('evaluating {0} from {1} node(s)'.format(axis, len(node_set)))
             return self._evaluate(node_set, axis)
         return name_test
@@ -337,13 +341,13 @@ class NameTestToken(Token):
 class NodeTestToken(Token):
     lbp = LBP.node_test
 
-    def __repr__(self):
+    def __str__(self):
         return '(node-test "{0}")'.format(self._dump_value())
 
     def led(self, left):
         def node_test(context, axis=Axis.child):
             node_set = left(context)
-            QueryError.must_be_node_set(node_set)
+            XpathQueryError.must_be_node_set(node_set)
             self.gab('evaluating {0} from {1} node(s)'.format(axis, len(node_set)))
             return self._evaluate(node_set, axis)
         return node_test
@@ -368,7 +372,7 @@ class NodeTestToken(Token):
 class ParentNodeToken(Token):
     lbp = LBP.node_test
 
-    def __repr__(self):
+    def __str__(self):
         return '(parent-node)'
 
     def led(self, left):
@@ -385,14 +389,14 @@ class ParentNodeToken(Token):
         return parent_node
 
     def _perform_parent_node(self, node_set):
-        QueryError.must_be_node_set(node_set)
+        XpathQueryError.must_be_node_set(node_set)
         return make_node_set([node.parent for node in node_set])
 
 
 class RightBraceToken(Token):
     lbp = LBP.predicate
 
-    def __repr__(self):
+    def __str__(self):
         return '(right-brace)'
 
     def led(self, left):
@@ -402,7 +406,7 @@ class RightBraceToken(Token):
 class SlashToken(Token):
     lbp = LBP.location_step
 
-    def __repr__(self):
+    def __str__(self):
         return '(slash)'
 
     def led(self, left):

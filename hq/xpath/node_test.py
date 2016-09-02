@@ -39,6 +39,12 @@ class NodeTest:
         return result
 
 
+    def apply_to_ancestor_or_self(self, node):
+        result = self.apply_to_self(node)
+        result.extend(self.apply_to_ancestor(node))
+        return result
+
+
     def apply_to_attribute(self, node):
         result = []
         if hasattr(node, 'attrs'):
@@ -63,6 +69,12 @@ class NodeTest:
         result = []
         if is_tag_node(node) or is_root_node(node):
             result = [tag for tag in node.descendants if self.accept_fn(tag)]
+        return result
+
+
+    def apply_to_descendant_or_self(self, node):
+        result = self.apply_to_self(node)
+        result.extend(self.apply_to_descendant(node))
         return result
 
 
@@ -114,3 +126,7 @@ class NodeTest:
             if self.accept_fn(node):
                 result.append(node)
         return result
+
+
+    def apply_to_self(self, node):
+        return [node] if self.accept_fn(node) else []

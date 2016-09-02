@@ -21,12 +21,31 @@ def test_explicit_child_axis():
 def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_matching_node_test():
     html_body = """
     <div>
-        <div>foo</div>
+        <div>
+            <div>selected</div>
+        </div>
     </div>
     <!-- comment -->
-    <div>bar</div>
+    <div>not selected</div>
     <p>not selected</p>"""
-    assert process_xpath_query(html_body, '/html/body/descendant::div') == expected_result("""
+    assert process_xpath_query(html_body, '/html/body/div/descendant::div') == expected_result("""
+    <div>
+     <div>
+      selected
+     </div>
+    </div>
+    <div>
+     selected
+    </div>""")
+
+
+def test_descendant_or_self_axis_returns_all_descendants_and_context_node_if_it_matches_node_test():
+    html_body = """
+    <div>
+        <div>foo</div>
+    </div>
+    <div>bar</div>"""
+    assert process_xpath_query(html_body, '/html/body/descendant-or-self::div') == expected_result("""
     <div>
      <div>
       foo
@@ -38,6 +57,17 @@ def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_m
     <div>
      bar
     </div>""")
+
+
+def test_descendant_or_self_axis_does_not_produce_self_if_node_test_does_not_match():
+    html_body = """
+    <div>
+        <p>foo</p>
+    </div>"""
+    assert process_xpath_query(html_body, '//div/descendant-or-self::p') == expected_result("""
+    <p>
+     foo
+    </p>""")
 
 
 def test_parent_axis_returns_parent_of_tag_node():
@@ -92,6 +122,22 @@ def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
      <div>
      </div>
     </body>""")
+
+
+def test_ancestor_or_self_axis_produces_ancestors_and_self_when_node_test_is_a_match():
+    html_body = """
+    <div>
+        <div>foo</div>
+    </div>"""
+    assert process_xpath_query(html_body, '/html/body/div/div/ancestor-or-self::div') == expected_result("""
+    <div>
+     <div>
+      foo
+     </div>
+    </div>
+    <div>
+     foo
+    </div>""")
 
 
 def test_following_sibling_axis_selects_all_following_siblings_and_only_following_siblings_that_match_name_test():
@@ -265,3 +311,17 @@ def test_attribute_axis_matching_any_attribute_produces_attributes_from_each_ele
     <span BBB="5" aaa="4" ccc="6"></span>"""
     actual = process_xpath_query(html_body, '//span/@*')
     assert re.sub(r'\w+="(\d)"\n?', r'\1', actual) == '123456'
+
+
+def test_self_axis_applies_only_to_self():
+    html_body = """
+    <div id="not selected">
+        <div id="selected">
+            <div></div>
+        </div>
+    </div>"""
+    assert process_xpath_query(html_body, '/html/body/div/div/self::div') == expected_result("""
+    <div id="selected">
+     <div>
+     </div>
+    </div>""")

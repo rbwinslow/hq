@@ -28,7 +28,7 @@ from .config import settings
 from .css.query_css import query_css
 from .output import result_object_to_text
 from .soup_util import make_soup
-from .xpath.query_xpath import query_xpath, QueryError
+from .xpath.query_xpath import query_xpath, XpathQueryError
 
 
 __version__ = '0.0.1'
@@ -55,7 +55,7 @@ def main():
             result = [soup]
 
         print(result_object_to_text(result, pretty=(not args['-n'])))
-    except QueryError as error:
+    except XpathQueryError as error:
         print('\nERROR! {0}\n'.format(str(error)), file=stderr)
 
 

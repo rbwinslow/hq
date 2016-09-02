@@ -6,5 +6,5 @@ class ExpressionContext:
         # self.position = position
         # self.size = size
 
-    def __repr__(self):
-        return 'hq.xpath.ExpressionContext(node={0})'.format(repr(self.node))
+    def __str__(self):
+        return 'context(node={0})'.format(str(self.node))

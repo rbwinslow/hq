@@ -76,13 +76,6 @@ def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
         </body>
     </html>"""
     assert process_xpath_query(html_body, '//div/ancestor::*', wrap_body=False) == expected_result("""
-    <body>
-     <!-- comment -->
-     <h1>
-     </h1>
-     <div>
-     </div>
-    </body>
     <html>
      <body>
       <!-- comment -->
@@ -91,7 +84,14 @@ def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
       <div>
       </div>
      </body>
-    </html>""")
+    </html>
+    <body>
+     <!-- comment -->
+     <h1>
+     </h1>
+     <div>
+     </div>
+    </body>""")
 
 
 def test_following_sibling_axis_selects_all_following_siblings_and_only_following_siblings_that_match_name_test():

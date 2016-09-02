@@ -61,16 +61,6 @@ def test_tag_node_test_selects_ancestors():
     </div>"""
     actual = process_xpath_query(html_body, '/html/body/div/p/ancestor::node()')
     assert actual == expected_result("""
-    <div id="id">
-     <p>
-     </p>
-    </div>
-    <body>
-     <div id="id">
-      <p>
-      </p>
-     </div>
-    </body>
     <html>
      <body>
       <div id="id">
@@ -78,7 +68,17 @@ def test_tag_node_test_selects_ancestors():
        </p>
       </div>
      </body>
-    </html>""")
+    </html>
+    <body>
+     <div id="id">
+      <p>
+      </p>
+     </div>
+    </body>
+    <div id="id">
+     <p>
+     </p>
+    </div>""")
 
 
 def test_text_node_test_selects_disjoint_text_nodes():

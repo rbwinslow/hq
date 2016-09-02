@@ -42,12 +42,13 @@ def make_node_set(node_set):
     if not isinstance(node_set, list):
         node_set = [node_set]
 
-    node_set = list(filter(is_unique_id, node_set))
+    node_set = list(sorted(filter(is_unique_id, node_set), key=lambda n: n.hq_doc_index))
 
     non_node_member = next(filterfalse(is_any_node, node_set), False)
     if non_node_member:
         format_str = 'Constructed node set that includes {0} object "{1}"'
         raise RuntimeError(format_str.format(object_type_name(non_node_member), non_node_member))
+
     return node_set
 
 

@@ -45,8 +45,7 @@ class NodeTest:
             for attr in AttributeNode.enumerate(node):
                 if self.accept_fn(attr, axis=Axis.attribute):
                     result.append(attr)
-        return sorted(result, key=lambda attr: attr.name.lower())
-
+        return result
 
     def apply_to_child(self, node):
         result = []
@@ -103,10 +102,8 @@ class NodeTest:
                 if self.accept_fn(node):
                     result.append(node)
                 descendant_query = self.apply_to_descendant(node)
-                descendant_query.reverse()
                 result.extend(descendant_query)
             node = node.parent
-        result.reverse()
         return result
 
 
@@ -116,5 +113,4 @@ class NodeTest:
             node = node.previous_sibling
             if self.accept_fn(node):
                 result.append(node)
-        result.reverse()
         return result

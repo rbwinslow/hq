@@ -1,6 +1,8 @@
 import os
 import sys
 
+from hq.soup_util import make_soup
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 from bs4 import BeautifulSoup
@@ -28,7 +30,7 @@ def test_path_to_root_node_succeeds_despite_other_root_level_objects():
     <html>
         <!-- inside -->
     </html>"""
-    raw_result = query_xpath(BeautifulSoup(html, 'html.parser'), '/node()')
+    raw_result = query_xpath(make_soup(html), '/node()')
     actual = result_object_to_text(raw_result)
     assert actual == expected_result("""
     <html>
@@ -144,3 +146,33 @@ def test_abbreviated_parent_node_works_in_predicate():
     <span>
      three
     </span>""")
+
+
+def test_double_slash_works_within_path():
+    html_body = """
+    <section>
+        <p>moe</p>
+        <div>
+            <div>
+                <p>larry</p>
+            </div>
+            <p>curly</p>
+        </div>
+    </section>
+    <p>joe besser</p>
+    <section>
+        <p>shemp</p>
+    </section>"""
+    assert process_xpath_query(html_body, '//section//p') == expected_result("""
+    <p>
+     moe
+    </p>
+    <p>
+     larry
+    </p>
+    <p>
+     curly
+    </p>
+    <p>
+     shemp
+    </p>""")

@@ -4,6 +4,7 @@ import sys
 
 from bs4 import BeautifulSoup
 from hq.output import result_object_to_text
+from hq.soup_util import make_soup
 from hq.xpath.query_xpath import query_xpath
 
 sys.path.insert(0, os.path.abspath('../..'))
@@ -35,7 +36,7 @@ def test_name_test_at_root_ignores_all_but_root_element():
     <!-- html -->
     <html id="root">
     </html>"""
-    raw_result = query_xpath(BeautifulSoup(html, 'html.parser'), '/html')
+    raw_result = query_xpath(make_soup(html), '/html')
     actual = result_object_to_text(raw_result)
     assert actual == expected_result("""
     <html id="root">
@@ -104,11 +105,6 @@ def test_ancestor_axis_selects_all_matching_ancestors():
     actual = process_xpath_query(html_body, '//p/ancestor::div')
     assert actual == expected_result("""
     <div>
-     <p>
-      text
-     </p>
-    </div>
-    <div>
      <section>
       <div>
        <p>
@@ -116,4 +112,9 @@ def test_ancestor_axis_selects_all_matching_ancestors():
        </p>
       </div>
      </section>
+    </div>
+    <div>
+     <p>
+      text
+     </p>
     </div>""")

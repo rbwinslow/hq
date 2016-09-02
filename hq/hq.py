@@ -22,14 +22,14 @@ from __future__ import print_function
 
 from sys import stderr, stdin
 
-import sys
-from bs4 import BeautifulSoup
 from docopt import docopt
 
 from .config import settings
 from .css.query_css import query_css
 from .output import result_object_to_text
+from .soup_util import make_soup
 from .xpath.query_xpath import query_xpath, QueryError
+
 
 __version__ = '0.0.1'
 
@@ -43,7 +43,7 @@ def main():
 
     try:
         source = stdin.read()
-        soup = BeautifulSoup(source, 'html.parser')
+        soup = make_soup(source)
 
         expression = args['<expression>']
         if len(expression) > 0:

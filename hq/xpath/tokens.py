@@ -1,4 +1,4 @@
-from hq.soup_util import soup_from_any_tag, debug_dump_node, visit_element_and_all_descendants, debug_dump_long_string
+from hq.soup_util import soup_from_any_tag, debug_dump_node, preorder_traverse_node_tree, debug_dump_long_string
 from hq.verbosity import verbose_print
 from hq.xpath.equality_operators import equals, not_equals
 from hq.xpath.function_support import FunctionSupport
@@ -149,14 +149,33 @@ class DoubleSlashToken(Token):
     def __repr__(self):
         return '(double-slash)'
 
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate(context):
+            node_set = left(context)
+            self.gab('iterating over {0} nodes from path so far.'.format(len(node_set)), indent_after=True)
+            msg_format = 'evaluating remainder of path for node "{0}" and all of its descendants.'
+            results = []
+            for node in node_set:
+                self.gab(msg_format.format(debug_dump_node(node)))
+                preorder_traverse_node_tree(node, lambda n: results.extend(right(ExpressionContext(n))))
+            results = make_node_set(results)
+            self.gab('evaluation finished; returning {0} nodes.'.format(len(results)), outdent_before=True)
+            return results
+
+        return evaluate
+
     def nud(self):
         right = self.parse_interface.expression(self.lbp)
+
         def evaluate(context):
-            msg_format = 'evaluating remainder of path for node "{0}" and all of its descendants.'
+            msg_format = 'evaluating remainder of path for context node "{0}" and all of its descendants.'
             self.gab(msg_format.format(context.node.name))
             results = []
-            visit_element_and_all_descendants(context.node, lambda node: results.extend(right(ExpressionContext(node))))
+            preorder_traverse_node_tree(context.node, lambda n: results.extend(right(ExpressionContext(n))))
             return make_node_set(results)
+
         return evaluate
 
 

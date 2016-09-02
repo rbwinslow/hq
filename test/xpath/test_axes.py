@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, process_xpath_query
+from ..test_util import expected_result, query_html_doc
 
 
 def test_explicit_child_axis():
@@ -12,7 +12,7 @@ def test_explicit_child_axis():
     <div>
         <p>foo</p>
     </div>"""
-    assert process_xpath_query(html_body, '//div/child::p') == expected_result("""
+    assert query_html_doc(html_body, '//div/child::p') == expected_result("""
     <p>
      foo
     </p>""")
@@ -28,7 +28,7 @@ def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_m
     <!-- comment -->
     <div>not selected</div>
     <p>not selected</p>"""
-    assert process_xpath_query(html_body, '/html/body/div/descendant::div') == expected_result("""
+    assert query_html_doc(html_body, '/html/body/div/descendant::div') == expected_result("""
     <div>
      <div>
       selected
@@ -45,7 +45,7 @@ def test_descendant_or_self_axis_returns_all_descendants_and_context_node_if_it_
         <div>foo</div>
     </div>
     <div>bar</div>"""
-    assert process_xpath_query(html_body, '/html/body/descendant-or-self::div') == expected_result("""
+    assert query_html_doc(html_body, '/html/body/descendant-or-self::div') == expected_result("""
     <div>
      <div>
       foo
@@ -64,14 +64,14 @@ def test_descendant_or_self_axis_does_not_produce_self_if_node_test_does_not_mat
     <div>
         <p>foo</p>
     </div>"""
-    assert process_xpath_query(html_body, '//div/descendant-or-self::p') == expected_result("""
+    assert query_html_doc(html_body, '//div/descendant-or-self::p') == expected_result("""
     <p>
      foo
     </p>""")
 
 
 def test_parent_axis_returns_parent_of_tag_node():
-    assert process_xpath_query('<div></div>', '//div/parent::*') == expected_result("""
+    assert query_html_doc('<div></div>', '//div/parent::*') == expected_result("""
     <body>
      <div>
      </div>
@@ -88,12 +88,12 @@ def test_parent_axis_returns_parents_for_multiple_matching_nodes():
      <p>
      </p>
     </div>"""
-    assert process_xpath_query(html_body, '//p/parent::*') == expected_result(html_body)
+    assert query_html_doc(html_body, '//p/parent::*') == expected_result(html_body)
 
 
 def test_parent_axis_produces_nothing_for_root_element():
-    assert process_xpath_query('', '/html/parent::*') == expected_result('')
-    assert process_xpath_query('<div></div>', 'div/parent::*', wrap_body=False) == expected_result('')
+    assert query_html_doc('', '/html/parent::*') == expected_result('')
+    assert query_html_doc('<div></div>', 'div/parent::*', wrap_body=False) == expected_result('')
 
 
 def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
@@ -105,7 +105,7 @@ def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
             <div></div>
         </body>
     </html>"""
-    assert process_xpath_query(html_body, '//div/ancestor::*', wrap_body=False) == expected_result("""
+    assert query_html_doc(html_body, '//div/ancestor::*', wrap_body=False) == expected_result("""
     <html>
      <body>
       <!-- comment -->
@@ -129,7 +129,7 @@ def test_ancestor_or_self_axis_produces_ancestors_and_self_when_node_test_is_a_m
     <div>
         <div>foo</div>
     </div>"""
-    assert process_xpath_query(html_body, '/html/body/div/div/ancestor-or-self::div') == expected_result("""
+    assert query_html_doc(html_body, '/html/body/div/div/ancestor-or-self::div') == expected_result("""
     <div>
      <div>
       foo
@@ -152,7 +152,7 @@ def test_following_sibling_axis_selects_all_following_siblings_and_only_followin
         <div></div>
         <p>curly</p>
     </section>"""
-    assert process_xpath_query(html_body, '//div/following-sibling::p') == expected_result("""
+    assert query_html_doc(html_body, '//div/following-sibling::p') == expected_result("""
     <p>
      moe
     </p>
@@ -168,8 +168,8 @@ def test_following_sibling_axis_works_with_node_test():
      <p></p>
      bar
     </div>"""
-    assert process_xpath_query(html_body, '//p/following-sibling::text()') == expected_result('bar')
-    assert process_xpath_query('<h1></h1><div></div><p>foo</p>', '//div/following-sibling::*') == expected_result("""
+    assert query_html_doc(html_body, '//p/following-sibling::text()') == expected_result('bar')
+    assert query_html_doc('<h1></h1><div></div><p>foo</p>', '//div/following-sibling::*') == expected_result("""
     <p>
      foo
     </p>""")
@@ -180,7 +180,7 @@ def test_preceding_sibling_axis_works_with_name_test():
     <p>foo</p>
     <div></div>
     <p>bar</p>"""
-    assert process_xpath_query(html_body, '//div/preceding-sibling::p') == expected_result("""
+    assert query_html_doc(html_body, '//div/preceding-sibling::p') == expected_result("""
     <p>
      foo
     </p>""")
@@ -191,7 +191,7 @@ def test_preceding_sibling_axis_works_with_node_test():
     <p>foo</p>
     <div></div>
     <p>bar</p>"""
-    assert process_xpath_query(html_body, '//div/preceding-sibling::node()') == expected_result("""
+    assert query_html_doc(html_body, '//div/preceding-sibling::node()') == expected_result("""
     <p>
      foo
     </p>""")
@@ -203,7 +203,7 @@ def test_preceding_sibling_axis_returns_nodes_in_document_order():
     <p>foo</p>
     <p>bar</p>
     <div></div>"""
-    assert process_xpath_query(html_body, '//div/preceding-sibling::p') == expected_result("""
+    assert query_html_doc(html_body, '//div/preceding-sibling::p') == expected_result("""
     <p>
      foo
     </p>
@@ -224,7 +224,7 @@ def test_following_axis_finds_all_following_nodes_that_match():
         </div>
     </section>
     <p>shemp</p>"""
-    assert process_xpath_query(html_body, '//aside/following::p') == expected_result("""
+    assert query_html_doc(html_body, '//aside/following::p') == expected_result("""
     <p>
      curly
     </p>
@@ -240,7 +240,7 @@ def test_preceding_axis_finds_all_preceding_nodes_that_match_node_test():
         <p>bar</p>
     </div>
     <span></span>"""
-    actual = process_xpath_query(html_body, '//span/preceding::text()')
+    actual = query_html_doc(html_body, '//span/preceding::text()')
     actual = re.sub(r'\W+', ' ', actual)
     assert actual == 'foo bar'
 
@@ -257,7 +257,7 @@ def test_preceding_axis_finds_all_preceding_nodes_that_match():
         </aside>
         <p>shemp</p>
     </section>"""
-    assert process_xpath_query(html_body, '//aside/preceding::p') == expected_result("""
+    assert query_html_doc(html_body, '//aside/preceding::p') == expected_result("""
     <p>
      moe
     </p>
@@ -281,7 +281,7 @@ def test_preceding_axis_produces_results_in_document_order_and_also_works_with_n
         <p>shemp</p>
     </section>
     <script></script>"""
-    assert process_xpath_query(html_body, '//script/preceding::p/text()') == expected_result("""
+    assert query_html_doc(html_body, '//script/preceding::p/text()') == expected_result("""
     moe
     larry
     curly
@@ -299,17 +299,17 @@ def test_attribute_axis_in_full_and_abbreviated_form_selects_named_attributes_or
     id="one"
     class="three"
     id="two"''')
-    assert process_xpath_query(html_body, '//div/attribute::id') == expected_ids_result
-    assert process_xpath_query(html_body, '//div/@id') == expected_ids_result
-    assert process_xpath_query(html_body, '//attribute::*') == expected_all_result
-    assert process_xpath_query(html_body, '//@*') == expected_all_result
+    assert query_html_doc(html_body, '//div/attribute::id') == expected_ids_result
+    assert query_html_doc(html_body, '//div/@id') == expected_ids_result
+    assert query_html_doc(html_body, '//attribute::*') == expected_all_result
+    assert query_html_doc(html_body, '//@*') == expected_all_result
 
 
 def test_attribute_axis_matching_any_attribute_produces_attributes_from_each_element_in_alphabetical_order():
     html_body = """
     <span moe="3" LARRY="2" curly="1"></span>
     <span BBB="5" aaa="4" ccc="6"></span>"""
-    actual = process_xpath_query(html_body, '//span/@*')
+    actual = query_html_doc(html_body, '//span/@*')
     assert re.sub(r'\w+="(\d)"\n?', r'\1', actual) == '123456'
 
 
@@ -320,7 +320,7 @@ def test_self_axis_applies_only_to_self():
             <div></div>
         </div>
     </div>"""
-    assert process_xpath_query(html_body, '/html/body/div/div/self::div') == expected_result("""
+    assert query_html_doc(html_body, '/html/body/div/div/self::div') == expected_result("""
     <div id="selected">
      <div>
      </div>

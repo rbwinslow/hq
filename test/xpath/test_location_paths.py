@@ -9,11 +9,11 @@ from bs4 import BeautifulSoup
 from hq.output import result_object_to_text
 from hq.xpath.query_xpath import query_xpath
 
-from ..test_util import expected_result, process_xpath_query
+from ..test_util import expected_result, query_html_doc
 
 
 def test_absolute_location_path_should_find_multiple_grandchildren():
-    actual = process_xpath_query('<div>one</div><p>not a div</p><div>two</div>', '/html/body/div')
+    actual = query_html_doc('<div>one</div><p>not a div</p><div>two</div>', '/html/body/div')
     assert actual == expected_result("""
     <div>
      one
@@ -23,14 +23,14 @@ def test_absolute_location_path_should_find_multiple_grandchildren():
     </div>""")
 
 
-def test_path_to_root_node_succeeds_despite_other_root_level_objects():
+def test_path_to_root_tag_succeeds_despite_other_root_level_objects():
     html = """
     <!DOCTYPE html>
     <!-- outside -->
     <html>
         <!-- inside -->
     </html>"""
-    raw_result = query_xpath(make_soup(html), '/node()')
+    raw_result = query_xpath(make_soup(html), '/*')
     actual = result_object_to_text(raw_result)
     assert actual == expected_result("""
     <html>
@@ -49,7 +49,7 @@ def test_relative_location_path_as_predicate():
     <div>
         <span>three</span>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/div[span]')
+    actual = query_html_doc(html_body, '/html/body/div[span]')
     assert actual == expected_result("""
     <div>
      <span>
@@ -72,7 +72,7 @@ def test_abbreviated_context_node_works_in_path():
     <div>
         <p>three</p>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/div/./p')
+    actual = query_html_doc(html_body, '/html/body/div/./p')
     assert actual == expected_result("""
     <p>
      one
@@ -95,7 +95,7 @@ def test_abbreviated_context_node_works_in_predicate():
         <p>four</p>
     </div>
     """
-    actual = process_xpath_query(html_body, '/html/body/node()[./p]')
+    actual = query_html_doc(html_body, '/html/body/node()[./p]')
     assert actual == expected_result("""
     <div>
      <p>
@@ -118,7 +118,7 @@ def test_abbreviated_parent_node_works_in_path():
         <br/>
         <span>two</span>
     </p>"""
-    actual = process_xpath_query(html_body, '//p/br/../span')
+    actual = query_html_doc(html_body, '//p/br/../span')
     assert actual == expected_result("""
     <span>
      two
@@ -138,7 +138,7 @@ def test_abbreviated_parent_node_works_in_predicate():
         <br/>
         <span>three</span>
     </p>"""
-    actual = process_xpath_query(html_body, '//span[../br]')
+    actual = query_html_doc(html_body, '//span[../br]')
     assert actual == expected_result("""
     <span>
      one
@@ -163,7 +163,7 @@ def test_double_slash_works_within_path():
     <section>
         <p>shemp</p>
     </section>"""
-    assert process_xpath_query(html_body, '//section//p') == expected_result("""
+    assert query_html_doc(html_body, '//section//p') == expected_result("""
     <p>
      moe
     </p>

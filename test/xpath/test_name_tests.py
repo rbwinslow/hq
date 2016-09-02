@@ -9,7 +9,7 @@ from hq.xpath.query_xpath import query_xpath
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, process_xpath_query
+from ..test_util import expected_result, query_html_doc
 
 
 def test_name_test_is_case_insensitive():
@@ -17,7 +17,7 @@ def test_name_test_is_case_insensitive():
     <SPAN>one</SPAN>
     <sPaN>two</sPaN>
     <span>three</span>"""
-    actual = process_xpath_query(html_body, '/html/body/SpAn')
+    actual = query_html_doc(html_body, '/html/body/SpAn')
     assert actual == expected_result("""
     <span>
      one
@@ -50,7 +50,7 @@ def test_child_axis_selects_only_immediate_children():
         <p>niece</p>
         <p>nephew</p>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/child::p')
+    actual = query_html_doc(html_body, '/html/body/child::p')
     assert actual == expected_result("""
     <p>
      uncle
@@ -67,7 +67,7 @@ def test_descendant_axis_selects_from_descendants_not_ancestors():
             </aside>
         </section>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/div/descendant::div')
+    actual = query_html_doc(html_body, '/html/body/div/descendant::div')
     assert actual == expected_result("""
     <div>
      uncle
@@ -84,7 +84,7 @@ def test_parent_axis_selects_only_the_immediate_parent():
             <p>daughter</p>
         </div>
     </div>"""
-    actual = process_xpath_query(html_body, '//p/parent::div')
+    actual = query_html_doc(html_body, '//p/parent::div')
     assert actual == expected_result("""
     <div id="mom">
      <p>
@@ -102,7 +102,7 @@ def test_ancestor_axis_selects_all_matching_ancestors():
             </div>
         </section>
     </div>"""
-    actual = process_xpath_query(html_body, '//p/ancestor::div')
+    actual = query_html_doc(html_body, '//p/ancestor::div')
     assert actual == expected_result("""
     <div>
      <section>

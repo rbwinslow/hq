@@ -4,7 +4,21 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, process_xpath_query
+from ..test_util import expected_result, query_html_doc
+
+
+def test_any_node_test_selects_all_node_types():
+    html_body = """Has he ever whaled it any?<h1>
+    </h1>
+    <!-- comment -->
+    <p></p>"""
+    assert query_html_doc(html_body, '/html/body/node()') == expected_result("""
+    Has he ever whaled it any?
+    <h1>
+    </h1>
+    <!-- comment -->
+    <p>
+    </p>""")
 
 
 def test_tag_node_test_selects_tag_children_but_not_other_stuff():
@@ -13,7 +27,7 @@ def test_tag_node_test_selects_tag_children_but_not_other_stuff():
     <!-- comment -->
     Has he ever whaled it any?
     <p></p>"""
-    actual = process_xpath_query(html_body, '/html/body/node()')
+    actual = query_html_doc(html_body, '/html/body/*')
     assert actual == expected_result("""
     <h1>
     </h1>
@@ -27,7 +41,7 @@ def test_tag_node_test_selects_descendants():
     <div>
         <p>text</p>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/descendant::node()')
+    actual = query_html_doc(html_body, '/html/body/descendant::*')
     assert actual == expected_result("""
     <div>
      <p>
@@ -46,7 +60,7 @@ def test_tag_node_test_selects_parent():
             <p></p>
         </div>
     </section>"""
-    actual = process_xpath_query(html_body, '/html/body/section/div/p/parent::node()')
+    actual = query_html_doc(html_body, '/html/body/section/div/p/parent::*')
     assert actual == expected_result("""
     <div id="id">
      <p>
@@ -59,7 +73,7 @@ def test_tag_node_test_selects_ancestors():
     <div id="id">
         <p></p>
     </div>"""
-    actual = process_xpath_query(html_body, '/html/body/div/p/ancestor::node()')
+    actual = query_html_doc(html_body, '/html/body/div/p/ancestor::*')
     assert actual == expected_result("""
     <html>
      <body>
@@ -83,7 +97,7 @@ def test_tag_node_test_selects_ancestors():
 
 def test_text_node_test_selects_disjoint_text_nodes():
     html_body = """<p>one<span>two</span>three</p>"""
-    actual = process_xpath_query(html_body, '/html/body/p/text()')
+    actual = query_html_doc(html_body, '/html/body/p/text()')
     assert actual == expected_result("""
     one
     three""")

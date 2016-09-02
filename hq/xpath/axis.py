@@ -3,18 +3,18 @@ from enum import Enum
 
 
 class Axis(Enum):
-    child = 1
-    descendant = 2
-    parent = 3
-    ancestor = 4
-    following_sibling = 5
-    preceding_sibling = 6
-    following = 7
-    preceding = 8
-    attribute = 9
-    self = 10
-    descendant_or_self = 11
-    ancestor_or_self = 12
+    ancestor            = 1
+    ancestor_or_self    = 2
+    attribute           = 3
+    child               = 4
+    descendant          = 5
+    descendant_or_self  = 6
+    following           = 7
+    following_sibling   = 8
+    parent              = 9
+    preceding           = 10
+    preceding_sibling   = 11
+    self                = 12
 
     def token(self):
         return self.name.replace('_', '-')

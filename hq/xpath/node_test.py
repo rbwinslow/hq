@@ -1,7 +1,8 @@
 from hq.verbosity import verbose_print
 from hq.xpath.axis import Axis
 
-from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, debug_dump_node
+from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, debug_dump_node, \
+    is_any_node
 
 
 def _accept_name(value):
@@ -11,7 +12,7 @@ def _accept_name(value):
     return evaluate
 
 
-def _accept_any(node, axis=None):
+def _accept_principal_node_type(node, axis=None):
     return is_attribute_node(node) if axis == Axis.attribute else is_tag_node(node)
 
 
@@ -20,8 +21,10 @@ class NodeTest:
         value = value.lower()
         if name_test:
             self.accept_fn = _accept_name(value)
-        elif value == 'node' or value == '*':
-            self.accept_fn = _accept_any
+        elif value == '*':
+            self.accept_fn = _accept_principal_node_type
+        elif value == 'node':
+            self.accept_fn = is_any_node
         elif value == 'text':
             self.accept_fn = is_text_node
 

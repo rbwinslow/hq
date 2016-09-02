@@ -47,11 +47,15 @@ def debug_dump_node(obj):
 
 
 def is_any_node(obj):
-    return is_root_node(obj) or is_tag_node(obj) or is_attribute_node(obj) or is_text_node(obj)
+    return is_root_node(obj) or is_tag_node(obj) or is_attribute_node(obj) or is_text_node(obj) or is_comment_node(obj)
 
 
 def is_attribute_node(obj):
     return isinstance(obj, AttributeNode)
+
+
+def is_comment_node(obj):
+    return str(type(obj)).find('.Comment') > 0
 
 
 def is_root_node(obj):

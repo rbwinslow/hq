@@ -8,6 +8,8 @@ https://www.w3.org/TR/xpath/#location-paths
 import os
 import sys
 
+from hq.soup_util import make_soup
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 from ..test_util import expected_result, query_context_node
@@ -27,96 +29,216 @@ def test_selects_all_text_node_children_of_the_context_node():
     after""")
 
 
-# def test_selects_all_the_children_of_the_context_node_whatever_their_node_type():
-#     html = """
-#     <context>selected text<selected-element>
-#         </selected-element>
-#         <!-- selected comment -->
-#     </context>"""
-#     assert query_context_node(html, 'child::node()') == expected_result("""
-#     <selected-element>
-#     </selected-element>
-#     <!-- selected comment -->""")
+def test_selects_all_the_children_of_the_context_node_whatever_their_node_type():
+    html = """
+    <context>selected text<selected-element>
+        </selected-element>
+        <!-- selected comment -->
+    </context>"""
+    assert query_context_node(html, 'child::node()') == expected_result("""
+    selected text
+    <selected-element>
+    </selected-element>
+    <!-- selected comment -->""")
 
 
-# def test_selects_the_name_attribute_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'attribute::name') == expected_result("""
-#     """)
-#
-#
-# def test_selects_all_the_attributes_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'attribute::*') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_para_element_descendants_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'descendant::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_all_div_ancestors_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'ancestor::div') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_div_ancestors_of_the_context_node_and_if_the_context_node_is_a_div_element_the_context_node_as_well():
-#     html = ""
-#     assert query_context_node(html, 'ancestor-or-self::div') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_para_element_descendants_of_the_context_node_and_if_the_context_node_is_a_para_element_the_context_node_as_well():
-#     html = ""
-#     assert query_context_node(html, 'descendant-or-self::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_context_node_if_it_is_a_para_element_and_otherwise_selects_nothing():
-#     html = ""
-#     assert query_context_node(html, 'self::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_para_element_descendants_of_the_chapter_element_children_of_the_context node():
-#     html = ""
-#     assert query_context_node(html, 'child::chapter/descendant::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_all_para_grandchildren_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'child::*/child::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_document_root_which_is_always_the_parent_of_the_document_element():
-#     html = ""
-#     assert query_context_node(html, '/') == expected_result("""
-#     """)
-#
-#
-# def test_selects_all_the_para_elements_in_the_same_document_as_the_context_node():
-#     html = ""
-#     assert query_context_node(html, '/descendant::para') == expected_result("""
-#     """)
-#
-#
-# def test_selects_all_the_item_elements_that_have_an_olist_parent_and_that_are_in_the_same_document_as_the_context_node():
-#     html = ""
-#     assert query_context_node(html, '/descendant::olist/child::item') == expected_result("""
-#     """)
-#
-#
+def test_selects_the_name_attribute_of_the_context_node():
+    html = "<context name='selected'></context>"
+    assert query_context_node(html, 'attribute::name') == expected_result('name="selected"')
+
+
+def test_selects_all_the_attributes_of_the_context_node():
+    html = "<context foo='bar' bar='foo'></context>"
+    assert query_context_node(html, 'attribute::*') == expected_result('''
+    bar="foo"
+    foo="bar"''')
+
+
+def test_selects_the_para_element_descendants_of_the_context_node():
+    html = """
+    <context>
+        <para>
+            <para/>
+        </para>
+    </context>"""
+    assert query_context_node(html, 'descendant::para') == expected_result("""
+    <para>
+     <para>
+     </para>
+    </para>
+    <para>
+    </para>""")
+
+
+def test_selects_all_div_ancestors_of_the_context_node():
+    html = """
+    <div>
+        <notdiv/>
+    </div>"""
+    assert query_context_node(make_soup(html).div.notdiv, 'ancestor::div') == expected_result("""
+    <div>
+     <notdiv>
+     </notdiv>
+    </div>""")
+
+
+def test_selects_the_div_ancestors_of_the_context_node_and_if_the_context_node_is_a_div_element_the_context_node_as_well():
+    html = """
+    <div>
+        <div/>
+        <notdiv/>
+    </div>"""
+    soup = make_soup(html)
+    assert query_context_node(soup.div.div, 'ancestor-or-self::div') == expected_result("""
+    <div>
+     <div>
+     </div>
+     <notdiv>
+     </notdiv>
+    </div>
+    <div>
+    </div>""")
+    assert query_context_node(soup.div.notdiv, 'ancestor-or-self::div') == expected_result("""
+    <div>
+     <div>
+     </div>
+     <notdiv>
+     </notdiv>
+    </div>""")
+
+
+def test_selects_the_para_element_descendants_of_the_context_node_and_if_the_context_node_is_a_para_element_the_context_node_as_well():
+    context_is_para = """
+    <para>
+        <para>foo</para>
+        <para>bar</para>
+    </para>"""
+    context_is_not_para = """
+    <notpara>
+        <para>foo</para>
+        <para>bar</para>
+    </notpara>"""
+    assert query_context_node(context_is_para, 'descendant-or-self::para') == expected_result("""
+    <para>
+     <para>
+      foo
+     </para>
+     <para>
+      bar
+     </para>
+    </para>
+    <para>
+     foo
+    </para>
+    <para>
+     bar
+    </para>""")
+    assert query_context_node(context_is_not_para, 'descendant-or-self::para') == expected_result("""
+    <para>
+     foo
+    </para>
+    <para>
+     bar
+    </para>""")
+
+
+def test_selects_the_context_node_if_it_is_a_para_element_and_otherwise_selects_nothing():
+    is_para = "<para></para>"
+    is_not_para = "<notpara></notpara>"
+    assert query_context_node(is_para, 'self::para') == expected_result("""
+    <para>
+    </para>""")
+    assert query_context_node(is_not_para, 'self::para') == ''
+
+
+def test_selects_the_para_element_descendants_of_the_chapter_element_children_of_the_context_node():
+    html = """
+    <context>
+        <verse>
+            <para>not selected</para>
+        </verse>
+        <chapter>
+            <div>
+                <para>selected</para>
+            </div>
+        </chapter>
+    </context>"""
+    assert query_context_node(html, 'child::chapter/descendant::para') == expected_result("""
+    <para>
+     selected
+    </para>""")
+
+
+def test_selects_all_para_grandchildren_of_the_context_node():
+    html = """
+    <context>
+        <para>not selected</para>
+        <foo>
+            <notpara>not selected</notpara>
+            <para>selected</para>
+        </foo>
+        <bar>
+            <para>also selected</para>
+        </bar>
+    </context>"""
+    assert query_context_node(html, 'child::*/child::para') == expected_result("""
+    <para>
+     selected
+    </para>
+    <para>
+     also selected
+    </para>""")
+
+
+def test_selects_the_document_root_which_is_always_the_parent_of_the_document_element():
+    html = """
+    <!-- comment -->
+    <root-tag>
+    </root-tag>"""
+    assert query_context_node(html, '/') == expected_result(html)
+
+
+def test_selects_all_the_para_elements_in_the_same_document_as_the_context_node():
+    html = """
+    <root>
+        <notpara/>
+        <para>selected</para>
+    </root>"""
+    soup = make_soup(html)
+    assert query_context_node(soup.root.notpara, '/descendant::para') == expected_result("""
+    <para>
+     selected
+    </para>""")
+
+
+def test_selects_all_the_item_elements_that_have_an_olist_parent_and_that_are_in_the_same_document_as_the_context_node():
+    html = """
+    <root>
+        <notolist/>
+        <olist>
+            <notitem>not selected</notitem>
+            <item>selected</item>
+        <olist>
+    </root>"""
+    soup = make_soup(html)
+    assert query_context_node(soup.root.notolist, '/descendant::olist/child::item') == expected_result("""
+    <item>
+     selected
+    </item>""")
+
+
 # def test_selects_the_first_para_child_of_the_context_node():
-#     html = ""
+#     html = """
+#     <context>
+#         <para>selected</para>
+#         <para>not selected</para>
+#     </context>"""
 #     assert query_context_node(html, 'child::para[position()=1]') == expected_result("""
-#     """)
-#
-#
+#     <para>
+#      selected
+#     </para>""")
+
+
 # def test_selects_the_last_para_child_of_the_context_node():
 #     html = ""
 #     assert query_context_node(html, 'child::para[position()=last()]') == expected_result("""

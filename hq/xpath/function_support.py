@@ -15,7 +15,7 @@ class FunctionSupport:
         try:
             fn = self.all_functions[name]
         except KeyError:
-            raise XpathQueryError('Unknown function name {0}'.format(name))
+            raise XpathQueryError('Unknown function name "{0}"'.format(name))
         return fn(*args)
 
     def _load_all_functions(self):

@@ -67,11 +67,16 @@ def object_type(obj):
 
 
 def object_type_name(obj):
-    if isinstance(obj, int):
-        index = obj
-    else:
-        index = object_type(obj)
-    return TYPE_NAMES[index]
+    result = 'NULL OR UNKNOWN TYPE'
+
+    if obj is not None:
+        if isinstance(obj, int):
+            index = obj
+        else:
+            index = object_type(obj)
+        result = TYPE_NAMES[index]
+
+    return result
 
 
 def string_value(obj):

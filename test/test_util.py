@@ -14,8 +14,8 @@ def query_html_doc(html_body, xpath, wrap_body=True):
 
 def query_context_node(node_or_source, xpath):
     if not is_any_node(node_or_source):
-        node = root_tag_from_soup(make_soup(node_or_source))
-    raw_result = query_xpath(node, xpath)
+        node_or_source = root_tag_from_soup(make_soup(node_or_source))
+    raw_result = query_xpath(node_or_source, xpath)
     return _eliminate_blank_lines(result_object_to_text(raw_result).strip())
 
 

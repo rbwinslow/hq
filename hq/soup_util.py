@@ -84,7 +84,7 @@ def make_soup(source):
                 visit_node(attr)
 
     preorder_traverse_node_tree(soup, visit_node, filter=is_any_node)
-    verbose_print('Loaded document containing {0} indexed nodes.'.format(counter[0]))
+    verbose_print('Loaded HTML document containing {0} indexed nodes.'.format(counter[0]))
     return soup
 
 

@@ -10,14 +10,17 @@ from hq.xpath.query_error import XpathQueryError
 from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
-from .expression_context import ExpressionContext, peek_context, evaluate_across_contexts, evaluate_in_context
+from .expression_context import peek_context, evaluate_across_contexts, evaluate_in_context
 
 function_support = FunctionSupport()
 
 
 class LBP:
     """Left-binding precendence values."""
-    (nothing, predicate, equality_op, add_or_subtract, mult_or_div, function_call, location_step, node_test) = range(8)
+    (
+        nothing, predicate, equality_op, add_or_subtract, mult_or_div, prefix_op, function_call, location_step,
+        node_test
+    ) = range(9)
 
 
 
@@ -49,9 +52,19 @@ class Token(object):
             left_value = constructor(left_generator())
             self._gab('evaluating right-hand side.', outdent_before=True, indent_after=True)
             right_value = constructor(right_generator())
-            self._gab('argument evaluation complete', outdent_before=True)
+            self._gab('operand evaluation complete', outdent_before=True)
             self._gab('evaluating expression {0} {1} {2}'.format(left_value, self, right_value), outdent_before=True)
             return left_value, right_value
+        except TypeError:
+            raise XpathSyntaxError('{0} evaluated against a non-{1} operand'.format(self, type_name))
+
+
+    def _evaluate_unary_operand(self, operand_generator, constructor=lambda v: v, type_name='xpath object'):
+        try:
+            self._gab('evaluating operand.', indent_after=True)
+            operand_value = constructor(operand_generator())
+            self._gab('operand evaluation complete', outdent_before=True)
+            return operand_value
         except TypeError:
             raise XpathSyntaxError('{0} evaluated against a non-{1} operand'.format(self, type_name))
 
@@ -78,6 +91,19 @@ class AddOrSubtractOperatorToken(Token):
 
         return evaluate
 
+    def nud(self):
+        if self.value != '-':
+            raise XpathSyntaxError('unexpected {0} at beginning of an expression')
+
+        right = self.parse_interface.expression(LBP.prefix_op)
+
+        def evaluate():
+            right_value = self._evaluate_unary_operand(right, constructor=number, type_name='number')
+            result = -right_value
+            self._gab('{0} returning {1}'.format(self, result))
+            return result
+
+        return evaluate
 
 
 class AxisToken(Token):
@@ -109,7 +135,7 @@ class AxisToken(Token):
 
 
 class CloseParenthesisToken(Token):
-    lbp = LBP.function_call
+    lbp = LBP.nothing
 
     def __str__(self):
         return '(close-parenthesis)'
@@ -117,7 +143,7 @@ class CloseParenthesisToken(Token):
 
 
 class CommaToken(Token):
-    lbp = LBP.function_call
+    lbp = LBP.nothing
 
     def __str__(self):
         return '(comma)'
@@ -241,13 +267,10 @@ class FunctionCallToken(Token):
         arg_generators = []
 
         while (not isinstance(self.parse_interface.peek(), CloseParenthesisToken)):
-            arg_generators.append(self.parse_interface.expression(self.lbp))
-            if isinstance(self.parse_interface.peek(), CommaToken):
-                self.parse_interface.advance()
+            arg_generators.append(self.parse_interface.expression(LBP.nothing))
+            self.parse_interface.advance_if(CommaToken)
 
-        right_paren = self.parse_interface.advance()
-        if not isinstance(right_paren, CloseParenthesisToken):
-            raise RuntimeError('FunctionCallToken expected right-hand parenthesis after argument(s)')
+        self.parse_interface.advance(CloseParenthesisToken)
 
         def evaluate():
             self._gab('evaluating argument list for function "{0}."'.format(self.value))

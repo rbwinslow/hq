@@ -2,7 +2,11 @@ from hq.xpath.expression_context import peek_context
 from hq.xpath.functions.core_numeric import number
 
 
-exports = ['position']
+exports = ['last', 'position']
+
+
+def last():
+    return number(peek_context().size)
 
 
 def position():

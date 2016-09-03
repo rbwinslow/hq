@@ -239,18 +239,31 @@ def test_selects_the_first_para_child_of_the_context_node():
     </para>""")
 
 
-# def test_selects_the_last_para_child_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'child::para[position()=last()]') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_last_but_one_para_child_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'child::para[position()=last()-1]') == expected_result("""
-#     """)
-#
-#
+def test_selects_the_last_para_child_of_the_context_node():
+    html = """
+    <context>
+        <para>not selected</para>
+        <para>selected</para>
+    </context>"""
+    assert query_context_node(html, 'child::para[position()=last()]') == expected_result("""
+    <para>
+     selected
+    </para>""")
+
+
+def test_selects_the_last_but_one_para_child_of_the_context_node():
+    html = """
+    <context>
+        <para>not selected</para>
+        <para>selected</para>
+        <para>also not selected</para>
+    </context>"""
+    assert query_context_node(html, 'child::para[position()=last()-1]') == expected_result("""
+    <para>
+     selected
+    </para>""")
+
+
 # def test_selects_all_the_para_children_of_the_context_node_other_than_the_first_para_child_of_the_context_node():
 #     html = ""
 #     assert query_context_node(html, 'child::para[position()>1]') == expected_result("""

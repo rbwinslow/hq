@@ -23,14 +23,20 @@ class number:
     def __sub__(self, other):
         return number(self.value - other.value)
 
+    def __neg__(self):
+        return number(-self.value)
+
     def __mul__(self, other):
         return number(self.value * other.value)
 
     def __div__(self, other):
-        return number(self.value / other.value)
+        return self.__truediv__(other)
 
     def __truediv__(self, other):
-        return number(self.value / other.value)
+        if other.value == 0:
+            return number(float('nan'))
+        else:
+            return number(self.value / other.value)
 
     def __mod__(self, other):
         return number(self.value % other.value)

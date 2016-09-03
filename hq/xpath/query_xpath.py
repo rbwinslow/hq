@@ -42,7 +42,7 @@ token_config = [
     (r'({0})::'.format('|'.join([value.token() for value in Axis])), AxisToken),
     (r'("[^"]*")', LiteralStringToken),
     (r"('[^']*')", LiteralStringToken),
-    (r'(-?\d[\d\.]*)', LiteralNumberToken),
+    (r'(\d[\d\.]*)', LiteralNumberToken),
     (r'(,)', CommaToken),
     (r'(@)', AxisToken),
     (r'(\*)', _pick_token_for_asterisk),
@@ -55,12 +55,24 @@ token_config = [
 
 
 class ParseInterface:
-    def advance(self):
+
+    def advance(self, expected_class):
+        global token
+        result = self.advance_if(expected_class)
+        if result is None:
+            raise RuntimeError('{0} expected; got {1}'.format(expected_class.__name__, token.__class__.__name__))
+        return result
+
+    def advance_if(self, expected_class):
         global next_token, token
-        verbose_print('ParseInterface advancing over token {0}'.format(token))
-        t = token
-        token = next_token()
-        return t
+        result = None
+
+        if isinstance(token, expected_class):
+            verbose_print('ParseInterface advancing over token {0}'.format(token))
+            result = token
+            token = next_token()
+
+        return result
 
     def expression(self, rbp=0):
         return expression(rbp)

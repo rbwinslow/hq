@@ -12,8 +12,7 @@ def test_boolean_function_converts_numbers_according_to_w3c_rules():
     assert query_html_doc('', 'boolean(1)') == expected_result('true')
     assert query_html_doc('', 'boolean(-1)') == expected_result('true')
     assert query_html_doc('', 'false() = boolean(false())') == expected_result('true')
-    # Restore when division is implemented:
-    # assert process_xpath_query('', 'boolean(0/0)') == expected_result('false')
+    assert query_html_doc('', 'boolean(0 div 0)') == expected_result('false')
 
 
 def test_boolean_function_converts_node_sets_according_to_w3c_rules():

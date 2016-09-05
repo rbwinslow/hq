@@ -47,6 +47,7 @@ token_config = [
     (r'(@)', AxisToken),
     (r'(\*)', _pick_token_for_asterisk),
     (r'(\+|-)', AddOrSubtractOperatorToken),
+    (r'(<=|<|>=|>)', RelationalOperatorToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(node|text)\(\)', NodeTestToken),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),

@@ -30,6 +30,22 @@ def test_number_function_converts_string_to_number():
     assert actual == expected_result('42.0')
 
 
+def test_number_function_converts_boolean_values_to_one_and_zero():
+    assert query_html_doc('', 'number(true())') == expected_result('1.0')
+    assert query_html_doc('', 'number(false())') == expected_result('0.0')
+
+
+def test_number_function_converts_node_set_based_on_string_value_of_first_node_in_doc_order():
+    html_body = """
+    <div>
+        <div>
+            <p>42</p>
+        </div>
+    </div>
+    <p>24</p>"""
+    assert query_html_doc(html_body, 'number(//p)') == expected_result('42.0')
+
+
 def test_true_and_false_functions_return_expected_values():
     assert query_html_doc('', 'false()') == expected_result('false')
     assert query_html_doc('', 'true()') == expected_result('true')

@@ -1,6 +1,6 @@
 from hq.verbosity import verbose_print
 from hq.xpath.functions.core_boolean import boolean
-from hq.xpath.functions.core_numeric import number
+from hq.xpath.functions.core_number import number
 from hq.xpath.object_type import object_type, string_value, object_type_name
 from hq.xpath.query_error import XpathQueryError
 
@@ -87,7 +87,7 @@ def equals(left, right):
         reverse = left_type > right_type
         op = equality_ops_table[left_type if not reverse else right_type][right_type if not reverse else left_type]
         return boolean(op(left if not reverse else right, right if not reverse else left))
-    except TypeError as err:
+    except TypeError:
         raise XpathQueryError('type mismatch comparing {0} and {1} for equality'.format(object_type_name(left_type),
                                                                                         object_type_name(right_type)))
 

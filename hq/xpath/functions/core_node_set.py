@@ -1,5 +1,5 @@
 from hq.xpath.expression_context import peek_context
-from hq.xpath.functions.core_numeric import number
+from hq.xpath.functions.core_number import number
 
 
 exports = ['last', 'position']

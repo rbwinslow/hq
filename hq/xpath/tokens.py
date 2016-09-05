@@ -3,10 +3,11 @@ from hq.verbosity import verbose_print
 from hq.xpath.equality_operators import equals, not_equals
 from hq.xpath.function_support import FunctionSupport
 from hq.xpath.functions.core_boolean import boolean
-from hq.xpath.functions.core_numeric import number
+from hq.xpath.functions.core_number import number
 from hq.xpath.node_test import NodeTest
 from hq.xpath.object_type import make_node_set, object_type_name
 from hq.xpath.query_error import XpathQueryError
+from hq.xpath.relational_operators import RelationalOperator
 from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
@@ -18,7 +19,7 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, predicate, equality_op, add_or_subtract, mult_or_div, prefix_op, function_call, location_step,
+        nothing, predicate, relational_op, add_or_subtract, mult_or_div, prefix_op, function_call, location_step,
         node_test
     ) = range(9)
 
@@ -239,7 +240,7 @@ class EndToken(Token):
 
 
 class EqualityOperatorToken(Token):
-    lbp = LBP.equality_op
+    lbp = LBP.relational_op
 
     def __str__(self):
         return '(equality-operator "{0}")'.format(self.value)
@@ -448,6 +449,25 @@ class ParentNodeToken(Token):
         node_set, from_what = self._default_node_set_to_context_and_describe(node_set)
         self._gab('returning parent(s) of {0}'.format(from_what))
         return make_node_set([node.parent for node in node_set])
+
+
+
+class RelationalOperatorToken(Token):
+    lbp = LBP.relational_op
+
+    def __str__(self):
+        return '(operator {0})'.format(RelationalOperator(self.value).name)
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right)
+            result = RelationalOperator(self.value).evaluate(left_value, right_value)
+            self._gab('returning {1}'.format(self, result))
+            return result
+
+        return evaluate
 
 
 

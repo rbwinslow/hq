@@ -1,135 +1,122 @@
-from hq.verbosity import verbose_print
 from hq.xpath.axis import Axis
 
-from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, debug_dump_node, \
-    is_any_node
-
-
-def _accept_name(value):
-    def evaluate(node, axis=None):
-        type_fn = is_attribute_node if axis == Axis.attribute else is_tag_node
-        return type_fn(node) and node.name.lower() == value
-    return evaluate
+from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, is_any_node, root_tag_from_soup
 
 
 def _accept_principal_node_type(node, axis=None):
     return is_attribute_node(node) if axis == Axis.attribute else is_tag_node(node)
 
 
+def _make_axis_agnostic_accept_fn(fn):
+    def evaluate(node, axis=None):
+        return fn(node)
+    return evaluate
+
+
+def _make_name_accept_fn(value):
+    def evaluate(node, axis=None):
+        type_fn = is_attribute_node if axis == Axis.attribute else is_tag_node
+        return type_fn(node) and node.name.lower() == value
+    return evaluate
+
+
 class NodeTest:
     def __init__(self, value, name_test=False):
         value = value.lower()
         if name_test:
-            self.accept_fn = _accept_name(value)
+            self.accept_fn = _make_name_accept_fn(value)
         elif value == '*':
             self.accept_fn = _accept_principal_node_type
         elif value == 'node':
-            self.accept_fn = is_any_node
+            self.accept_fn = _make_axis_agnostic_accept_fn(is_any_node)
         elif value == 'text':
-            self.accept_fn = is_text_node
+            self.accept_fn = _make_axis_agnostic_accept_fn(is_text_node)
 
 
     def apply(self, axis, node):
-        return getattr(self, 'apply_to_{0}'.format(axis.name))(node)
+        nodes = getattr(self, 'gather_{0}'.format(axis.name))(node)
+        return [node for node in nodes if self.accept_fn(node, axis=axis)]
 
 
-    def apply_to_ancestor(self, node):
-        result = []
-        while node.parent is not None:
-            node = node.parent
-            if self.accept_fn(node):
-                result.append(node)
+    def gather_ancestor(self, node):
+        if hasattr(node, 'parents'):
+            return list(node.parents)
+        else:
+            return []
+
+
+    def gather_ancestor_or_self(self, node):
+        result = self.gather_self(node)
+        result.extend(self.gather_ancestor(node))
         return result
 
 
-    def apply_to_ancestor_or_self(self, node):
-        result = self.apply_to_self(node)
-        result.extend(self.apply_to_ancestor(node))
-        return result
+    def gather_attribute(self, node):
+        return list(AttributeNode.enumerate(node))
 
 
-    def apply_to_attribute(self, node):
-        result = []
-        if hasattr(node, 'attrs'):
-            for attr in AttributeNode.enumerate(node):
-                if self.accept_fn(attr, axis=Axis.attribute):
-                    result.append(attr)
-        return result
-
-    def apply_to_child(self, node):
-        result = []
+    def gather_child(self, node):
         if is_root_node(node):
-            try:
-                result.append(next(child for child in node.children if self.accept_fn(child)))
-            except StopIteration:
-                pass
+            return [root_tag_from_soup(node)]
         elif is_tag_node(node):
-            result.extend(child for child in node.children if self.accept_fn(child))
+            return node.contents
+        else:
+            return []
+
+
+    def gather_descendant(self, node):
+        if hasattr(node, 'descendants'):
+            return list(node.descendants)
+        else:
+            return []
+
+
+    def gather_descendant_or_self(self, node):
+        result = self.gather_self(node)
+        result.extend(self.gather_descendant(node))
         return result
 
 
-    def apply_to_descendant(self, node):
-        result = []
-        if is_tag_node(node) or is_root_node(node):
-            result = [tag for tag in node.descendants if self.accept_fn(tag)]
-        return result
-
-
-    def apply_to_descendant_or_self(self, node):
-        result = self.apply_to_self(node)
-        result.extend(self.apply_to_descendant(node))
-        return result
-
-
-    def apply_to_following(self, node):
+    def gather_following(self, node):
         result = []
         while is_tag_node(node):
-            while hasattr(node, 'next_sibling') and node.next_sibling is not None:
-                node = node.next_sibling
-                if self.accept_fn(node):
-                    result.append(node)
-                result.extend(self.apply_to_descendant(node))
+            for sibling in node.next_siblings:
+                result.append(sibling)
+                result.extend(self.gather_descendant(sibling))
             node = node.parent
         return result
 
 
-    def apply_to_following_sibling(self, node):
-        result = []
-        while hasattr(node, 'next_sibling') and node.next_sibling is not None:
-            node = node.next_sibling
-            if self.accept_fn(node):
-                result.append(node)
-        return result
+    def gather_following_sibling(self, node):
+        if hasattr(node, 'next_siblings'):
+            return list(node.next_siblings)
+        else:
+            return []
 
 
-    def apply_to_parent(self, node):
-        result = []
-        if self.accept_fn(node.parent):
-            result.append(node.parent)
-        return result
+    def gather_parent(self, node):
+        if hasattr(node, 'parent') and node.parent is not None:
+            return [node.parent]
+        else:
+            return []
 
 
-    def apply_to_preceding(self, node):
+    def gather_preceding(self, node):
         result = []
         while is_tag_node(node):
-            while hasattr(node, 'previous_sibling') and node.previous_sibling is not None:
-                node = node.previous_sibling
-                if self.accept_fn(node):
-                    result.append(node)
-                descendant_query = self.apply_to_descendant(node)
-                result.extend(descendant_query)
+            for sibling in node.previous_siblings:
+                result.append(sibling)
+                result.extend(self.gather_descendant(sibling))
             node = node.parent
         return result
 
 
-    def apply_to_preceding_sibling(self, node):
-        result = []
-        while hasattr(node, 'previous_sibling') and node.previous_sibling is not None:
-            node = node.previous_sibling
-            if self.accept_fn(node):
-                result.append(node)
-        return result
+    def gather_preceding_sibling(self, node):
+        if hasattr(node, 'previous_siblings'):
+            return list(node.previous_siblings)
+        else:
+            return []
 
 
-    def apply_to_self(self, node):
-        return [node] if self.accept_fn(node) else []
+    def gather_self(self, node):
+        return [node]

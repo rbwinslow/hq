@@ -28,7 +28,7 @@ def is_string(obj):
     return isinstance(obj, str) or obj.__class__.__name__.endswith('unicode')
 
 
-def make_node_set(node_set):
+def make_node_set(node_set, reverse=False):
     ids = []
 
     def is_unique_id(node):
@@ -42,7 +42,7 @@ def make_node_set(node_set):
     if not isinstance(node_set, list):
         node_set = [node_set]
 
-    node_set = list(sorted(filter(is_unique_id, node_set), key=lambda n: n.hq_doc_index))
+    node_set = list(sorted(filter(is_unique_id, node_set), key=lambda n: n.hq_doc_index, reverse=reverse))
 
     non_node_member = next(filterfalse(is_any_node, node_set), False)
     if non_node_member:

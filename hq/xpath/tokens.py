@@ -11,7 +11,7 @@ from hq.xpath.relational_operators import RelationalOperator
 from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
-from .expression_context import peek_context, evaluate_across_contexts, evaluate_in_context
+from .expression_context import peek_context, evaluate_across_contexts, evaluate_in_context, get_context_node
 
 function_support = FunctionSupport()
 
@@ -32,9 +32,9 @@ class Token(object):
         self.value = value
 
 
-    def _default_node_set_to_context_and_describe(self, node_set_or_none):
+    def _use_node_set_or_default_to_context_if_none(self, node_set_or_none):
         if node_set_or_none is None:
-            node_set_or_none = [peek_context().node]
+            node_set_or_none = [get_context_node()]
             description = 'context node {0}'.format(debug_dump_node(node_set_or_none[0]))
         else:
             XpathQueryError.must_be_node_set(node_set_or_none)
@@ -48,7 +48,7 @@ class Token(object):
                                   constructor=lambda v: v,
                                   type_name='xpath object'):
         try:
-            self._gab('{0} evaluation...'.format(self), indent_after=True)
+            self._gab('operator evaluation...', indent_after=True)
             self._gab('evaluating left-hand side.', indent_after=True)
             left_value = constructor(left_generator())
             self._gab('evaluating right-hand side.', outdent_before=True, indent_after=True)
@@ -57,7 +57,7 @@ class Token(object):
             self._gab('evaluating expression {0} {1} {2}'.format(left_value, self, right_value), outdent_before=True)
             return left_value, right_value
         except TypeError:
-            raise XpathSyntaxError('{0} evaluated against a non-{1} operand'.format(self, type_name))
+            raise XpathSyntaxError('evaluated against a non-{0} operand'.format(type_name))
 
 
     def _evaluate_unary_operand(self, operand_generator, constructor=lambda v: v, type_name='xpath object'):
@@ -67,7 +67,7 @@ class Token(object):
             self._gab('operand evaluation complete', outdent_before=True)
             return operand_value
         except TypeError:
-            raise XpathSyntaxError('{0} evaluated against a non-{1} operand'.format(self, type_name))
+            raise XpathSyntaxError('evaluated against a non-{0} operand'.format(type_name))
 
 
     def _gab(self, msg, **kwargs):
@@ -128,7 +128,7 @@ class AxisToken(Token):
         right = self.parse_interface.expression(self.lbp)
 
         def node_test():
-            self._gab('evaluating node test on context node {0}'.format(debug_dump_node(peek_context().node)))
+            self._gab('evaluating node test on context node {0}'.format(debug_dump_node(get_context_node())))
             return right(axis=Axis[self.value.replace('-', '_')])
 
         return node_test
@@ -169,7 +169,7 @@ class ContextNodeToken(Token):
     def nud(self):
 
         def context_node():
-            context_node = peek_context().node
+            context_node = get_context_node()
             self._gab('returning node set containing context node {0}'.format(context_node))
             return make_node_set(context_node)
 
@@ -220,7 +220,7 @@ class DoubleSlashToken(Token):
         return evaluate
 
     def _evaluate(self, expression_fn, node_set=None):
-        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
         self._gab('evaluating for {0}'.format(input_desc), indent_after=True)
 
         results = []
@@ -251,7 +251,7 @@ class EqualityOperatorToken(Token):
         def evaluate():
             left_value, right_value = self._evaluate_binary_operands(left, right)
             result = equals(left_value, right_value) if self.value == '=' else not_equals(left_value, right_value)
-            self._gab('{0} returning {1}'.format(self, result))
+            self._gab('returning {0}'.format(result))
             return result
 
         return evaluate
@@ -294,7 +294,7 @@ class LeftBraceToken(Token):
         right = self.parse_interface.expression(self.lbp)
 
         def context_node_if_selected():
-            context_node = peek_context().node
+            context_node = get_context_node()
             return [context_node] if boolean(right()) else []
 
         def evaluate():
@@ -380,11 +380,14 @@ class NameTestToken(Token):
         return name_test
 
     def _evaluate(self, axis, node_set=None):
-        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
         self._gab('evaluating {0}::{1} from {2}'.format(axis, self.value, input_desc))
 
-        result = evaluate_across_contexts(node_set, lambda: make_node_set(self.test.apply(axis, peek_context().node)))
+        result = evaluate_across_contexts(node_set, lambda: make_node_set(self.test.apply(axis, get_context_node())))
         self._gab('evaluation produced {0} node(s)'.format(len(result)))
+
+        if axis == Axis.preceding or axis == Axis.preceding_sibling:
+            result = make_node_set(result, reverse=True)
         return result
 
 
@@ -419,12 +422,15 @@ class NodeTestToken(Token):
         return '{0}{1}'.format(self.value, '()' if self.value != '*' else '')
 
     def _evaluate(self, axis, node_set=None):
-        node_set, input_desc = self._default_node_set_to_context_and_describe(node_set)
+        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
         self._gab('evaluating {0}::{1} from {2}'.format(axis, self._dump_value(), input_desc))
 
         result = evaluate_across_contexts(node_set,
                                           lambda: make_node_set(self.test.apply(axis, peek_context().node)))
         self._gab('evaluation produced {0} node(s)'.format(len(result)))
+
+        if axis == Axis.preceding or axis == Axis.preceding_sibling:
+            result = make_node_set(result, reverse=True)
         return result
 
 
@@ -446,7 +452,7 @@ class ParentNodeToken(Token):
         return parent_node
 
     def _evaluate(self, node_set=None):
-        node_set, from_what = self._default_node_set_to_context_and_describe(node_set)
+        node_set, from_what = self._use_node_set_or_default_to_context_if_none(node_set)
         self._gab('returning parent(s) of {0}'.format(from_what))
         return make_node_set([node.parent for node in node_set])
 

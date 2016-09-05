@@ -280,18 +280,34 @@ def test_selects_all_the_para_children_of_the_context_node_other_than_the_first_
     </para>""")
 
 
-# def test_selects_the_next_chapter_sibling_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'following-sibling::chapter[position()=1]') == expected_result("""
-#     """)
-#
-#
-# def test_selects_the_previous_chapter_sibling_of_the_context_node():
-#     html = ""
-#     assert query_context_node(html, 'preceding-sibling::chapter[position()=1]') == expected_result("""
-#     """)
-#
-#
+def test_selects_the_next_chapter_sibling_of_the_context_node():
+    html = """
+    <root>
+        <context/>
+        <chapter>selected</chapter>
+        <chapter>not selected</chapter>
+    </root>"""
+    soup = make_soup(html)
+    assert query_context_node(soup.root.context, 'following-sibling::chapter[position()=1]') == expected_result("""
+    <chapter>
+     selected
+    </chapter>""")
+
+
+def test_selects_the_previous_chapter_sibling_of_the_context_node():
+    html = """
+    <root>
+        <chapter>not selected</chapter>
+        <chapter>selected</chapter>
+        <context/>
+    </root>"""
+    soup = make_soup(html)
+    assert query_context_node(soup.root.context, 'preceding-sibling::chapter[position()=1]') == expected_result("""
+    <chapter>
+     selected
+    </chapter>""")
+
+
 # def test_selects_the_forty_second_figure_element_in_the_document():
 #     html = ""
 #     assert query_context_node(html, '/descendant::figure[position()=42]') == expected_result("""

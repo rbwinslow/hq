@@ -35,6 +35,10 @@ def evaluate_in_context(node, expression_fn, position=1, size=1, **kwargs):
     return result
 
 
+def get_context_node():
+    return peek_context().node
+
+
 def peek_context():
     return context_stack[-1]
 

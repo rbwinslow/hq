@@ -4,7 +4,7 @@
 """hq - Beautiful HTML querying, filtering, slicing and dicing!
 
 Usage:
-  hq.py [-x] [-n] <expression>
+  hq.py [-v] [-x] [-n] <expression>
   hq.py --version
   hq.py (-h | --help)
 
@@ -28,8 +28,8 @@ from .config import settings
 from .css.query_css import query_css
 from .output import result_object_to_text
 from .soup_util import make_soup
+from .verbosity import verbose_print, set_verbosity
 from .xpath.query_xpath import query_xpath, XpathQueryError
-
 
 __version__ = '0.0.1'
 
@@ -38,11 +38,12 @@ def main():
     CSS, XPATH = range(2)
     args = docopt(__doc__, version='HQ {0}'.format(__version__))
     print(args)
-    language = XPATH if '-x' in args else CSS
-    setattr(settings, 'VERBOSE', bool('-v' in args))
+    language = XPATH if args['-x'] else CSS
+    set_verbosity(bool(args['-v']))
 
     try:
         source = stdin.read()
+        verbose_print('Read {0} characters of input'.format(len(source)))
         soup = make_soup(source)
 
         expression = args['<expression>']

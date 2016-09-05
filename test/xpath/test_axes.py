@@ -189,16 +189,20 @@ def test_preceding_sibling_axis_works_with_name_test():
 def test_preceding_sibling_axis_works_with_node_test():
     html_body = """
     <p>foo</p>
+    <p>bar</p>
     <div></div>
-    <p>bar</p>"""
+    <p>nothing</p>"""
     assert query_html_doc(html_body, '//div/preceding-sibling::node()') == expected_result("""
     <p>
      foo
+    </p>
+    <p>
+     bar
     </p>""")
 
 
 def test_preceding_sibling_axis_returns_nodes_in_document_order():
-    "Node sets are unordered, but people really seem to like these being in document order."
+    """Node sets are unordered, but people really seem to like these being in document order."""
     html_body = """
     <p>foo</p>
     <p>bar</p>

@@ -19,9 +19,9 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, predicate, relational_op, add_or_subtract, mult_or_div, prefix_op, function_call, location_step,
-        node_test
-    ) = range(9)
+        nothing, predicate, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
+        function_call, location_step, node_test
+    ) = range(12)
 
 
 
@@ -87,7 +87,7 @@ class AddOrSubtractOperatorToken(Token):
         def evaluate():
             left_value, right_value = self._evaluate_binary_operands(left, right, constructor=number, type_name='number')
             result = left_value + right_value if self.value == '+' else left_value - right_value
-            self._gab('{0} returning {1}'.format(self, result))
+            self._gab('returning {0}'.format(result))
             return result
 
         return evaluate
@@ -101,10 +101,33 @@ class AddOrSubtractOperatorToken(Token):
         def evaluate():
             right_value = self._evaluate_unary_operand(right, constructor=number, type_name='number')
             result = -right_value
-            self._gab('{0} returning {1}'.format(self, result))
+            self._gab('returning {0}'.format(result))
             return result
 
         return evaluate
+
+
+
+class AndOperator(Token):
+    lbp = LBP.or_op
+
+    def __str__(self):
+        return '(operator "and")'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left,
+                                                                     right,
+                                                                     constructor=boolean,
+                                                                     type_name='boolean')
+            result = bool(left_value) and bool(right_value)
+            self._gab('returning {0}'.format(result))
+            return result
+
+        return evaluate
+
 
 
 class AxisToken(Token):
@@ -116,7 +139,7 @@ class AxisToken(Token):
     def __str__(self):
         return '(axis "{0}")'.format(self.value)
 
-    def led(self, left=None):
+    def led(self, left):
         right = self.parse_interface.expression(self.lbp)
 
         def node_test():
@@ -240,7 +263,7 @@ class EndToken(Token):
 
 
 class EqualityOperatorToken(Token):
-    lbp = LBP.relational_op
+    lbp = LBP.equality_op
 
     def __str__(self):
         return '(equality-operator "{0}")'.format(self.value)
@@ -432,6 +455,28 @@ class NodeTestToken(Token):
         if axis == Axis.preceding or axis == Axis.preceding_sibling:
             result = make_node_set(result, reverse=True)
         return result
+
+
+
+class OrOperator(Token):
+    lbp = LBP.or_op
+
+    def __str__(self):
+        return '(operator "or")'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left,
+                                                                     right,
+                                                                     constructor=boolean,
+                                                                     type_name='boolean')
+            result = bool(left_value) or bool(right_value)
+            self._gab('returning {0}'.format(result))
+            return result
+
+        return evaluate
 
 
 

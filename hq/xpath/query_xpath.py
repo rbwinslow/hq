@@ -14,6 +14,16 @@ def _pick_token_based_on_numeric_context(parse_interface, value, previous_token,
         return other_class(parse_interface, value)
 
 
+def _pick_token_for_and_or_or(parse_interface, value, previous_token):
+    name_test_predecessors = (AxisToken, SlashToken, DoubleSlashToken)
+    if previous_token is None or any(isinstance(previous_token, clazz) for clazz in name_test_predecessors):
+        return NameTestToken(parse_interface, value)
+    elif value == 'or':
+        return OrOperator(parse_interface, value)
+    else:
+        return AndOperator(parse_interface, value)
+
+
 def _pick_token_for_asterisk(parse_interface, value, previous_token):
     return _pick_token_based_on_numeric_context(parse_interface,
                                                 value,
@@ -48,8 +58,9 @@ token_config = [
     (r'(\*)', _pick_token_for_asterisk),
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(<=|<|>=|>)', RelationalOperatorToken),
-    (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(node|text)\(\)', NodeTestToken),
+    (r'(div|mod)', _pick_token_for_div_or_mod),
+    (r'(and|or)', _pick_token_for_and_or_or),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\w[\w]*)', NameTestToken),
 ]

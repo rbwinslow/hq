@@ -10,19 +10,19 @@ def _eq_bool_vs_primitive(bool_val, other_val):
     return bool_val == boolean(other_val)
 
 
-def _eq_native(left, right):
-    return left == right
+def _eq_native(first, second):
+    return first == second
 
 
-def _eq_node_sets(left, right):
-    left_values = set([string_value(node) for node in left])
-    right_values = set([string_value(node) for node in right])
+def _eq_node_sets(first, second):
+    first_values = set([string_value(node) for node in first])
+    second_values = set([string_value(node) for node in second])
 
-    verbose_print('Comparing two nodes sets (size {0} and {1}).'.format(len(left_values), len(right_values)))
+    verbose_print('Comparing two nodes sets (size {0} and {1}).'.format(len(first_values), len(second_values)))
 
-    for left_value in left_values:
-        if left_value in right_values:
-            verbose_print('Found value "{0}" from left-hand node set in right-hand node set'.format(left_value))
+    for first_value in first_values:
+        if first_value in second_values:
+            verbose_print('Found value "{0}" from first node set in second node set'.format(first_value))
             return True
 
     verbose_print('Found no matching nodes between node sets.')
@@ -80,17 +80,17 @@ equality_ops_table = (
 )
 
 
-def equals(left, right):
-    left_type = object_type(left)
-    right_type = object_type(right)
+def equals(first, second):
+    first_type = object_type(first)
+    second_type = object_type(second)
     try:
-        reverse = left_type > right_type
-        op = equality_ops_table[left_type if not reverse else right_type][right_type if not reverse else left_type]
-        return boolean(op(left if not reverse else right, right if not reverse else left))
+        reverse = first_type > second_type
+        op = equality_ops_table[first_type if not reverse else second_type][second_type if not reverse else first_type]
+        return boolean(op(first if not reverse else second, second if not reverse else first))
     except TypeError:
-        raise XpathQueryError('type mismatch comparing {0} and {1} for equality'.format(object_type_name(left_type),
-                                                                                        object_type_name(right_type)))
+        raise XpathQueryError('type mismatch comparing {0} and {1} for equality'.format(object_type_name(first_type),
+                                                                                        object_type_name(second_type)))
 
 
-def not_equals(left, right):
-    return boolean(not bool(equals(left, right)))
+def not_equals(first, second):
+    return boolean(not bool(equals(first, second)))

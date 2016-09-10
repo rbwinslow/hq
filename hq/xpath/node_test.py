@@ -21,16 +21,28 @@ def _make_name_accept_fn(value):
 
 
 class NodeTest:
+
     def __init__(self, value, name_test=False):
         value = value.lower()
+        self.repr = value
+        repr_parens = False
+
         if name_test:
             self.accept_fn = _make_name_accept_fn(value)
         elif value == '*':
             self.accept_fn = _accept_principal_node_type
         elif value == 'node':
+            repr_parens = True
             self.accept_fn = _make_axis_agnostic_accept_fn(is_any_node)
         elif value == 'text':
+            repr_parens = True
             self.accept_fn = _make_axis_agnostic_accept_fn(is_text_node)
+
+        self.repr = '{0}{1}'.format(self.repr, '()' if repr_parens else '')
+
+
+    def __repr__(self):
+        return self.repr
 
 
     def apply(self, axis, node):

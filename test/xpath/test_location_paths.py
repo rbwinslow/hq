@@ -1,12 +1,10 @@
 import os
 import sys
 
-from hq.soup_util import make_soup
-
 sys.path.insert(0, os.path.abspath('../..'))
 
-from bs4 import BeautifulSoup
 from hq.output import result_object_to_text
+from hq.soup_util import make_soup
 from hq.xpath.query_xpath import query_xpath
 
 from ..test_util import expected_result, query_html_doc

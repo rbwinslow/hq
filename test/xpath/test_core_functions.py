@@ -51,3 +51,53 @@ def test_true_and_false_functions_return_expected_values():
     assert query_html_doc('', 'true()') == expected_result('true')
     assert query_html_doc('', 'true() = false()') == expected_result('false')
     assert query_html_doc('', 'true() != false()') == expected_result('true')
+
+
+def test_position_function_in_predicate_applies_to_current_step_only():
+    html_body = """
+    <table>
+        <tr class="select-me">
+            <td>one</td>
+            <td>two</td>
+        </tr>
+        <tr class="forget-me">
+            <td>uno</td>
+            <td>dos</td>
+        </tr>
+        <tr class="select-me">
+            <td>ichi</td>
+            <td>ni</td>
+        </tr>
+    </table>"""
+    assert query_html_doc(html_body, '//tr[@class="select-me"]/td[position()=2]') == expected_result("""
+    <td>
+     two
+    </td>
+    <td>
+     ni
+    </td>""")
+
+
+def test_position_function_in_second_predicate_applies_to_results_from_first_predicate():
+    html_body = """
+    <table>
+        <tr class="select-me">
+            <td>one</td>
+            <td>two</td>
+        </tr>
+        <tr class="forget-me">
+            <td>uno</td>
+            <td>dos</td>
+        </tr>
+        <tr class="select-me">
+            <td>ichi</td>
+            <td>ni</td>
+        </tr>
+    </table>"""
+    assert query_html_doc(html_body, '//td[../@class="select-me"][position()=1]') == expected_result("""
+    <td>
+     one
+    </td>
+    <td>
+     ichi
+    </td>""")

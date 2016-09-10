@@ -99,6 +99,10 @@ def preorder_traverse_node_tree(node, fn, filter=lambda n: is_tag_node(n) or is_
                 preorder_traverse_node_tree(child, fn, filter)
 
 
+def root_tag_from_any_tag(obj):
+    return root_tag_from_soup(soup_from_any_tag(obj))
+
+
 def root_tag_from_soup(soup):
     return next(tag for tag in soup.children if is_tag_node(tag))
 

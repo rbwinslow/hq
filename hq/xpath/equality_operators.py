@@ -58,7 +58,7 @@ def _eq_node_set_vs_string(nodes_val, string_val):
         node_val_string = string_value(node)
         verbose_print('(=) node string value "{0}" is{1} equal to "{2}"'.format(
             node_val_string,
-            (' not' if node_val_string == string_val else ''),
+            ('' if node_val_string == string_val else ' not'),
             string_val))
 
         if node_val_string == string_val:

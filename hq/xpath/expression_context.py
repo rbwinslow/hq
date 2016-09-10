@@ -16,21 +16,21 @@ class ExpressionContext:
         return 'context(node={0})'.format(str(self.node))
 
 
-def evaluate_across_contexts(node_set, expression_fn, **kwargs):
+def evaluate_across_contexts(node_set, expression_fn):
     XpathQueryError.must_be_node_set(node_set)
 
     node_set_len = len(node_set)
-    ragged = [evaluate_in_context(node, expression_fn, position=index+1, size=node_set_len, **kwargs)
+    ragged = [evaluate_in_context(node, expression_fn, position=index+1, size=node_set_len)
               for index, node in enumerate(node_set)]
     return make_node_set([item for sublist in ragged for item in sublist])
 
 
-def evaluate_in_context(node, expression_fn, position=1, size=1, **kwargs):
+def evaluate_in_context(node, expression_fn, position=1, size=1):
     if not is_any_node(node):
         raise XpathQueryError('cannot use {0} "{1}" as context node'.format(type(node),
                                                                             debug_dump_long_string(str(node))))
     push_context(node, position, size)
-    result = expression_fn(**kwargs)
+    result = expression_fn()
     pop_context()
     return result
 

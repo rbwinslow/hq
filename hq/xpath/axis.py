@@ -16,5 +16,8 @@ class Axis(Enum):
     preceding_sibling   = 11
     self                = 12
 
+    def is_reverse_order(self):
+        return self in (Axis.ancestor, Axis.ancestor_or_self, Axis.preceding, Axis.preceding_sibling)
+
     def token(self):
         return self.name.replace('_', '-')

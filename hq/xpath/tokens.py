@@ -1,4 +1,4 @@
-from hq.soup_util import soup_from_any_tag, debug_dump_node, preorder_traverse_node_tree, debug_dump_long_string
+from hq.soup_util import soup_from_any_tag, debug_dump_node
 from hq.verbosity import verbose_print
 from hq.xpath.equality_operators import equals, not_equals
 from hq.xpath.function_support import FunctionSupport
@@ -11,7 +11,7 @@ from hq.xpath.relational_operators import RelationalOperator
 from hq.xpath.syntax_error import XpathSyntaxError
 
 from .axis import Axis
-from .expression_context import peek_context, evaluate_across_contexts, evaluate_in_context, get_context_node
+from .expression_context import get_context_node
 
 function_support = FunctionSupport()
 
@@ -131,30 +131,17 @@ class AndOperator(Token):
 
 
 class AxisToken(Token):
-    lbp = LBP.node_test
+    lbp = LBP.nothing
 
     def __init__(self, parse_interface, value, **kwargs):
         super(AxisToken, self).__init__(parse_interface, value if value != '@' else 'attribute', **kwargs)
+        self.axis = Axis[self.value.replace('-', '_')]
 
     def __str__(self):
         return '(axis "{0}")'.format(self.value)
 
-    def led(self, left):
-        right = self.parse_interface.expression(self.lbp)
-
-        def node_test():
-            return evaluate_across_contexts(left(), right, axis=Axis[self.value.replace('-', '_')])
-
-        return node_test
-
     def nud(self):
-        right = self.parse_interface.expression(self.lbp)
-
-        def node_test():
-            self._gab('evaluating node test on context node {0}'.format(debug_dump_node(get_context_node())))
-            return right(axis=Axis[self.value.replace('-', '_')])
-
-        return node_test
+        return self.parse_interface.location_path(self).evaluate
 
 
 
@@ -180,23 +167,8 @@ class ContextNodeToken(Token):
     def __str__(self):
         return '(context-node)'
 
-    def led(self, left):
-
-        def identity():
-            result = left()
-            self._gab('passing along {0}'.format(result))
-            return result
-
-        return identity
-
     def nud(self):
-
-        def context_node():
-            context_node = get_context_node()
-            self._gab('returning node set containing context node {0}'.format(context_node))
-            return make_node_set(context_node)
-
-        return context_node
+        return self.parse_interface.location_path(self).evaluate
 
 
 
@@ -226,34 +198,8 @@ class DoubleSlashToken(Token):
     def __str__(self):
         return '(double-slash)'
 
-    def led(self, left):
-        right = self.parse_interface.expression(self.lbp)
-
-        def evaluate():
-            return self._evaluate(right, node_set=left())
-
-        return evaluate
-
     def nud(self):
-        right = self.parse_interface.expression(self.lbp)
-
-        def evaluate():
-            return self._evaluate(right)
-
-        return evaluate
-
-    def _evaluate(self, expression_fn, node_set=None):
-        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
-        self._gab('evaluating for {0}'.format(input_desc), indent_after=True)
-
-        results = []
-        for node in node_set:
-            self._gab(self.evaluating_message.format(debug_dump_node(node)))
-            preorder_traverse_node_tree(node, lambda n: results.extend(evaluate_in_context(n, expression_fn)))
-        results = make_node_set(results)
-
-        self._gab('evaluation finished; returning {0} nodes.'.format(len(results)), outdent_before=True)
-        return results
+        return self.parse_interface.location_path(self).evaluate
 
 
 
@@ -313,23 +259,6 @@ class LeftBraceToken(Token):
     def __str__(self):
         return '(left-brace)'
 
-    def led(self, left):
-        right = self.parse_interface.expression(self.lbp)
-
-        def context_node_if_selected():
-            context_node = get_context_node()
-            return [context_node] if boolean(right()) else []
-
-        def evaluate():
-            node_set = left()
-            self._gab('evaluating predicate for {0} nodes'.format(len(node_set)), indent_after=True)
-
-            result = evaluate_across_contexts(node_set, context_node_if_selected)
-            self._gab('evaluation returning {0} nodes'.format(len(result)), outdent_before=True)
-            return result
-
-        return evaluate
-
 
 
 class LiteralNumberToken(Token):
@@ -381,37 +310,13 @@ class NameTestToken(Token):
 
     def __init__(self, *args, **kwargs):
         super(NameTestToken, self).__init__(*args, **kwargs)
-        self.test = NodeTest(self.value, name_test=True)
+        self.node_test = NodeTest(self.value, name_test=True)
 
     def __str__(self):
         return '(name-test "{0}")'.format(self.value)
 
-    def led(self, left):
-
-        def name_test(axis=Axis.child):
-            node_set = left()
-            XpathQueryError.must_be_node_set(node_set)
-            return self._evaluate(axis, node_set)
-
-        return name_test
-
     def nud(self):
-
-        def name_test(axis=Axis.child):
-            return self._evaluate(axis)
-
-        return name_test
-
-    def _evaluate(self, axis, node_set=None):
-        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
-        self._gab('evaluating {0}::{1} from {2}'.format(axis, self.value, input_desc))
-
-        result = evaluate_across_contexts(node_set, lambda: make_node_set(self.test.apply(axis, get_context_node())))
-        self._gab('evaluation produced {0} node(s)'.format(len(result)))
-
-        if axis == Axis.preceding or axis == Axis.preceding_sibling:
-            result = make_node_set(result, reverse=True)
-        return result
+        return self.parse_interface.location_path(self).evaluate
 
 
 
@@ -420,41 +325,16 @@ class NodeTestToken(Token):
 
     def __init__(self, *args, **kwargs):
         super(NodeTestToken, self).__init__(*args, **kwargs)
-        self.test = NodeTest(self.value)
+        self.node_test = NodeTest(self.value)
 
     def __str__(self):
         return '(node-test "{0}")'.format(self._dump_value())
 
-    def led(self, left):
-
-        def node_test(axis=Axis.child):
-            node_set = left()
-            XpathQueryError.must_be_node_set(node_set)
-            return self._evaluate(axis, node_set)
-
-        return node_test
-
     def nud(self):
-
-        def node_test(axis=Axis.child):
-            return self._evaluate(axis)
-
-        return node_test
+        return self.parse_interface.location_path(self).evaluate
 
     def _dump_value(self):
         return '{0}{1}'.format(self.value, '()' if self.value != '*' else '')
-
-    def _evaluate(self, axis, node_set=None):
-        node_set, input_desc = self._use_node_set_or_default_to_context_if_none(node_set)
-        self._gab('evaluating {0}::{1} from {2}'.format(axis, self._dump_value(), input_desc))
-
-        result = evaluate_across_contexts(node_set,
-                                          lambda: make_node_set(self.test.apply(axis, peek_context().node)))
-        self._gab('evaluation produced {0} node(s)'.format(len(result)))
-
-        if axis == Axis.preceding or axis == Axis.preceding_sibling:
-            result = make_node_set(result, reverse=True)
-        return result
 
 
 
@@ -486,20 +366,8 @@ class ParentNodeToken(Token):
     def __str__(self):
         return '(parent-node)'
 
-    def led(self, left):
-        def parent_node():
-            return self._evaluate(left())
-        return parent_node
-
     def nud(self):
-        def parent_node():
-            return self._evaluate()
-        return parent_node
-
-    def _evaluate(self, node_set=None):
-        node_set, from_what = self._use_node_set_or_default_to_context_if_none(node_set)
-        self._gab('returning parent(s) of {0}'.format(from_what))
-        return make_node_set([node.parent for node in node_set])
+        return self.parse_interface.location_path(self).evaluate
 
 
 
@@ -523,13 +391,10 @@ class RelationalOperatorToken(Token):
 
 
 class RightBraceToken(Token):
-    lbp = LBP.predicate
+    lbp = LBP.nothing
 
     def __str__(self):
         return '(right-brace)'
-
-    def led(self, left):
-        return left
 
 
 
@@ -539,11 +404,12 @@ class SlashToken(Token):
     def __str__(self):
         return '(slash)'
 
-    def led(self, left):
-        return left
-
     def nud(self):
-        def root():
-            self._gab('returning document root as start of absolute path')
-            return make_node_set(soup_from_any_tag(peek_context().node))
-        return root
+        next_token = self.parse_interface.peek()
+        absolute_path_followup_tokens = (AxisToken, ContextNodeToken, NameTestToken, NodeTestToken, ParentNodeToken)
+
+        if any(isinstance(next_token, clz) for clz in absolute_path_followup_tokens):
+            path = self.parse_interface.location_path(self)
+            return path.evaluate
+        else:
+            return lambda: make_node_set(soup_from_any_tag(get_context_node()))

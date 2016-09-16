@@ -1,4 +1,4 @@
-from hq.soup_util import root_tag_from_any_tag, debug_dump_node, soup_from_any_tag
+from hq.soup_util import debug_dump_node, soup_from_any_tag
 from hq.verbosity import verbose_print
 from hq.xpath.expression_context import get_context_node, evaluate_across_contexts, peek_context, evaluate_in_context
 from hq.xpath.functions.core_number import number
@@ -55,7 +55,7 @@ class LocationPath:
             def accept_context_node():
                 context = peek_context()
 
-                format_str = 'Evaluating predicate expression for context node at position {0} of {1}: {2}.'
+                format_str = u'Evaluating predicate expression for context node at position {0} of {1}: {2}.'
                 verbose_print(format_str.format(context.position, context.size, debug_dump_node(context.node)))
 
                 value = expression_fn()
@@ -64,8 +64,8 @@ class LocationPath:
                 else:
                     accept = bool(value)
 
-                verbose_print('{0} node {1}'.format('Accepted' if accept else 'Rejected',
-                                                    debug_dump_node(context.node)))
+                verbose_print(u'{0} node {1}'.format('Accepted' if accept else 'Rejected',
+                                                     debug_dump_node(context.node)))
                 return [context.node] if accept else []
 
             verbose_print('Evaluating predicate #{0} against {1} nodes'.format(index + 1, len(result_set)),

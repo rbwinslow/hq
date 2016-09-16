@@ -69,7 +69,7 @@ def _cmp_nodes_to_value(base_op, first, second):
 def _cmp_value_to_nodes(base_op, first, second):
     node_values = set([number(node) for node in second])
     first = number(first)
-    verbose_print('Comparing {0} nodes in node set to value "{1}"'.format(len(node_values), second))
+    verbose_print('Comparing {0} nodes in node set to value "{1}"'.format(len(node_values), first))
 
     for node_value in node_values:
         if base_op(first, node_value):

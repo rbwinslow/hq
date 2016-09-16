@@ -4,7 +4,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, query_html_doc
+from ..common_test_util import expected_result
+from test.xpath.xpath_test_util import query_html_doc
 
 
 def test_explicit_child_axis():
@@ -16,6 +17,40 @@ def test_explicit_child_axis():
     <p>
      foo
     </p>""")
+
+
+def test_child_axis_selects_only_immediate_children():
+    html_body = """
+    <p>uncle</p>
+    <div>
+        <p>niece</p>
+        <p>nephew</p>
+    </div>"""
+    actual = query_html_doc(html_body, '/html/body/child::p')
+    assert actual == expected_result("""
+    <p>
+     uncle
+    </p>""")
+
+
+def test_descendant_axis_selects_from_descendants_not_ancestors():
+    html_body = """
+    <div id="grandma">
+        <section>
+            <div>uncle</div>
+            <aside>
+                <div>niece</div>
+            </aside>
+        </section>
+    </div>"""
+    actual = query_html_doc(html_body, '/html/body/div/descendant::div')
+    assert actual == expected_result("""
+    <div>
+     uncle
+    </div>
+    <div>
+     niece
+    </div>""")
 
 
 def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_matching_node_test():
@@ -78,6 +113,22 @@ def test_parent_axis_returns_parent_of_tag_node():
     </body>""")
 
 
+def test_parent_axis_selects_only_the_immediate_parent():
+    html_body = """
+    <div id="grandma">
+        <div id="mom">
+            <p>daughter</p>
+        </div>
+    </div>"""
+    actual = query_html_doc(html_body, '//p/parent::div')
+    assert actual == expected_result("""
+    <div id="mom">
+     <p>
+      daughter
+     </p>
+    </div>""")
+
+
 def test_parent_axis_returns_parents_for_multiple_matching_nodes():
     html_body = """
     <div id="first">
@@ -94,6 +145,33 @@ def test_parent_axis_returns_parents_for_multiple_matching_nodes():
 def test_parent_axis_produces_nothing_for_root_element():
     assert query_html_doc('', '/html/parent::*') == expected_result('')
     assert query_html_doc('<div></div>', 'div/parent::*', wrap_body=False) == expected_result('')
+
+
+def test_ancestor_axis_selects_all_matching_ancestors():
+    html_body = """
+    <div>
+        <section>
+            <div>
+                <p>text</p>
+            </div>
+        </section>
+    </div>"""
+    actual = query_html_doc(html_body, '//p/ancestor::div')
+    assert actual == expected_result("""
+    <div>
+     <section>
+      <div>
+       <p>
+        text
+       </p>
+      </div>
+     </section>
+    </div>
+    <div>
+     <p>
+      text
+     </p>
+    </div>""")
 
 
 def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():

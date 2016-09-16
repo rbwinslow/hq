@@ -1,3 +1,4 @@
+from builtins import str
 from bs4 import BeautifulSoup
 
 from .verbosity import verbose_print
@@ -13,7 +14,7 @@ class AttributeNode:
         return 'AttributeNode("{0}", "{1}")'.format(self.name, self.value)
 
     def __str__(self):
-        return '{0}="{1}"'.format(self.name, self.value)
+        return u'{0}="{1}"'.format(self.name, self.value)
 
     @classmethod
     def enumerate(cls, node):
@@ -37,11 +38,11 @@ def debug_dump_node(obj):
     if is_root_node(obj):
         return 'ROOT DOCUMENT'
     elif is_tag_node(obj):
-        return 'ELEMENT {0}'.format(debug_dump_long_string(str(obj)))
+        return u'ELEMENT {0}'.format(debug_dump_long_string(str(obj)))
     elif is_attribute_node(obj):
         return 'ATTRIBUTE {0}="{1}"'.format(obj.name, debug_dump_long_string(obj.value))
     elif is_text_node(obj):
-        return 'TEXT "{0}"'.format(debug_dump_long_string(obj.string))
+        return u'TEXT "{0}"'.format(debug_dump_long_string(obj.string))
     else:
         return 'NODE type {0}'.format(obj.__class__.__name__)
 

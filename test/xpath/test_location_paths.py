@@ -7,7 +7,8 @@ from hq.output import result_object_to_text
 from hq.soup_util import make_soup
 from hq.xpath.query_xpath import query_xpath
 
-from ..test_util import expected_result, query_html_doc
+from ..common_test_util import expected_result
+from test.xpath.xpath_test_util import query_html_doc
 
 
 def test_absolute_location_path_should_find_multiple_grandchildren():

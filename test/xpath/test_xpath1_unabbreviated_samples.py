@@ -12,7 +12,8 @@ from hq.soup_util import make_soup
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, query_context_node, query_html_doc
+from ..common_test_util import expected_result
+from test.xpath.xpath_test_util import query_html_doc, query_context_node
 
 
 def test_selects_the_para_element_children_of_the_context_node():

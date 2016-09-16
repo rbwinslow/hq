@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 from hq.output import result_object_to_text
 from hq.css.query_css import query_css
-from ..test_util import soup_with_body, expected_result
+from ..common_test_util import soup_with_body, expected_result
 
 
 def test_nth_of_type_pseudoclass_support():

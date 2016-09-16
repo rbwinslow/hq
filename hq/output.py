@@ -1,3 +1,4 @@
+from builtins import str
 from .xpath.object_type import is_node_set
 
 from .soup_util import is_text_node, is_attribute_node, is_comment_node

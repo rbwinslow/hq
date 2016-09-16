@@ -3,7 +3,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from ..test_util import expected_result, query_html_doc
+from ..common_test_util import expected_result
+from test.xpath.xpath_test_util import query_html_doc
 
 
 def test_relational_comparison_of_numbers():

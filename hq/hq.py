@@ -24,7 +24,6 @@ from sys import stderr, stdin
 
 from docopt import docopt
 
-from .config import settings
 from .css.query_css import query_css
 from .output import result_object_to_text
 from .soup_util import make_soup
@@ -37,7 +36,6 @@ __version__ = '0.0.1'
 def main():
     CSS, XPATH = range(2)
     args = docopt(__doc__, version='HQ {0}'.format(__version__))
-    print(args)
     language = XPATH if args['-x'] else CSS
     set_verbosity(bool(args['-v']))
 

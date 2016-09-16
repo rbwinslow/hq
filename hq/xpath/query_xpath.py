@@ -64,7 +64,7 @@ token_config = [
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
-    (r'(\w[\w]*)', NameTestToken),
+    (r'(\w[\w\-]*)', NameTestToken),
 ]
 
 
@@ -203,11 +203,6 @@ def parse_location_path_node_test():
     node_test_token = advance(NameTestToken, NodeTestToken, ContextNodeToken, ParentNodeToken)
     verbose_print('consumed {0}'.format(node_test_token))
 
-    def no_axis_token_allowed():
-        if axis_token is not None:
-            raise XpathSyntaxError('Axis {0} cannot be combined with abbreviated {1}.'.format(axis_token,
-                                                                                              node_test_token))
-
     is_abbreviated = False
     if isinstance(node_test_token, ContextNodeToken):
         is_abbreviated = True
@@ -217,7 +212,9 @@ def parse_location_path_node_test():
         axis = Axis.parent
 
     if is_abbreviated:
-        no_axis_token_allowed()
+        if axis_token is not None:
+            raise XpathSyntaxError('Axis {0} cannot be combined with abbreviated {1}.'.format(axis_token,
+                                                                                              node_test_token))
         node_test = NodeTest('node')
     else:
         node_test = node_test_token.node_test

@@ -60,7 +60,7 @@ token_config = [
     (r'(\*)', _pick_token_for_asterisk),
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(<=|<|>=|>)', RelationalOperatorToken),
-    (r'(node|text)\(\)', NodeTestToken),
+    (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),

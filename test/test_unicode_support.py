@@ -28,6 +28,16 @@ def test_tolerates_latin_characters_in_attribute_contents(capsys, mocker):
     assert _capture_output(capsys) == expected_result(u'role="prim\xe4r"')
 
 
+def test_tolerates_latin_characters_in_comments(capsys, mocker):
+    mocker.patch('hq.hq.docopt').return_value = _mock_arguments(expression='//comment()')
+    mocker.patch('sys.stdin.read').return_value = wrap_html_body("""
+    <!-- sacr\xe9 bleu! -->""")
+
+    main()
+
+    assert _capture_output(capsys) == expected_result(u'<!-- sacr\xe9 bleu! -->')
+
+
 def _capture_output(capsys):
     output, _ = capsys.readouterr()
     return eliminate_blank_lines(output.strip())

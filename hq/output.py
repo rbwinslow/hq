@@ -13,7 +13,7 @@ def result_object_to_text(obj, pretty=True):
 
 def soup_object_to_text(obj, pretty):
     if is_comment_node(obj):
-        return '<!-- {0} -->'.format(str(obj).strip())
+        return u'<!-- {0} -->'.format(str(obj).strip())
     if not pretty or is_text_node(obj) or is_attribute_node(obj):
         return str(obj)
     else:

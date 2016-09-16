@@ -1,6 +1,7 @@
 from hq.xpath.axis import Axis
 
-from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, is_any_node, root_tag_from_soup
+from ..soup_util import is_root_node, is_tag_node, is_text_node, AttributeNode, is_attribute_node, is_any_node, root_tag_from_soup, \
+    is_comment_node
 
 
 def _accept_principal_node_type(node, axis=None):
@@ -25,20 +26,19 @@ class NodeTest:
     def __init__(self, value, name_test=False):
         value = value.lower()
         self.repr = value
-        repr_parens = False
 
         if name_test:
             self.accept_fn = _make_name_accept_fn(value)
         elif value == '*':
             self.accept_fn = _accept_principal_node_type
         elif value == 'node':
-            repr_parens = True
             self.accept_fn = _make_axis_agnostic_accept_fn(is_any_node)
         elif value == 'text':
-            repr_parens = True
             self.accept_fn = _make_axis_agnostic_accept_fn(is_text_node)
+        elif value == 'comment':
+            self.accept_fn = _make_axis_agnostic_accept_fn(is_comment_node)
 
-        self.repr = '{0}{1}'.format(self.repr, '()' if repr_parens else '')
+        self.repr = '{0}{1}'.format(self.repr, '' if name_test or value == '*' else '()')
 
 
     def __repr__(self):

@@ -102,3 +102,14 @@ def test_text_node_test_selects_disjoint_text_nodes():
     assert actual == expected_result("""
     one
     three""")
+
+
+def test_comment_node_test_selects_comments():
+    html_body = """
+    <!-- head comment -->
+    <div>
+        <!-- comment in div -->
+    </div>"""
+    assert query_html_doc(html_body, '//comment()') == expected_result("""
+    <!-- head comment -->
+    <!-- comment in div -->""")

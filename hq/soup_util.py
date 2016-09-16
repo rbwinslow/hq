@@ -43,6 +43,8 @@ def debug_dump_node(obj):
         return 'ATTRIBUTE {0}="{1}"'.format(obj.name, debug_dump_long_string(obj.value))
     elif is_text_node(obj):
         return u'TEXT "{0}"'.format(debug_dump_long_string(obj.string))
+    elif is_comment_node(obj):
+        return u'COMMENT "{0}"'.format(debug_dump_long_string(obj.string))
     else:
         return 'NODE type {0}'.format(obj.__class__.__name__)
 

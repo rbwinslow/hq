@@ -64,6 +64,7 @@ token_config = [
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
+    (r'(\()', OpenParenthesisToken),
     (r'(\w[\w\-]*)', NameTestToken),
 ]
 

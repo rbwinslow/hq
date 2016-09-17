@@ -20,8 +20,8 @@ class LBP:
     """Left-binding precendence values."""
     (
         nothing, predicate, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
-        function_call, location_step, node_test
-    ) = range(12)
+        function_call, location_step, node_test, parenthesized_expr
+    ) = range(13)
 
 
 
@@ -335,6 +335,19 @@ class NodeTestToken(Token):
 
     def _dump_value(self):
         return '{0}{1}'.format(self.value, '()' if self.value != '*' else '')
+
+
+
+class OpenParenthesisToken(Token):
+    lbp = LBP.parenthesized_expr
+
+    def __str__(self):
+        return '(open parenthesis)'
+
+    def nud(self):
+        expr = self.parse_interface.expression(LBP.nothing)
+        self.parse_interface.advance(CloseParenthesisToken)
+        return expr
 
 
 

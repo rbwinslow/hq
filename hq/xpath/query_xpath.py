@@ -21,7 +21,7 @@ def _pick_token_for_and_or_or(parse_interface, value, previous_token):
     if previous_token is None or any(isinstance(previous_token, clazz) for clazz in name_test_predecessors):
         return NameTestToken(parse_interface, value)
     elif value == 'or':
-        return OrOperator(parse_interface, value)
+        return OrOperatorToken(parse_interface, value)
     else:
         return AndOperator(parse_interface, value)
 
@@ -60,6 +60,7 @@ token_config = [
     (r'(\*)', _pick_token_for_asterisk),
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(<=|<|>=|>)', RelationalOperatorToken),
+    (r'(\|)', UnionOperatorToken),
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),

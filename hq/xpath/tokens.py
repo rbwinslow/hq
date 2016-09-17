@@ -19,9 +19,9 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, predicate, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
+        nothing, union, predicate, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
         function_call, location_step, node_test, parenthesized_expr
-    ) = range(13)
+    ) = range(14)
 
 
 
@@ -351,7 +351,7 @@ class OpenParenthesisToken(Token):
 
 
 
-class OrOperator(Token):
+class OrOperatorToken(Token):
     lbp = LBP.or_op
 
     def __str__(self):
@@ -396,7 +396,7 @@ class RelationalOperatorToken(Token):
         def evaluate():
             left_value, right_value = self._evaluate_binary_operands(left, right)
             result = RelationalOperator(self.value).evaluate(left_value, right_value)
-            self._gab('returning {1}'.format(self, result))
+            self._gab('returning {0}'.format(result))
             return result
 
         return evaluate
@@ -426,3 +426,23 @@ class SlashToken(Token):
             return path.evaluate
         else:
             return lambda: make_node_set(soup_from_any_tag(get_context_node()))
+
+
+
+class UnionOperatorToken(Token):
+    lbp = LBP.union
+
+    def __str__(self):
+        return '(union operator)'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right, type_name='node set')
+            left_value.extend(right_value)
+            result = make_node_set(left_value)
+            self._gab('returning node set with {0} nodes'.format(len(result)))
+            return result
+
+        return evaluate

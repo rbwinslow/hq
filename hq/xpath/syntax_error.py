@@ -1,3 +1,0 @@
-
-class XpathSyntaxError(ValueError):
-    pass

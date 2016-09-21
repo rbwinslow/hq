@@ -1,0 +1,3 @@
+
+class HquerySyntaxError(ValueError):
+    pass

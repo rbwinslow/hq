@@ -1,7 +1,7 @@
 import re
 
 from hq.soup_util import debug_dump_long_string
-from hq.hquery.expression_context import evaluate_in_context
+from hq.hquery.evaluation_in_context import evaluate_in_context
 from hq.hquery.location_path import LocationPath
 
 from .tokens import *
@@ -105,15 +105,16 @@ class HqueryProcessor():
     next_token = None
 
 
-    def __init__(self, source):
+    def __init__(self, source, preserve_space=False):
         self.source = source
+        self.preserve_space = preserve_space
 
 
     def query(self, starting_node):
         verbose_print('PARSING HQUERY "{0}"'.format(debug_dump_long_string(self.source)), indent_after=True)
         expression_fn = self.parse()
         verbose_print('EVALUATING HQUERY', indent_after=True, outdent_before=True)
-        result = evaluate_in_context(starting_node, expression_fn)
+        result = evaluate_in_context(starting_node, expression_fn, preserve_space=self.preserve_space)
         verbose_print('HQUERY FINISHED', outdent_before=True)
         return result
 
@@ -153,7 +154,7 @@ class HqueryProcessor():
         result = self.advance_if(expected_classes)
         if result is None:
             class_names = ' or '.join([clz.__name__ for clz in expected_classes])
-            raise HquerySyntaxError('{0} expected; got {1}'.format(class_names, self.token.__class__.__name__))
+            raise HquerySyntaxError('expected {0}; got {1}'.format(class_names, self.token.__class__.__name__))
         return result
 
 

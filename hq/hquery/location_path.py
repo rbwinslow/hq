@@ -1,6 +1,7 @@
 from hq.soup_util import debug_dump_node, soup_from_any_tag
 from hq.verbosity import verbose_print
-from hq.hquery.expression_context import get_context_node, evaluate_across_contexts, peek_context, evaluate_in_context
+from hq.hquery.expression_context import get_context_node, peek_context
+from hq.hquery.evaluation_in_context import evaluate_across_contexts, evaluate_in_context
 from hq.hquery.functions.core_number import number
 from hq.hquery.object_type import make_node_set, is_number
 

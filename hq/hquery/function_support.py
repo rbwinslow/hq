@@ -11,9 +11,9 @@ class FunctionSupport:
 
     def call_function(self, name, *args):
         self._load_all_functions()
-        name = name.replace('-', '_')
+        py_name = name.replace('-', '_')
         try:
-            fn = self.all_functions[name]
+            fn = self.all_functions[py_name]
         except KeyError:
             raise HqueryEvaluationError('Unknown function name "{0}"'.format(name))
         return fn(*args)

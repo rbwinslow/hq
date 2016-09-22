@@ -270,7 +270,6 @@ class InterpolatedStringToken(Token):
         for clause in clauses[1:]:
             if clause[0] == '{':
                 expr, _, static = clause[1:].partition('}')
-                # expressions.append(lambda: 'PARSED({0})'.format(expr))
                 expressions.append(self.parse_interface.parse_in_new_processor(expr))
                 expressions.append(lambda: static)
             else:

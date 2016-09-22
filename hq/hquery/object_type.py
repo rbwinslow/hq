@@ -1,4 +1,7 @@
+import re
+
 from future.standard_library import install_aliases
+from hq.hquery.expression_context import peek_context
 
 install_aliases()
 
@@ -52,6 +55,10 @@ def make_node_set(node_set, reverse=False):
     return node_set
 
 
+def normalize_content(value):
+    return re.sub(r'\s+', ' ', string_value(value))
+
+
 def object_type(obj):
     if is_boolean(obj):
         return BOOLEAN
@@ -81,7 +88,10 @@ def object_type_name(obj):
 
 def string_value(obj):
     if is_tag_node(obj):
-        return ''.join(obj.stripped_strings)
+        if peek_context().preserve_space:
+            return ''.join(obj.strings)
+        else:
+            return normalize_content(''.join(obj.stripped_strings))
     elif is_attribute_node(obj):
         return obj.value
     elif is_text_node(obj) or is_number(obj):

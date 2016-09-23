@@ -1,5 +1,3 @@
-import re
-
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.object_type import string_value, normalize_content
 

@@ -1,5 +1,6 @@
 from builtins import str
 from bs4 import BeautifulSoup
+from hq.string_util import truncate_string
 
 from .verbosity import verbose_print
 
@@ -25,13 +26,7 @@ class AttributeNode:
 
 
 def debug_dump_long_string(s, length=50, one_line=True, suffix='...'):
-    if len(s) <= length:
-        result = s
-    else:
-        result = s[:length].rsplit(' ', 1)[0] + suffix
-    if one_line:
-        result = result.replace('\n', '\\n')
-    return result
+    truncate_string(s, length, one_line, suffix)
 
 
 def debug_dump_node(obj):

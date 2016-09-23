@@ -12,3 +12,36 @@ def test_element_node_becomes_normalized_text_contents_in_interpolated_string():
         foo   bar
     </p>"""
     assert query_html_doc(html_body, '`-->${//p}<--`') == expected_result('-->foo bar<--')
+
+
+def test_join_filter_joins_string_values_from_node_set():
+    html_body = """
+    <p>one</p>
+    <p>two</p>
+    <p>three</p>"""
+    assert query_html_doc(html_body, '`${j:,://p}`') == expected_result('one,two,three')
+
+
+def test_join_filter_defaults_to_empty_string_delimiter():
+    html_body = """
+    <p>one</p>
+    <p>two</p>"""
+    assert query_html_doc(html_body, '`${j:://p}`') == expected_result('onetwo')
+
+
+def test_truncate_filter_elides_contents():
+    html_body = "<p>The quick brown fox jumped over the lazy dog.</p>"
+    assert query_html_doc(html_body, '`${t:23:?://p}`') == expected_result('The quick brown fox?')
+
+
+def test_truncate_filter_defaults_to_no_suffix():
+    html_body = "<p>short, sharp shock</p>"
+    assert query_html_doc(html_body, '`${t:15:://p}`') == expected_result('short, sharp')
+
+
+def test_filters_chain_left_to_right():
+    html_body = """
+    <p>one</p>
+    <p>two</p>
+    <p>three</p>"""
+    assert query_html_doc(html_body, '`${j:, :t:12: ...://p} whatever!`') == expected_result('one, two, ... whatever!')

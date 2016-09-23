@@ -1,3 +1,4 @@
+from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.soup_util import soup_from_any_tag, debug_dump_node
 from hq.verbosity import verbose_print
 from hq.hquery.equality_operators import equals, not_equals
@@ -260,22 +261,7 @@ class InterpolatedStringToken(Token):
         super(InterpolatedStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
 
     def nud(self):
-        expressions = self._parse_contents()
-        return lambda: ''.join([string_value(exp()) for exp in expressions])
-
-    def _parse_contents(self):
-        expressions = []
-        clauses = self.value.split('$')
-        expressions.append(lambda: clauses[0])
-        for clause in clauses[1:]:
-            if clause[0] == '{':
-                expr, _, static = clause[1:].partition('}')
-                expressions.append(self.parse_interface.parse_in_new_processor(expr))
-                expressions.append(lambda: static)
-            else:
-                # parse variable
-                pass
-        return expressions
+        return parse_interpolated_string(self.value, self.parse_interface)
 
 
 class LeftBraceToken(Token):

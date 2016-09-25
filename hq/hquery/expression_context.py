@@ -1,5 +1,5 @@
-from hq.soup_util import debug_dump_node
 from hq.verbosity import verbose_print
+from ..soup_util import debug_dump_node
 
 context_stack = []
 

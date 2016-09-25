@@ -88,8 +88,8 @@ def equals(first, second):
         op = equality_ops_table[first_type if not reverse else second_type][second_type if not reverse else first_type]
         return boolean(op(first if not reverse else second, second if not reverse else first))
     except TypeError:
-        raise HqueryEvaluationError('type mismatch comparing {0} and {1} for equality'.format(object_type_name(first_type),
-                                                                                              object_type_name(second_type)))
+        msg = 'type mismatch comparing {0} and {1} for equality'
+        raise HqueryEvaluationError(msg.format(object_type_name(first_type), object_type_name(second_type)))
 
 
 def not_equals(first, second):

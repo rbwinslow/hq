@@ -1,10 +1,10 @@
 import re
 
-from hq.soup_util import debug_dump_long_string
 from hq.hquery.evaluation_in_context import evaluate_in_context
 from hq.hquery.location_path import LocationPath
 
 from .tokens import *
+from ..soup_util import debug_dump_long_string
 from ..verbosity import verbose_print
 
 
@@ -42,6 +42,14 @@ def _pick_token_for_div_or_mod(parse_interface, value, previous_token):
                                                 NameTestToken)
 
 
+def _pick_token_for_to(parse_interface, value, previous_token):
+    return _pick_token_based_on_numeric_context(parse_interface,
+                                                value,
+                                                previous_token,
+                                                RangeOperatorToken,
+                                                NameTestToken)
+
+
 token_config = [
     (r'(//)', DoubleSlashToken),
     (r'(/)', SlashToken),
@@ -65,6 +73,7 @@ token_config = [
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
+    (r'(to)', _pick_token_for_to),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\()', OpenParenthesisToken),
     (r'(\w[\w\-]*)', NameTestToken),

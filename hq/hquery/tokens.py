@@ -20,7 +20,7 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, union, predicate, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
+        nothing, union, range, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
         function_call, location_step, node_test, parenthesized_expr
     ) = range(14)
 
@@ -265,7 +265,7 @@ class InterpolatedStringToken(Token):
 
 
 class LeftBraceToken(Token):
-    lbp = LBP.predicate
+    lbp = LBP.nothing
 
     def __str__(self):
         return '(left-brace)'
@@ -392,6 +392,26 @@ class ParentNodeToken(Token):
 
     def nud(self):
         return self.parse_interface.location_path(self).evaluate
+
+
+
+class RangeOperatorToken(Token):
+    lbp = LBP.range
+
+    def __str__(self):
+        return '(range-operator)'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left,
+                                                                     right,
+                                                                     constructor=number,
+                                                                     type_name='number')
+            return list(range(int(left_value), int(right_value + 1)))
+
+        return evaluate
 
 
 

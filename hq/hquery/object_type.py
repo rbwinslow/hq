@@ -20,11 +20,15 @@ def is_boolean(obj):
 
 
 def is_node_set(obj):
-    return isinstance(obj, list)
+    return isinstance(obj, list) and all(is_any_node(x) for x in obj)
 
 
 def is_number(obj):
     return obj.__class__.__name__ == 'number'
+
+
+def is_sequence(obj):
+    return isinstance(obj, list)
 
 
 def is_string(obj):

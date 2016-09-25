@@ -1,7 +1,7 @@
 from builtins import str
 from bs4 import BeautifulSoup
-from hq.string_util import truncate_string
 
+from .string_util import truncate_string
 from .verbosity import verbose_print
 
 

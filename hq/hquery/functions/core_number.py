@@ -22,6 +22,9 @@ class number:
     def __float__(self):
         return self.value
 
+    def __int__(self):
+        return int(self.value)
+
     def __str__(self):
         return str(self.value)
 
@@ -29,40 +32,45 @@ class number:
         return self.value.__hash__()
 
     def __add__(self, other):
-        return number(self.value + other.value)
+        return number(self.value + self._value_of_other_operand(other))
 
     def __sub__(self, other):
-        return number(self.value - other.value)
+        return number(self.value - self._value_of_other_operand(other))
 
     def __neg__(self):
         return number(-self.value)
 
     def __mul__(self, other):
-        return number(self.value * other.value)
+        return number(self.value * self._value_of_other_operand(other))
 
     def __div__(self, other):
         return self.__truediv__(other)
 
     def __truediv__(self, other):
-        if other.value == 0:
+        other = self._value_of_other_operand(other)
+        if other == 0:
             return number(float('nan'))
         else:
-            return number(self.value / other.value)
+            return number(self.value / other)
 
     def __mod__(self, other):
-        return number(self.value % other.value)
+        return number(self.value % self._value_of_other_operand(other))
 
     def __eq__(self, other):
-        return is_number(other) and self.value == other.value
+        return self.value == self._value_of_other_operand(other)
 
     def __ge__(self, other):
-        return self.value >= other.value
+        return self.value >= self._value_of_other_operand(other)
 
     def __gt__(self, other):
-        return self.value > other.value
+        return self.value > self._value_of_other_operand(other)
 
     def __le__(self, other):
-        return self.value <= other.value
+        return self.value <= self._value_of_other_operand(other)
 
     def __lt__(self, other):
-        return self.value < other.value
+        return self.value < self._value_of_other_operand(other)
+
+    @staticmethod
+    def _value_of_other_operand(other):
+        return other.value if is_number(other) else other

@@ -10,17 +10,17 @@ class number:
         if isinstance(obj, number):
             self.value = obj.value
         elif is_boolean(obj):
-            self.value = float(1 if obj else 0)
+            self.value = 1 if obj else 0
         elif is_node_set(obj) or is_any_node(obj):
-            self.value = float(string_value(obj))
+            self.value = self._int_or_float(float(string_value(obj)))
         else:
             try:
-                self.value = float(obj)
+                self.value = self._int_or_float(float(obj))
             except ValueError:
                 self.value = float('nan')
 
     def __float__(self):
-        return self.value
+        return float(self.value)
 
     def __int__(self):
         return int(self.value)
@@ -70,6 +70,13 @@ class number:
 
     def __lt__(self, other):
         return self.value < self._value_of_other_operand(other)
+
+    @staticmethod
+    def _int_or_float(numeric_value):
+        if isinstance(numeric_value, int) or numeric_value % 1 != 0:
+            return numeric_value
+        else:
+            return int(numeric_value)
 
     @staticmethod
     def _value_of_other_operand(other):

@@ -6,7 +6,7 @@ from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
 from hq.hquery.node_test import NodeTest
-from hq.hquery.object_type import make_node_set, object_type_name, string_value
+from hq.hquery.object_type import make_node_set, object_type_name, string_value, is_sequence
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.syntax_error import HquerySyntaxError
@@ -17,12 +17,15 @@ from .expression_context import get_context_node
 function_support = FunctionSupport()
 
 
+
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, union, range, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div, prefix_op,
-        function_call, location_step, node_test, parenthesized_expr
-    ) = range(14)
+        nothing, sequence, union, range, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div,
+        prefix_op, function_call, location_step, node_test, parenthesized_expr
+    ) = range(15)
+
+assert LBP.sequence == LBP.nothing + 1
 
 
 
@@ -155,10 +158,39 @@ class CloseParenthesisToken(Token):
 
 
 class CommaToken(Token):
-    lbp = LBP.nothing
+    lbp = LBP.sequence
 
     def __str__(self):
         return '(comma)'
+
+    def led(self, left):
+        right = self.parse_interface.expression(self.lbp)
+
+        def evaluate():
+            left_value, right_value = self._evaluate_binary_operands(left, right)
+            if is_sequence(left_value):
+                if is_sequence(right_value):
+                    self._gab('concatenating sequences with lengths {0} and {1}'.format(len(left_value),
+                                                                                       len(right_value)))
+                    left_value.extend(right_value)
+                else:
+                    self._gab('appending {0} to sequence of length {1}'.format(object_type_name(right_value),
+                                                                               len(left_value)))
+                    left_value.append(right_value)
+                result = left_value
+            else:
+                if is_sequence(right_value):
+                    self._gab('prepending {0} to sequence of length {1}'.format(object_type_name(left_value),
+                                                                                len(right_value)))
+                    right_value.insert(0, left_value)
+                    result = right_value
+                else:
+                    self._gab('assembling sequence from {0} and {1}'.format(object_type_name(left_value),
+                                                                            object_type_name(right_value)))
+                    result = [left_value, right_value]
+            return result
+
+        return evaluate
 
 
 
@@ -238,7 +270,7 @@ class FunctionCallToken(Token):
         arg_generators = []
 
         while (not isinstance(self.parse_interface.peek(), CloseParenthesisToken)):
-            arg_generators.append(self.parse_interface.expression(LBP.nothing))
+            arg_generators.append(self.parse_interface.expression(LBP.sequence))
             self.parse_interface.advance_if(CommaToken)
 
         self.parse_interface.advance(CloseParenthesisToken)
@@ -409,7 +441,7 @@ class RangeOperatorToken(Token):
                                                                      right,
                                                                      constructor=number,
                                                                      type_name='number')
-            return list(range(int(left_value), int(right_value + 1)))
+            return list(number(x) for x in range(int(left_value), int(right_value + 1)))
 
         return evaluate
 

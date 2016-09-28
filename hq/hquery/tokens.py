@@ -1,16 +1,21 @@
-from hq.hquery.string_interpolation import parse_interpolated_string
-from hq.hquery.variables import value_of_variable
-from hq.soup_util import soup_from_any_tag, debug_dump_node
-from hq.verbosity import verbose_print
+import re
+from html.entities import name2codepoint
+
 from hq.hquery.equality_operators import equals, not_equals
+from hq.hquery.evaluation_error import HqueryEvaluationError
+from hq.hquery.flwor import Flwor
 from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
 from hq.hquery.node_test import NodeTest
-from hq.hquery.object_type import make_node_set, object_type_name, string_value, is_sequence, sequence_concat
-from hq.hquery.evaluation_error import HqueryEvaluationError
+from hq.hquery.object_type import make_node_set, object_type_name, sequence_concat
 from hq.hquery.relational_operators import RelationalOperator
+from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.hquery.syntax_error import HquerySyntaxError
+from hq.hquery.variables import value_of_variable
+from hq.soup_util import soup_from_any_tag, debug_dump_node, debug_dump_long_string
+from hq.string_util import html_entity_decode
+from hq.verbosity import verbose_print
 
 from .axis import Axis
 from .expression_context import get_context_node
@@ -22,9 +27,9 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, sequence, union, range, or_op, and_op, equality_op, relational_op, add_or_subtract, mult_or_div,
-        prefix_op, function_call, location_step, node_test, parenthesized_expr
-    ) = range(15)
+        nothing, sequence, union, range, abbrev_flwor, or_op, and_op, equality_op, relational_op, add_or_subtract,
+        mult_or_div, prefix_op, function_call, location_step, node_test, parenthesized_expr
+    ) = range(16)
 
 assert LBP.sequence == LBP.nothing + 1
 
@@ -78,6 +83,21 @@ class Token(object):
     def _gab(self, msg, **kwargs):
         verbose_print('{0} {1}'.format(self, msg), **kwargs)
 
+
+
+class AbbreviatedFlworOperatorToken(Token):
+    lbp = LBP.abbrev_flwor
+
+    def __str__(self):
+        return '(abbreviated-FLWOR-operator)'
+
+    def led(self, left):
+        right = self.parse_interface.expression()
+
+        flwor = Flwor()
+        flwor.set_iteration_expression('_', left)
+        flwor.set_return_expression(right)
+        return flwor.evaluate
 
 
 class AddOrSubtractOperatorToken(Token):
@@ -296,7 +316,10 @@ class InterpolatedStringToken(Token):
     lbp = LBP.nothing
 
     def __init__(self, parse_interface, value, **kwargs):
-        super(InterpolatedStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
+        super(InterpolatedStringToken, self).__init__(parse_interface, html_entity_decode(value[1:-1]), **kwargs)
+
+    def __str__(self):
+        return '(interpolated-string "{0}")'.format(self.value)
 
     def nud(self):
         return parse_interpolated_string(self.value, self.parse_interface)
@@ -325,7 +348,7 @@ class LiteralStringToken(Token):
     lbp = LBP.nothing
 
     def __init__(self, parse_interface, value, **kwargs):
-        super(LiteralStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
+        super(LiteralStringToken, self).__init__(parse_interface, html_entity_decode(value[1:-1]), **kwargs)
 
     def __str__(self):
         return '(literal-string "{0}")'.format(self.value)
@@ -531,7 +554,7 @@ class VariableToken(Token):
 
         def evaluate():
             result = value_of_variable(self.value)
-            self._gab('reference evaluating to value {0}'.format(result))
+            self._gab('reference evaluating to value {0}'.format(debug_dump_long_string(str(result))))
             return result
 
         return evaluate

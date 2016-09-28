@@ -3,6 +3,7 @@ import re
 from hq.hquery.functions.extend_string import join
 from hq.hquery.object_type import string_value
 from hq.hquery.syntax_error import HquerySyntaxError
+from hq.soup_util import debug_dump_long_string
 from hq.string_util import truncate_string
 from hq.verbosity import verbose_print
 
@@ -59,26 +60,52 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
 
 
 def parse_interpolated_string(source, parse_interface):
-    verbose_print('Parsing interpolated string contents `{0}`'.format(source))
+    verbose_print('Parsing interpolated string contents `{0}`'.format(source), indent_after=True)
     expressions = []
     clauses = _split_at_embedding_dollars_but_not_dollars_inside_expressions(source)
-    expressions.append(lambda: clauses[0])
+    if len(clauses[0]) > 0:
+        verbose_print('Adding static evaluator for substring "{0}"'.format(debug_dump_long_string(clauses[0])))
+        expressions.append(lambda: clauses[0])
     for clause in clauses[1:]:
         if clause[0] == '{':
             inside, _, outside = clause[1:].partition('}')
             verbose_print('Parsing embedded expression "{0}"'.format(inside))
             expressions.append(reduce_filters_and_expression(inside, parse_interface))
-            expressions.append(lambda: outside)
+            if len(outside) > 0:
+                verbose_print('Adding static evaluator for substring "{0}"'.format(debug_dump_long_string(outside)))
+                expressions.append(_make_static_literal_evaluator(outside))
         else:
             name_match = re.match(r'[_\w][_\w\-]*', clause)
             if name_match is None:
                 msg = 'Invalid character "{0}" following "$" in interpolated string'
                 raise HquerySyntaxError(msg.format(clause[0]))
             outside_index = name_match.span()[1]
-            verbose_print('Parsing variable reference "{0}"'.format(clause[:outside_index]))
+            verbose_print('Parsing variable reference "${0}"'.format(clause[:outside_index]))
             expressions.append(parse_interface.parse_in_new_processor('${0}'.format(clause[:outside_index])))
-            expressions.append(lambda: clause[outside_index:])
-    return lambda: ''.join([string_value(exp()) for exp in expressions])
+            if outside_index < len(clause):
+                verbose_print('Adding static evaluator for substring "{0}"'.format(
+                    debug_dump_long_string(clause[outside_index:])
+                ))
+                expressions.append(_make_static_literal_evaluator(clause[outside_index:]))
+
+    def evaluate():
+        chunks = [string_value(exp()) for exp in expressions]
+        verbose_print(u'Interpolated string evaluation assembling {0} chunks{1}.'.format(
+            len(chunks),
+            '' if len(chunks) == 0 else u' ("{0}")'.format('", "'.join(chunks)))
+        )
+        return ''.join(chunks)
+
+    verbose_print(
+        'Finished parsing interpolated string "{0}" ({1} chunks found)'.format(debug_dump_long_string(source),
+                                                                               len(expressions)),
+        outdent_before=True
+    )
+    return evaluate
+
+
+def _make_static_literal_evaluator(value):
+    return lambda: value
 
 
 def _split_at_embedding_dollars_but_not_dollars_inside_expressions(source):

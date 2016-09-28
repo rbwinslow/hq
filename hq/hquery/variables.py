@@ -1,10 +1,11 @@
+from hq.soup_util import debug_dump_long_string
 from hq.verbosity import verbose_print
 
 variable_stack = []
 NAME, VALUE = range(2)
 
 
-class variable_context:
+class variable_scope:
     def __enter__(self):
         self.mark = len(variable_stack)
 
@@ -14,7 +15,7 @@ class variable_context:
 
 def push_variable(name, value):
     global variable_stack
-    verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, value))
+    verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_long_string(str(value))))
     variable_stack.append((name, value))
 
 

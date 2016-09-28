@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
@@ -25,53 +24,6 @@ def test_boolean_function_converts_node_sets_according_to_w3c_rules():
 def test_boolean_function_converts_strings_according_to_w3c_rules():
     assert query_html_doc('', 'boolean("")') == expected_result('false')
     assert query_html_doc('', 'boolean(" ")') == expected_result('true')
-
-
-def test_matches_function_performs_regex_matching_as_per_xpath_30_functions_spec():
-    html_body = """
-    <p>moe</p>
-    <p>larry</p>
-    <p>curly</p>"""
-
-    assert query_html_doc(html_body, '//p[matches(text(), "^l[ary]+")]/text()') == expected_result('larry')
-    assert query_html_doc(html_body, '//p[matches(text(), ".URL.", "i")]/text()') == expected_result('curly')
-
-
-def test_matches_function_supports_a_subset_of_xpath_30_flag_values():
-    html_body = """
-    <p>first</p>
-    <p>second one</p>
-    <p>
-        multiple
-        lines
-        of
-        text
-    </p>"""
-    multiline_pattern = r'.+multiple.+text.+'
-
-    assert query_html_doc(html_body, r'//p[matches(text(), "\w+RST", "i")]/text()') == expected_result('first')
-    assert query_html_doc(html_body, r'//p[matches(text(), ".+lines.+text")]', preserve_space=True) == ''
-    assert re.match(
-        multiline_pattern,
-        query_html_doc(html_body, r'//p[matches(text(), ".+lines.+text", "s")]', preserve_space=True),
-        re.S
-    )
-    assert query_html_doc(html_body, r'//p[matches(text(), "^ *lines$")]', preserve_space=True) == ''
-    assert re.match(
-        multiline_pattern,
-        query_html_doc(html_body, r'//p[matches(text(), "^\s*lines$", "m")]', preserve_space=True),
-        re.S
-    )
-    assert query_html_doc(html_body, r'//p[matches(text(), "sec  ond\sone")]/text()') == ''
-    assert query_html_doc(html_body, r'//p[matches(text(), "sec  ond\sone", "x")]/text()') == 'second one'
-
-
-def test_matches_function_extends_to_using_context_node_when_passed_no_input_string():
-    html_body = """
-    <p>bar</p>
-    <p>foo</p>"""
-
-    assert query_html_doc(html_body, '//p[matches("^f.+")]/text()') == expected_result('foo')
 
 
 def test_not_function_produces_expected_results():

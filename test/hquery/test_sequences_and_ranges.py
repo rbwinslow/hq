@@ -31,9 +31,19 @@ def test_range_within_sequence_constructor_collapses_into_sequence():
     3
     4""")
 
+
 def test_sequences_collapse():
     assert query_html_doc('', '(1, (2, 3), 4)') == expected_result("""
     1
     2
     3
     4""")
+
+
+def test_string_value_of_a_sequence_is_concatenation_of_all_items_unlike_node_set():
+    html_body = """
+    <p>one</p>
+    <p>two</p>"""
+
+    assert query_html_doc(html_body, 'let $_ := //p/text() return string($_)') == 'one'
+    assert query_html_doc(html_body, 'let $_ := ("one", "two") return string($_)') == 'onetwo'

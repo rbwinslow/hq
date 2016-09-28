@@ -78,6 +78,7 @@ token_config = [
     (r'(,)', CommaToken),
     (r'(@)', AxisToken),
     (r'(\*)', _pick_token_for_asterisk),
+    (r'(->)', AbbreviatedFlworOperatorToken),
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(<=|<|>=|>)', RelationalOperatorToken),
     (r'(\|)', UnionOperatorToken),
@@ -221,13 +222,15 @@ class HqueryProcessor():
 
 
     def parse_flwor_for(self, flwor):
-        if flwor.sequence_expression is not None:
-            raise HquerySyntaxError('More than one "for" clause found in FLWOR "{0}"'.format(flwor.debug_dump()))
-        flwor.sequence_variable = self.advance(VariableToken).value
+        variable_name = self.advance(VariableToken).value
+
         in_token = self.advance_over_name()
         if in_token.value.lower() != 'in':
             raise HquerySyntaxError('FLWOR expected reserved word "in," got "{0}"'.format(in_token.value))
-        flwor.sequence_expression = self.expression()
+
+        iteration_expression = self.expression()
+
+        flwor.set_iteration_expression(variable_name, iteration_expression)
 
 
     def parse_flwor_let(self, flwor):
@@ -238,9 +241,7 @@ class HqueryProcessor():
 
 
     def parse_flwor_return(self, flwor):
-        if flwor.return_expression is not None:
-            raise HquerySyntaxError('More than one return clause found for FLWOR {0}'.format(flwor))
-        flwor.return_expression = self.expression()
+        flwor.set_return_expression(self.expression())
 
 
     def parse_location_path(self, first_token, root_expression=None):

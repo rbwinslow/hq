@@ -14,6 +14,14 @@ def test_element_node_becomes_normalized_text_contents_in_interpolated_string():
     assert query_html_doc(html_body, '`-->${//p}<--`') == expected_result('-->foo bar<--')
 
 
+def test_text_between_embedded_expressions_gets_picked_up():
+    html_body = """
+    <p>one</p>
+    <p>two</p>
+    <p>three</p>"""
+    assert query_html_doc(html_body, 'let $_ := 2 return `${//p[1]}, $_, ${//p[3]}`') == 'one, 2, three'
+
+
 def test_join_filter_joins_string_values_from_node_set():
     html_body = """
     <p>one</p>

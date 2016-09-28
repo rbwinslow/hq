@@ -107,3 +107,25 @@ def test_variables_before_for_have_global_scope_and_within_for_have_iteration_sc
     2
     2
     true""")
+
+
+def test_flwor_with_multiple_for_clauses_is_a_syntax_error():
+    with raises(HquerySyntaxError):
+        query_html_doc('', 'for $x in (1, 2) let $y := 0 for $z in (3, 4) return $z')
+
+
+def test_flwor_with_multiple_return_clauses_is_a_syntax_error():
+    with raises(HquerySyntaxError):
+        query_html_doc('', 'let $x := 0 return $x return $x + 1')
+
+
+def test_abbreviated_flowr_provides_expected_iteration_variable_in_value_clause():
+    html_body = """
+    <p>one</p>
+    <p>two</p>
+    <p>three</p>"""
+
+    assert query_html_doc(html_body, '//p -> $_/text()') == expected_result("""
+    one
+    two
+    three""")

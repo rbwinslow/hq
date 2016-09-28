@@ -14,7 +14,7 @@ class FunctionSupport:
         self._load_all_functions()
 
         py_name = name.replace('-', '_')
-        if name in ('not',):
+        if name in ('class', 'not'):
             py_name += '_'
 
         try:

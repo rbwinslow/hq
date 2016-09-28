@@ -1,5 +1,6 @@
 from hq.hquery.object_type import make_sequence, sequence_concat, make_node_set
-from hq.hquery.variables import push_variable, variable_context
+from hq.hquery.syntax_error import HquerySyntaxError
+from hq.hquery.variables import push_variable, variable_scope
 from hq.soup_util import debug_dump_long_string
 from hq.verbosity import verbose_print
 
@@ -41,12 +42,26 @@ class Flwor:
         else:
             result = self._evaluate_without_iteration()
 
-        verbose_print('FLWOR evaluation completed; returning {0}'.format(result), outdent_before=True)
+        verbose_print('FLWOR evaluation completed; returning {0}'.format(debug_dump_long_string(str(result))),
+                      outdent_before=True)
         return result
 
 
+    def set_iteration_expression(self, variable_name, expression_fn):
+        if self.sequence_expression is not None:
+            raise HquerySyntaxError('More than one "for" clause found in FLWOR "{0}"'.format(self.debug_dump()))
+        self.sequence_variable = variable_name
+        self.sequence_expression = expression_fn
+
+
+    def set_return_expression(self, expression_fn):
+        if self.return_expression is not None:
+            raise HquerySyntaxError('More than one return clause found for FLWOR {0}'.format(self.debug_dump()))
+        self.return_expression = expression_fn
+
+
     def _evaluate_iteration(self):
-        with variable_context():
+        with variable_scope():
             self._push_global_variables()
 
             sequence = make_sequence(self.sequence_expression())
@@ -56,7 +71,7 @@ class Flwor:
             for item in sequence:
                 verbose_print('Visiting item {0}'.format(debug_dump_long_string(str(item))), indent_after=True)
 
-                with variable_context():
+                with variable_scope():
                     push_variable(self.sequence_variable, make_sequence(item))
                     self._push_iteration_variables()
                     this_result = make_sequence(self.return_expression())
@@ -69,7 +84,7 @@ class Flwor:
 
 
     def _evaluate_without_iteration(self):
-        with variable_context():
+        with variable_scope():
             self._push_global_variables()
             verbose_print('Evaluating return expression.', indent_after=True)
             result = self.return_expression()

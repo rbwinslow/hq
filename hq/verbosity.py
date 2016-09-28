@@ -26,6 +26,6 @@ def verbose_print(text, indent_after=False, outdent_before=False):
         if outdent_before:
             pop_indent()
         if getattr(settings, 'VERBOSE'):
-            print('{0}{1}'.format(' ' * indent_level, text), file=sys.stderr)
+            print(u'{0}{1}'.format(' ' * indent_level, text), file=sys.stderr)
         if indent_after:
             push_indent()

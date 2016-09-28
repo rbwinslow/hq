@@ -89,3 +89,21 @@ def test_rooted_location_paths_work_with_both_kinds_of_slash():
     <div>
      bar
     </div>""")
+
+
+def test_variables_before_for_have_global_scope_and_within_for_have_iteration_scope():
+    query = """
+    let $x := 2
+    let $z := $x
+    for $_ in (1, $x)
+    let $y := $_
+    let $x := $_
+    return ($x, $z, $x = $y)"""
+
+    assert query_html_doc('', ' '.join(query.split('\n'))) == expected_result("""
+    1
+    2
+    true
+    2
+    2
+    true""")

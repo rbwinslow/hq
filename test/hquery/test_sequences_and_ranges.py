@@ -9,6 +9,21 @@ def test_range_expression_produces_expected_sequence():
     3""")
 
 
+def test_range_expression_works_without_parentheses():
+    assert query_html_doc('', '1 to 3') == expected_result("""
+    1
+    2
+    3""")
+
+
+def test_range_operator_is_interpreted_as_name_test_in_appropriate_contexts():
+    html_body = '<to>from</to>'
+    assert query_html_doc(html_body, '//to') == expected_result("""
+    <to>
+     from
+    </to>""")
+
+
 def test_range_within_sequence_constructor_collapses_into_sequence():
     assert query_html_doc('', '(1, 2 to 4)') == expected_result("""
     1

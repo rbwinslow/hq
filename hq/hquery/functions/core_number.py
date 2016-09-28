@@ -26,7 +26,10 @@ class number:
         return int(self.value)
 
     def __str__(self):
-        return str(self.value)
+        result = str(self.value)
+        if result == 'nan':
+            result = 'NaN'
+        return result
 
     def __hash__(self):
         return self.value.__hash__()

@@ -1,4 +1,5 @@
 from hq.hquery.string_interpolation import parse_interpolated_string
+from hq.hquery.variables import value_of_variable
 from hq.soup_util import soup_from_any_tag, debug_dump_node
 from hq.verbosity import verbose_print
 from hq.hquery.equality_operators import equals, not_equals
@@ -134,6 +135,14 @@ class AndOperator(Token):
 
 
 
+class AssignmentOperatorToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(assignment-operator)'
+
+
+
 class AxisToken(Token):
     lbp = LBP.nothing
 
@@ -257,6 +266,20 @@ class EqualityOperatorToken(Token):
             return result
 
         return evaluate
+
+
+
+class FlworReservedWordToken(Token):
+    lbp = LBP.nothing
+
+    def __init__(self, parse_interface, value, **kwargs):
+        super(FlworReservedWordToken, self).__init__(parse_interface, value.lower(), **kwargs)
+
+    def __str__(self):
+        return '({0})'.format(self.value)
+
+    def nud(self):
+        return self.parse_interface.flwor(self).evaluate
 
 
 
@@ -506,6 +529,22 @@ class UnionOperatorToken(Token):
             left_value.extend(right_value)
             result = make_node_set(left_value)
             self._gab('returning node set with {0} nodes'.format(len(result)))
+            return result
+
+        return evaluate
+
+
+class VariableToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(variable ${0})'.format(self.value)
+
+    def nud(self):
+
+        def evaluate():
+            result = value_of_variable(self.value)
+            self._gab('reference evaluating to value {0}'.format(result))
             return result
 
         return evaluate

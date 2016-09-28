@@ -1,11 +1,16 @@
 import re
 
 from hq.hquery.evaluation_in_context import evaluate_in_context
+from hq.hquery.flwor import Flwor
 from hq.hquery.location_path import LocationPath
 
 from .tokens import *
 from ..soup_util import debug_dump_long_string
 from ..verbosity import verbose_print
+
+
+def _is_name_test_predecessor(token):
+    return any(isinstance(token, clazz) for clazz in (AxisToken, SlashToken, DoubleSlashToken))
 
 
 def _pick_token_based_on_numeric_context(parse_interface, value, previous_token, numeric_class, other_class):
@@ -17,8 +22,7 @@ def _pick_token_based_on_numeric_context(parse_interface, value, previous_token,
 
 
 def _pick_token_for_and_or_or(parse_interface, value, previous_token):
-    name_test_predecessors = (AxisToken, SlashToken, DoubleSlashToken)
-    if previous_token is None or any(isinstance(previous_token, clazz) for clazz in name_test_predecessors):
+    if previous_token is None or _is_name_test_predecessor(previous_token):
         return NameTestToken(parse_interface, value)
     elif value == 'or':
         return OrOperatorToken(parse_interface, value)
@@ -40,6 +44,13 @@ def _pick_token_for_div_or_mod(parse_interface, value, previous_token):
                                                 previous_token,
                                                 DivOrModOperatorToken,
                                                 NameTestToken)
+
+
+def _pick_token_for_flwor_reserved_word(parse_interface, value, previous_token):
+    if _is_name_test_predecessor(previous_token):
+        return NameTestToken(parse_interface, value)
+    else:
+        return FlworReservedWordToken(parse_interface, value)
 
 
 def _pick_token_for_to(parse_interface, value, previous_token):
@@ -70,6 +81,9 @@ token_config = [
     (r'(\+|-)', AddOrSubtractOperatorToken),
     (r'(<=|<|>=|>)', RelationalOperatorToken),
     (r'(\|)', UnionOperatorToken),
+    (r'\$([_\w][\w_\-]*)', VariableToken),
+    (r'(:=)', AssignmentOperatorToken),
+    (r'(let|return)', _pick_token_for_flwor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
@@ -93,6 +107,9 @@ class ParseInterface:
 
     def expression(self, rbp=0):
         return self.processor.expression(rbp)
+
+    def flwor(self, first_token):
+        return self.processor.parse_flwor(first_token)
 
     def is_on(self, *token_classes):
         return self.processor.token_is(*token_classes)
@@ -171,7 +188,43 @@ class HqueryProcessor():
         generator = self.tokenize()
         self.next_token = generator.__next__ if hasattr(generator, '__next__') else generator.next
         self.token = self.next_token()
-        return self.expression()
+        evaluation_fn = self.expression()
+        if not self.token_is(EndToken):
+            raise HquerySyntaxError('Unexpected token {0} beyond end of HQuery'.format(self.token))
+        return evaluation_fn
+
+
+    def parse_flwor(self, first_token):
+        verbose_print('Parsing FLWOR starting with {0}'.format(first_token), indent_after=True)
+
+        flwor = Flwor()
+        token = first_token
+        while True:
+            if isinstance(token, FlworReservedWordToken):
+                getattr(self, 'parse_flwor_{0}'.format(token.value))(flwor)
+                if token.value == 'return':
+                    break
+            else:
+                raise HquerySyntaxError('Unexpected token {0} at beginning of FLWOR'.format(first_token))
+            token = self.advance_if(FlworReservedWordToken)
+            if token is None:
+                break
+
+        verbose_print('Finished parsing FLWOR {0}'.format(debug_dump_long_string(str(flwor))), outdent_before=True)
+        return flwor
+
+
+    def parse_flwor_let(self, flwor):
+        variable_token = self.advance(VariableToken)
+        self.advance(AssignmentOperatorToken)
+        expression = self.expression()
+        flwor.append_let(variable_token.value, expression)
+
+
+    def parse_flwor_return(self, flwor):
+        if flwor.return_expression is not None:
+            raise HquerySyntaxError('More than one return clause found for FLWOR {0}'.format(flwor))
+        flwor.return_expression = self.expression()
 
 
     def parse_location_path(self, first_token):
@@ -252,12 +305,12 @@ class HqueryProcessor():
         expressions = []
         while self.advance_if(LeftBraceToken):
             verbose_print('parsing predicate expression starting with {0}'.format(self.token))
-            expressions.append(self.expression(LBP.nothing))
+            expressions.append(self.expression())
             self.advance(RightBraceToken)
         return expressions
 
 
-    def expression(self, rbp=0):
+    def expression(self, rbp=LBP.nothing):
         t = self.token
         verbose_print('parsing expression starting with {0} (RBP={1})'.format(t, rbp), indent_after=True)
         self.token = self.next_token()

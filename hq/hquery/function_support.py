@@ -9,14 +9,21 @@ from hq.hquery.evaluation_error import HqueryEvaluationError
 class FunctionSupport:
     all_functions = None
 
+
     def call_function(self, name, *args):
         self._load_all_functions()
+
         py_name = name.replace('-', '_')
+        if name in ('not',):
+            py_name += '_'
+
         try:
             fn = self.all_functions[py_name]
         except KeyError:
             raise HqueryEvaluationError('Unknown function name "{0}"'.format(name))
+
         return fn(*args)
+
 
     def _load_all_functions(self):
         if self.all_functions is None:

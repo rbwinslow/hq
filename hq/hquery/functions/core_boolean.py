@@ -3,7 +3,7 @@ from math import isnan
 from hq.hquery.object_type import is_node_set, is_number, is_boolean
 
 
-exports = ['boolean', 'false', 'true']
+exports = ['boolean', 'false', 'not_', 'true']
 
 
 class boolean:
@@ -32,6 +32,10 @@ class boolean:
 
 def false():
     return boolean(False)
+
+
+def not_(value):
+    return boolean(not boolean(value))
 
 
 def true():

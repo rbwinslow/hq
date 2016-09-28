@@ -1,6 +1,6 @@
 from builtins import str
 
-from .hquery.object_type import is_node_set, is_sequence
+from .hquery.object_type import is_sequence
 from .soup_util import is_text_node, is_attribute_node, is_comment_node, is_any_node
 
 

@@ -98,8 +98,8 @@ def string_value(obj):
             return normalize_content(''.join(obj.stripped_strings))
     elif is_attribute_node(obj):
         return obj.value
-    elif is_text_node(obj) or is_number(obj):
-        return str(obj);
+    elif is_text_node(obj) or is_number(obj) or is_boolean(obj):
+        return str(obj)
     elif is_node_set(obj):
         return string_value(obj[0]) if len(obj) > 0 else ''
     elif is_string(obj):

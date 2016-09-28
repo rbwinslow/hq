@@ -47,7 +47,7 @@ def main():
         else:
             result = [soup]
 
-        print(result_object_to_text(result, pretty=(not (args['-u'] or args['--ugly']))))
+        print(result_object_to_text(result, pretty=(not args['--ugly'])))
 
     except HquerySyntaxError as error:
         print('\nSYNTAX ERROR: {0}\n'.format(str(error)), file=stderr)

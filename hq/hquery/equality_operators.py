@@ -22,7 +22,7 @@ def _eq_node_sets(first, second):
 
     for first_value in first_values:
         if first_value in second_values:
-            verbose_print('Found value "{0}" from first node set in second node set'.format(first_value))
+            verbose_print(u'Found value "{0}" from first node set in second node set'.format(first_value))
             return True
 
     verbose_print('Found no matching nodes between node sets.')
@@ -52,11 +52,11 @@ def _eq_node_set_vs_number(nodes_val, num_val):
 
 def _eq_node_set_vs_string(nodes_val, string_val):
     string_val = str(string_val)
-    verbose_print('(=) comparing number "{0}" to {1} nodes'.format(string_val, len(nodes_val)))
+    verbose_print(u'(=) comparing number "{0}" to {1} nodes'.format(string_val, len(nodes_val)))
 
     for node in nodes_val:
         node_val_string = string_value(node)
-        verbose_print('(=) node string value "{0}" is{1} equal to "{2}"'.format(
+        verbose_print(u'(=) node string value "{0}" is{1} equal to "{2}"'.format(
             node_val_string,
             ('' if node_val_string == string_val else ' not'),
             string_val))

@@ -85,9 +85,9 @@ def _cmp_values(base_op, first, second):
 
 
 comparison_method_table = (
-    # BOOLEAN,              NODE_SET,               NUMBER,                 STRING
+    # BOOLEAN,              SEQUENCE,               NUMBER,                 STRING
     (_cmp_values,           _cmp_value_to_nodes,    _cmp_values,            _cmp_values),           # BOOLEAN
-    (_cmp_nodes_to_value,   _cmp_node_sets,         _cmp_nodes_to_value,    _cmp_nodes_to_value),   # NODE_SET
+    (_cmp_nodes_to_value,   _cmp_node_sets,         _cmp_nodes_to_value,    _cmp_nodes_to_value),   # SEQUENCE
     (_cmp_values,           _cmp_value_to_nodes,    _cmp_values,            _cmp_values),           # NUMBER
     (_cmp_values,           _cmp_value_to_nodes,    _cmp_values,            _cmp_values),           # STRING
 )

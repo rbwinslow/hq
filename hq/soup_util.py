@@ -26,7 +26,7 @@ class AttributeNode:
 
 
 def debug_dump_long_string(s, length=50, one_line=True, suffix='...'):
-    truncate_string(s, length, one_line, suffix)
+    return truncate_string(s, length, one_line, suffix)
 
 
 def debug_dump_node(obj):

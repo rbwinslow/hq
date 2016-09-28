@@ -72,9 +72,9 @@ def _eq_num_vs_string(num_val, string_val):
 
 
 equality_ops_table = (
-    # BOOLEAN,      NODE_SET,               NUMBER,                 STRING
+    # BOOLEAN,      SEQUENCE,               NUMBER,                 STRING
     (_eq_native,    _eq_node_set_vs_bool,   _eq_bool_vs_primitive,  _eq_bool_vs_primitive),     # BOOLEAN
-    (None,          _eq_node_sets,          _eq_node_set_vs_number, _eq_node_set_vs_string),    # NODE_SET
+    (None,          _eq_node_sets,          _eq_node_set_vs_number, _eq_node_set_vs_string),    # SEQUENCE
     (None,          None,                   _eq_native,             _eq_num_vs_string),         # NUMBER
     (None,          None,                   None,                   _eq_native),                # STRING
 )

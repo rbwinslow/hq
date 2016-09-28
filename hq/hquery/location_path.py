@@ -1,4 +1,5 @@
-from hq.soup_util import debug_dump_node, soup_from_any_tag
+from hq.hquery.syntax_error import HquerySyntaxError
+from hq.soup_util import debug_dump_node, soup_from_any_tag, debug_dump_long_string
 from hq.verbosity import verbose_print
 from hq.hquery.expression_context import get_context_node, peek_context
 from hq.hquery.evaluation_in_context import evaluate_across_contexts, evaluate_in_context
@@ -8,10 +9,13 @@ from hq.hquery.object_type import make_node_set, is_number
 
 class LocationPath:
 
-    def __init__(self, first_axis, first_node_test, first_predicates, absolute=False):
+    def __init__(self, first_axis, first_node_test, first_predicates, absolute=False, root_expression=None):
         self.absolute = absolute
+        self.root_expression = root_expression
         self.steps = []
         self.append_step(first_axis, first_node_test, first_predicates)
+        if self.absolute and self.root_expression is not None:
+            raise HquerySyntaxError('internal error forming location path; it looks both rooted and absolute')
 
 
     def __len__(self):
@@ -19,20 +23,28 @@ class LocationPath:
 
 
     def __str__(self):
-        return '{0}{1}'.format('/' if self.absolute else '', '/'.join([str(step) for step in self.steps]))
+        return '{0}{1}{2}'.format('' if self.root_expression is None else '<expr>/',
+                                  '/' if self.absolute else '',
+                                  '/'.join([str(step) for step in self.steps]))
 
 
     def append_step(self, axis, node_test, predicates):
         self.steps.append(LocationPathStep(axis, node_test, predicates))
 
 
+    def debug_dump(self):
+        return debug_dump_long_string(str(self))
+
+
     def evaluate(self):
-        verbose_print('Evaluating location path with {0} steps'.format(len(self)), indent_after=True)
+        verbose_print('Evaluating location path {0}'.format(self.debug_dump()), indent_after=True)
 
         if self.absolute:
             verbose_print('Switching context to root because this path is absolute.')
             results = evaluate_in_context(soup_from_any_tag(get_context_node()),
                                           lambda: self._evaluate_steps(self.steps))
+        elif self.root_expression is not None:
+            results = evaluate_across_contexts(self.root_expression(), lambda: self._evaluate_steps(self.steps))
         else:
             results = self._evaluate_steps(self.steps)
 
@@ -43,14 +55,12 @@ class LocationPath:
 
     def _evaluate_steps(self, remaining_steps):
         step = remaining_steps[0]
-        start_msg = 'Evaluating step {0}::{1} with {2} predicates'.format(step.axis.name,
-                                                                          repr(step.node_test),
-                                                                          len(step.predicates))
+        start_msg = 'Evaluating step {0}'.format(remaining_steps[0])
         verbose_print(start_msg, indent_after=True)
 
         result_set = make_node_set(step.node_test.apply(step.axis, get_context_node()),
                                    reverse=step.axis.is_reverse_order())
-        verbose_print('Initial node set from axis and node test contains {0} nodes'.format(len(result_set)))
+        verbose_print('Axis and node test produced {0} matching nodes'.format(len(result_set)))
 
         for index, expression_fn in enumerate(step.predicates):
             def accept_context_node():

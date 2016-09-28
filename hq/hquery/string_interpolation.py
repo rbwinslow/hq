@@ -2,7 +2,9 @@ import re
 
 from hq.hquery.functions.extend_string import join
 from hq.hquery.object_type import string_value
+from hq.hquery.syntax_error import HquerySyntaxError
 from hq.string_util import truncate_string
+from hq.verbosity import verbose_print
 
 
 def _join_filter_link(arguments):
@@ -57,15 +59,45 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
 
 
 def parse_interpolated_string(source, parse_interface):
+    verbose_print('Parsing interpolated string contents `{0}`'.format(source))
     expressions = []
-    clauses = source.split('$')
+    clauses = _split_at_embedding_dollars_but_not_dollars_inside_expressions(source)
     expressions.append(lambda: clauses[0])
     for clause in clauses[1:]:
         if clause[0] == '{':
             inside, _, outside = clause[1:].partition('}')
+            verbose_print('Parsing embedded expression "{0}"'.format(inside))
             expressions.append(reduce_filters_and_expression(inside, parse_interface))
             expressions.append(lambda: outside)
         else:
-            # parse variable
-            pass
+            name_match = re.match(r'[_\w][_\w\-]*', clause)
+            if name_match is None:
+                msg = 'Invalid character "{0}" following "$" in interpolated string'
+                raise HquerySyntaxError(msg.format(clause[0]))
+            outside_index = name_match.span()[1]
+            verbose_print('Parsing variable reference "{0}"'.format(clause[:outside_index]))
+            expressions.append(parse_interface.parse_in_new_processor('${0}'.format(clause[:outside_index])))
+            expressions.append(lambda: clause[outside_index:])
     return lambda: ''.join([string_value(exp()) for exp in expressions])
+
+
+def _split_at_embedding_dollars_but_not_dollars_inside_expressions(source):
+    result = []
+    stitching_together = None
+    splits = source.split('$')
+    result.append(splits[0])
+
+    for split in splits[1:]:
+        if len(split) > 0:
+            if stitching_together is None:
+                if split[0] != '{' or split.find('}') > 0:
+                    result.append(split)
+                else:
+                    stitching_together = split
+            else:
+                stitching_together = '{0}${1}'.format(stitching_together, split)
+                if split.find('}') >= 0:
+                    result.append(stitching_together)
+                    stitching_together = None
+
+    return result

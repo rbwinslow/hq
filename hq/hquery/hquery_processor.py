@@ -83,7 +83,7 @@ token_config = [
     (r'(\|)', UnionOperatorToken),
     (r'\$([_\w][\w_\-]*)', VariableToken),
     (r'(:=)', AssignmentOperatorToken),
-    (r'(let|return)', _pick_token_for_flwor_reserved_word),
+    (r'(for|let|return)', _pick_token_for_flwor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
@@ -114,8 +114,8 @@ class ParseInterface:
     def is_on(self, *token_classes):
         return self.processor.token_is(*token_classes)
 
-    def location_path(self, first_token):
-        return self.processor.parse_location_path(first_token)
+    def location_path(self, first_token, root_expression=None):
+        return self.processor.parse_location_path(first_token, root_expression=root_expression)
 
     def parse_in_new_processor(self, source):
         return HqueryProcessor(source).parse()
@@ -176,6 +176,11 @@ class HqueryProcessor():
         return result
 
 
+    def advance_over_name(self):
+        accept_token_that_looks_like_a_name_with_no_grammar_role_of_its_own = NameTestToken
+        return self.advance_if(accept_token_that_looks_like_a_name_with_no_grammar_role_of_its_own)
+
+
     def advance(self, *expected_classes):
         result = self.advance_if(expected_classes)
         if result is None:
@@ -201,6 +206,7 @@ class HqueryProcessor():
         token = first_token
         while True:
             if isinstance(token, FlworReservedWordToken):
+                verbose_print('Parsing FLWOR "{0}" clause'.format(token.value))
                 getattr(self, 'parse_flwor_{0}'.format(token.value))(flwor)
                 if token.value == 'return':
                     break
@@ -210,8 +216,18 @@ class HqueryProcessor():
             if token is None:
                 break
 
-        verbose_print('Finished parsing FLWOR {0}'.format(debug_dump_long_string(str(flwor))), outdent_before=True)
+        verbose_print('Finished parsing FLWOR {0}'.format(flwor.debug_dump()), outdent_before=True)
         return flwor
+
+
+    def parse_flwor_for(self, flwor):
+        if flwor.sequence_expression is not None:
+            raise HquerySyntaxError('More than one "for" clause found in FLWOR "{0}"'.format(flwor.debug_dump()))
+        flwor.sequence_variable = self.advance(VariableToken).value
+        in_token = self.advance_over_name()
+        if in_token.value.lower() != 'in':
+            raise HquerySyntaxError('FLWOR expected reserved word "in," got "{0}"'.format(in_token.value))
+        flwor.sequence_expression = self.expression()
 
 
     def parse_flwor_let(self, flwor):
@@ -227,15 +243,29 @@ class HqueryProcessor():
         flwor.return_expression = self.expression()
 
 
-    def parse_location_path(self, first_token):
-        verbose_print('Parsing location path starting with {0}'.format(first_token), indent_after=True)
+    def parse_location_path(self, first_token, root_expression=None):
+        verbose_print(
+            'Parsing location path {0} {1}'.format(
+                'starting with' if root_expression is None else 'rooted at <expr> followed by',
+                first_token
+            ),
+            indent_after=True
+        )
 
         if isinstance(first_token, SlashToken):
             axis, node_test = self.parse_location_path_node_test()
             predicates = self.parse_location_path_predicates()
-            path = LocationPath(axis, node_test, predicates, absolute=True)
+            path = LocationPath(axis,
+                                node_test,
+                                predicates,
+                                absolute=(root_expression is None),
+                                root_expression=root_expression)
         elif isinstance(first_token, DoubleSlashToken):
-            path = LocationPath(Axis.descendant_or_self, NodeTest('node'), [], absolute=True)
+            path = LocationPath(Axis.descendant_or_self,
+                                NodeTest('node'),
+                                [],
+                                absolute=(root_expression is None),
+                                root_expression=root_expression)
             axis, node_test = self.parse_location_path_node_test()
             predicates = self.parse_location_path_predicates()
             path.append_step(axis, node_test, predicates)

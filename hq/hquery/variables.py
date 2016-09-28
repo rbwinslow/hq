@@ -4,6 +4,14 @@ variable_stack = []
 NAME, VALUE = range(2)
 
 
+class variable_context:
+    def __enter__(self):
+        self.mark = len(variable_stack)
+
+    def __exit__(self, *args):
+        del variable_stack[self.mark:]
+
+
 def push_variable(name, value):
     global variable_stack
     verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, value))

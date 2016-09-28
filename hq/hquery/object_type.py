@@ -11,8 +11,8 @@ from ..verbosity import verbose_print
 from ..soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node
 
 
-BOOLEAN, NODE_SET, NUMBER, STRING = range(4)
-TYPE_NAMES = ('BOOLEAN', 'NODE_SET', 'NUMBER', 'STRING')
+BOOLEAN, SEQUENCE, NUMBER, STRING = range(4)
+TYPE_NAMES = ('BOOLEAN', 'SEQUENCE', 'NUMBER', 'STRING')
 
 
 def is_boolean(obj):
@@ -59,6 +59,18 @@ def make_node_set(node_set, reverse=False):
     return node_set
 
 
+def make_sequence(sequence):
+    if not isinstance(sequence, list):
+        sequence = [sequence]
+    return sequence
+
+
+def sequence_concat(first, second):
+    first = make_sequence(first)
+    first.extend(make_sequence(second))
+    return first
+
+
 def normalize_content(value):
     return re.sub(r'\s+', ' ', string_value(value))
 
@@ -67,7 +79,9 @@ def object_type(obj):
     if is_boolean(obj):
         return BOOLEAN
     elif is_node_set(obj):
-        return NODE_SET
+        return SEQUENCE
+    elif is_sequence(obj):
+        return SEQUENCE
     elif is_number(obj):
         return NUMBER
     elif is_string(obj):
@@ -100,7 +114,7 @@ def string_value(obj):
         return obj.value
     elif is_text_node(obj) or is_number(obj) or is_boolean(obj):
         return str(obj)
-    elif is_node_set(obj):
+    elif is_node_set(obj) or is_sequence(obj):
         return string_value(obj[0]) if len(obj) > 0 else ''
     elif is_string(obj):
         return obj

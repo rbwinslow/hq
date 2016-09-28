@@ -7,7 +7,7 @@ from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
 from hq.hquery.node_test import NodeTest
-from hq.hquery.object_type import make_node_set, object_type_name, string_value, is_sequence
+from hq.hquery.object_type import make_node_set, object_type_name, string_value, is_sequence, sequence_concat
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.syntax_error import HquerySyntaxError
@@ -177,27 +177,7 @@ class CommaToken(Token):
 
         def evaluate():
             left_value, right_value = self._evaluate_binary_operands(left, right)
-            if is_sequence(left_value):
-                if is_sequence(right_value):
-                    self._gab('concatenating sequences with lengths {0} and {1}'.format(len(left_value),
-                                                                                       len(right_value)))
-                    left_value.extend(right_value)
-                else:
-                    self._gab('appending {0} to sequence of length {1}'.format(object_type_name(right_value),
-                                                                               len(left_value)))
-                    left_value.append(right_value)
-                result = left_value
-            else:
-                if is_sequence(right_value):
-                    self._gab('prepending {0} to sequence of length {1}'.format(object_type_name(left_value),
-                                                                                len(right_value)))
-                    right_value.insert(0, left_value)
-                    result = right_value
-                else:
-                    self._gab('assembling sequence from {0} and {1}'.format(object_type_name(left_value),
-                                                                            object_type_name(right_value)))
-                    result = [left_value, right_value]
-            return result
+            return sequence_concat(left_value, right_value)
 
         return evaluate
 
@@ -239,6 +219,9 @@ class DoubleSlashToken(Token):
 
     def __str__(self):
         return '(double-slash)'
+
+    def led(self, left):
+        return self.parse_interface.location_path(self, root_expression=left).evaluate
 
     def nud(self):
         return self.parse_interface.location_path(self).evaluate
@@ -502,6 +485,10 @@ class SlashToken(Token):
 
     def __str__(self):
         return '(slash)'
+
+    def led(self, left):
+        path = self.parse_interface.location_path(self, root_expression=left)
+        return path.evaluate
 
     def nud(self):
         next_token = self.parse_interface.peek()

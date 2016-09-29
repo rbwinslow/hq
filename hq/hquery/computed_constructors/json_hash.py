@@ -22,6 +22,19 @@ def _construct_array_filter(tag_names):
     return evaluate
 
 
+def _construct_map_filter(mappings):
+    mappings = {old: new for (old, _, new) in [m.partition('>') for m in mappings.split(',')]}
+
+    def evaluate(hash):
+        for key, value in hash.items():
+            if key in mappings:
+                verbose_print('JSON hash constructor mapping filter converting attribute name "{0}" to "{1}"'.format(key, value))
+                hash[mappings[key]] = hash[key]
+                del hash[key]
+
+    return evaluate
+
+
 def _construct_number_filter(tag_names):
     tag_names = tag_names.split(',')
 
@@ -41,12 +54,13 @@ def _construct_number_filter(tag_names):
 
 _name_list_arg_regex = r'(([a-zA-Z]\w*,?)+)'
 
-def _skip_over_embedded_groups_from_name_list_matches(groups):
+def _skip_over_embedded_groups_from_list_matches(groups):
     return groups[::2]
 
 
 _filter_map = {
     r'a:{0}:'.format(_name_list_arg_regex): _construct_array_filter,
+    r'm:(([a-zA-Z]\w*>[a-zA-Z]\w*,?)+):': _construct_map_filter,
     r'n:{0}:'.format(_name_list_arg_regex): _construct_number_filter,
 }
 
@@ -66,13 +80,18 @@ class ComputedJsonHashConstructor:
 
     def set_filters(self, source):
         while len(source) > 0:
+            match = None
             for regex, constructor in _filter_map.items():
                 match = re.match(regex, source)
                 if match:
-                    filter_fn = constructor(*_skip_over_embedded_groups_from_name_list_matches(match.groups()))
+                    filter_fn = constructor(*_skip_over_embedded_groups_from_list_matches(match.groups()))
                     self.filters.append(filter_fn)
                     source = source[match.span()[1]:]
                     break
+            if match is None:
+                raise HquerySyntaxError(
+                    'Malformed filter "{0}" in computed JSON hash constructor filter clause'.format(source)
+                )
 
 
     def evaluate(self):

@@ -81,3 +81,18 @@ def test_hash_constructor_filters_can_be_combined():
     assert actual['p'][0] == '20'
     assert actual['div'] == 20
     assert actual['h1'][0] == 20.2
+
+
+def test_hash_constructor_mapping_filter_renames_attributes_derived_from_element_content():
+    html_body = """
+    <p>foo</p>
+    <div>bar</div>"""
+
+    actual = json.loads(query_html_doc(html_body, 'hash {m:p>paragraph,div>other:} { /html/body/* }'))
+
+    assert 'paragraph' in actual
+    assert 'other' in actual
+    assert 'p' not in actual
+    assert 'div' not in actual
+    assert actual['paragraph'] == 'foo'
+    assert actual['other'] == 'bar'

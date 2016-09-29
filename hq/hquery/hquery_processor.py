@@ -229,8 +229,8 @@ class HqueryProcessor():
         constructor = ComputedHtmlElementConstructor(self.advance_over_name().value)
         self.advance(OpenCurlyBraceToken)
 
-        while not isinstance(self.token, CloseCurlyBraceToken):
-            constructor.add_content(self.expression())
+        if not isinstance(self.token, CloseCurlyBraceToken):
+            constructor.set_content(self.expression())
 
         self.advance(CloseCurlyBraceToken)
         return constructor

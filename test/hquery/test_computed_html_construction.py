@@ -70,3 +70,17 @@ def test_element_constructor_can_be_nested():
       Hey, Moe!
      </curly>
     </moe>""")
+
+
+def test_attribute_constructor_adds_attributes_to_an_element():
+    html_body = '<p ng-bind="someModel"></p>'
+    assert query_html_doc(html_body, 'element model { attribute name { //p[1]/@ng-bind } }') == expected_result("""
+    <model name="someModel">
+    </model>""")
+
+
+def test_attribute_constructor_takes_string_value_of_tag_nodes_in_content_sequence_and_separates_with_spaces():
+    html_body = '<p>Easy as</p>'
+    assert query_html_doc(html_body, 'element foo {attribute bar {//p, 1 to 3}}') == expected_result("""
+    <foo bar="Easy as 1 2 3">
+    </foo>""")

@@ -30,8 +30,7 @@ class ComputedHtmlElementConstructor:
             elif is_string(value) or is_number(value) or is_boolean(value):
                 result.append(str(value))
             else:
-                value_desc = debug_dump_node(value) if is_any_node(value) else object_type_name(
-                    value)
+                value_desc = debug_dump_node(value) if is_any_node(value) else object_type_name(value)
                 raise HqueryEvaluationError(
                     'Cannot use {0} as a content object in a computed element constructor'.format(value_desc)
                 )

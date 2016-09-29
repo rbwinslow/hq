@@ -1,8 +1,6 @@
-import re
-
-from hq.hquery.computed_html_element_constructor import ComputedHtmlElementConstructor
+from hq.hquery.computed_constructors.html_attribute import ComputedHtmlAttributeConstructor
+from hq.hquery.computed_constructors.html_element import ComputedHtmlElementConstructor
 from hq.hquery.evaluation_in_context import evaluate_in_context
-from hq.hquery.flwor import Flwor
 from hq.hquery.location_path import LocationPath
 
 from .tokens import *
@@ -92,12 +90,12 @@ token_config = [
     (r'(\|)', UnionOperatorToken),
     (r'\$([_\w][\w_\-]*)', VariableToken),
     (r'(:=)', AssignmentOperatorToken),
-    (r'(for|let|return)', _pick_token_for_flwor_reserved_word),
-    (r'(element)', _pick_token_for_computed_constructor_reserved_word),
+    (r'(for|let|return)(?=\W)', _pick_token_for_flwor_reserved_word),
+    (r'(attribute|element)(?=\W)', _pick_token_for_computed_constructor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
-    (r'(div|mod)', _pick_token_for_div_or_mod),
-    (r'(and|or)', _pick_token_for_and_or_or),
-    (r'(to)', _pick_token_for_to),
+    (r'(div|mod)(?=[^a-zA-Z])', _pick_token_for_div_or_mod),
+    (r'(and|or)(?=[^a-zA-Z])', _pick_token_for_and_or_or),
+    (r'(to)(?=[^a-zA-Z])', _pick_token_for_to),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\()', OpenParenthesisToken),
     (r'(\{)', OpenCurlyBraceToken),
@@ -212,6 +210,17 @@ class HqueryProcessor():
         if not self.token_is(EndToken):
             raise HquerySyntaxError('Unexpected token {0} beyond end of HQuery'.format(self.token))
         return evaluation_fn
+
+
+    def parse_computed_attribute_constructor(self):
+        constructor = ComputedHtmlAttributeConstructor(self.advance_over_name().value)
+        self.advance(OpenCurlyBraceToken)
+
+        if not isinstance(self.token, CloseCurlyBraceToken):
+            constructor.set_content(self.expression())
+
+        self.advance(CloseCurlyBraceToken)
+        return constructor
 
 
     def parse_computed_constructor(self, first_token):

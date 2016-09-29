@@ -50,7 +50,9 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
             if chain is None:
                 return reduce_filters_and_expression(remainder, parse_interface, filter_constructor)
             else:
-                return reduce_filters_and_expression(remainder, parse_interface, lambda eval_fn: filter_constructor(chain(eval_fn)))
+                return reduce_filters_and_expression(remainder,
+                                                     parse_interface,
+                                                     lambda eval_fn: filter_constructor(chain(eval_fn)))
 
     eval_fn = parse_interface.parse_in_new_processor(remainder)
     if chain is None:

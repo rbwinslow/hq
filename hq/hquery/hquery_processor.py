@@ -1,5 +1,6 @@
 from hq.hquery.computed_constructors.html_attribute import ComputedHtmlAttributeConstructor
 from hq.hquery.computed_constructors.html_element import ComputedHtmlElementConstructor
+from hq.hquery.computed_constructors.json_hash import ComputedJsonHashConstructor
 from hq.hquery.evaluation_in_context import evaluate_in_context
 from hq.hquery.location_path import LocationPath
 
@@ -90,14 +91,15 @@ token_config = [
     (r'(\|)', UnionOperatorToken),
     (r'\$([_\w][\w_\-]*)', VariableToken),
     (r'(:=)', AssignmentOperatorToken),
-    (r'(for|let|return)(?=\W)', _pick_token_for_flwor_reserved_word),
-    (r'(attribute|element)(?=\W)', _pick_token_for_computed_constructor_reserved_word),
+    (r'(for|let|return)(?!\w)', _pick_token_for_flwor_reserved_word),
+    (r'(attribute|element|hash)(?!\w)', _pick_token_for_computed_constructor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
-    (r'(div|mod)(?=[^a-zA-Z])', _pick_token_for_div_or_mod),
-    (r'(and|or)(?=[^a-zA-Z])', _pick_token_for_and_or_or),
-    (r'(to)(?=[^a-zA-Z])', _pick_token_for_to),
+    (r'(div|mod)(?![a-zA-Z])', _pick_token_for_div_or_mod),
+    (r'(and|or)(?![a-zA-Z])', _pick_token_for_and_or_or),
+    (r'(to)(?![a-zA-Z])', _pick_token_for_to),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\()', OpenParenthesisToken),
+    (r'({[a-z]{1,3}(?::[^:]*)*:})', ComputedConstructorFiltersToken),
     (r'(\{)', OpenCurlyBraceToken),
     (r'(\})', CloseCurlyBraceToken),
     (r'(\w[\w\-]*)', NameTestToken),
@@ -237,6 +239,21 @@ class HqueryProcessor():
     def parse_computed_element_constructor(self):
         constructor = ComputedHtmlElementConstructor(self.advance_over_name().value)
         self.advance(OpenCurlyBraceToken)
+
+        if not isinstance(self.token, CloseCurlyBraceToken):
+            constructor.set_content(self.expression())
+
+        self.advance(CloseCurlyBraceToken)
+        return constructor
+
+
+    def parse_computed_hash_constructor(self):
+        constructor = ComputedJsonHashConstructor()
+        token = self.advance(ComputedConstructorFiltersToken, OpenCurlyBraceToken)
+
+        if isinstance(token, ComputedConstructorFiltersToken):
+            constructor.set_filters(token.value)
+            self.advance(OpenCurlyBraceToken)
 
         if not isinstance(self.token, CloseCurlyBraceToken):
             constructor.set_content(self.expression())

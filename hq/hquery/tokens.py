@@ -211,6 +211,16 @@ class CommaToken(Token):
 
 
 
+class ComputedConstructorFiltersToken(Token):
+    lbp = LBP.nothing
+
+    def __init__(self, parse_interface, value, **kwargs):
+        super(ComputedConstructorFiltersToken, self).__init__(parse_interface, value[1:-1], **kwargs)
+
+    def __str__(self):
+        return '(computed-constructor-filters "{0}")'.format(self.value)
+
+
 class ConstructorReservedWordToken(Token):
     lbp = LBP.nothing
 
@@ -569,6 +579,7 @@ class UnionOperatorToken(Token):
             return result
 
         return evaluate
+
 
 
 class VariableToken(Token):

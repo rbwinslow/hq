@@ -1,5 +1,6 @@
 import re
 
+from hq.hquery.computed_html_element_constructor import ComputedHtmlElementConstructor
 from hq.hquery.evaluation_in_context import evaluate_in_context
 from hq.hquery.flwor import Flwor
 from hq.hquery.location_path import LocationPath
@@ -46,6 +47,13 @@ def _pick_token_for_div_or_mod(parse_interface, value, previous_token):
                                                 NameTestToken)
 
 
+def _pick_token_for_computed_constructor_reserved_word(parse_interface, value, previous_token):
+    if _is_name_test_predecessor(previous_token):
+        return NameTestToken(parse_interface, value)
+    else:
+        return ConstructorReservedWordToken(parse_interface, value)
+
+
 def _pick_token_for_flwor_reserved_word(parse_interface, value, previous_token):
     if _is_name_test_predecessor(previous_token):
         return NameTestToken(parse_interface, value)
@@ -85,12 +93,15 @@ token_config = [
     (r'\$([_\w][\w_\-]*)', VariableToken),
     (r'(:=)', AssignmentOperatorToken),
     (r'(for|let|return)', _pick_token_for_flwor_reserved_word),
+    (r'(element)', _pick_token_for_computed_constructor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)', _pick_token_for_div_or_mod),
     (r'(and|or)', _pick_token_for_and_or_or),
     (r'(to)', _pick_token_for_to),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\()', OpenParenthesisToken),
+    (r'(\{)', OpenCurlyBraceToken),
+    (r'(\})', CloseCurlyBraceToken),
     (r'(\w[\w\-]*)', NameTestToken),
 ]
 
@@ -105,6 +116,9 @@ class ParseInterface:
 
     def advance_if(self, *expected_classes):
         return self.processor.advance_if(*expected_classes)
+
+    def computed_constructor(self, first_token):
+        return self.processor.parse_computed_constructor(first_token)
 
     def expression(self, rbp=0):
         return self.processor.expression(rbp)
@@ -198,6 +212,28 @@ class HqueryProcessor():
         if not self.token_is(EndToken):
             raise HquerySyntaxError('Unexpected token {0} beyond end of HQuery'.format(self.token))
         return evaluation_fn
+
+
+    def parse_computed_constructor(self, first_token):
+        if not isinstance(first_token, ConstructorReservedWordToken):
+            raise HquerySyntaxError('Computed constructor parsing somehow triggered by {0}'.format(str(first_token)))
+
+        verbose_print('Parsing computed constructor "{0}"'.format(first_token.value), indent_after=True)
+        result = getattr(self, 'parse_computed_{0}_constructor'.format(first_token.value))()
+
+        verbose_print('Finished parsing computed constructor', outdent_before=True)
+        return result
+
+
+    def parse_computed_element_constructor(self):
+        constructor = ComputedHtmlElementConstructor(self.advance_over_name().value)
+        self.advance(OpenCurlyBraceToken)
+
+        while not isinstance(self.token, CloseCurlyBraceToken):
+            constructor.add_content(self.expression())
+
+        self.advance(CloseCurlyBraceToken)
+        return constructor
 
 
     def parse_flwor(self, first_token):

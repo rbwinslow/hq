@@ -178,6 +178,14 @@ class AxisToken(Token):
 
 
 
+class CloseCurlyBraceToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(close-curly-brace)'
+
+
+
 class CloseParenthesisToken(Token):
     lbp = LBP.nothing
 
@@ -200,6 +208,17 @@ class CommaToken(Token):
             return sequence_concat(left_value, right_value)
 
         return evaluate
+
+
+
+class ConstructorReservedWordToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(constructor-keyword "{0}")'.format(self.value)
+
+    def nud(self):
+        return self.parse_interface.computed_constructor(self).evaluate
 
 
 
@@ -410,11 +429,19 @@ class NodeTestToken(Token):
 
 
 
+class OpenCurlyBraceToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(open-curly-brace)'
+
+
+
 class OpenParenthesisToken(Token):
     lbp = LBP.parenthesized_expr
 
     def __str__(self):
-        return '(open parenthesis)'
+        return '(open-parenthesis)'
 
     def nud(self):
         expr = self.parse_interface.expression(LBP.nothing)

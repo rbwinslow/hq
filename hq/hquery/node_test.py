@@ -16,8 +16,11 @@ def _make_axis_agnostic_accept_fn(fn):
 
 def _make_name_accept_fn(value):
     def evaluate(node, axis=None):
-        type_fn = is_attribute_node if axis == Axis.attribute else is_tag_node
-        return type_fn(node) and node.name.lower() == value
+        if axis == Axis.css_class:
+            return is_tag_node(node) and 'class' in node.attrs and value in node['class']
+        else:
+            type_fn = is_attribute_node if axis == Axis.attribute else is_tag_node
+            return type_fn(node) and node.name.lower() == value
     return evaluate
 
 
@@ -74,6 +77,10 @@ class NodeTest:
             return node.contents
         else:
             return []
+
+
+    def gather_css_class(self, node):
+        return self.gather_child(node)
 
 
     def gather_descendant(self, node):

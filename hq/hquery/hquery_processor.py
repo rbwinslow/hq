@@ -68,16 +68,18 @@ def _pick_token_for_to(parse_interface, value, previous_token):
                                                 NameTestToken)
 
 
+_all_axes = [value.token() for value in Axis] + [re.escape(a) for a in Axis.abbreviations()]
+
 token_config = [
     (r'(//)', DoubleSlashToken),
     (r'(/)', SlashToken),
     (r'(\[)', LeftBraceToken),
     (r'(\])', RightBraceToken),
+    (r'({0})::'.format('|'.join(_all_axes)), AxisToken),
     (r'(\.\.)', ParentNodeToken),
     (r'(\.)', ContextNodeToken),
     (r'(\))', CloseParenthesisToken),
     (r'(!=|=)', EqualityOperatorToken),
-    (r'({0})::'.format('|'.join([value.token() for value in Axis])), AxisToken),
     (r'(`[^`]*`)', InterpolatedStringToken),
     (r'("[^"]*")', LiteralStringToken),
     (r"('[^']*')", LiteralStringToken),

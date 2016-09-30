@@ -167,8 +167,8 @@ class AxisToken(Token):
     lbp = LBP.nothing
 
     def __init__(self, parse_interface, value, **kwargs):
-        super(AxisToken, self).__init__(parse_interface, value if value != '@' else 'attribute', **kwargs)
-        self.axis = Axis[self.value.replace('-', '_')]
+        super(AxisToken, self).__init__(parse_interface, Axis.canonicalize(value), **kwargs)
+        self.axis = Axis[self.value]
 
     def __str__(self):
         return '(axis "{0}")'.format(self.value)

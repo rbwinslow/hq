@@ -26,8 +26,7 @@ def test_child_axis_selects_only_immediate_children():
         <p>niece</p>
         <p>nephew</p>
     </div>"""
-    actual = query_html_doc(html_body, '/html/body/child::p')
-    assert actual == expected_result("""
+    assert query_html_doc(html_body, '/html/body/child::p') == expected_result("""
     <p>
      uncle
     </p>""")
@@ -63,7 +62,7 @@ def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_m
     <!-- comment -->
     <div>not selected</div>
     <p>not selected</p>"""
-    assert query_html_doc(html_body, '/html/body/div/descendant::div') == expected_result("""
+    expected = expected_result("""
     <div>
      <div>
       selected
@@ -72,6 +71,9 @@ def test_descendant_axis_returns_all_descendants_and_only_descendants_of_nodes_m
     <div>
      selected
     </div>""")
+
+    assert query_html_doc(html_body, '/html/body/div/descendant::div') == expected
+    assert query_html_doc(html_body, '/html/body/div/~::div') == expected
 
 
 def test_descendant_or_self_axis_returns_all_descendants_and_context_node_if_it_matches_node_test():
@@ -156,8 +158,7 @@ def test_ancestor_axis_selects_all_matching_ancestors():
             </div>
         </section>
     </div>"""
-    actual = query_html_doc(html_body, '//p/ancestor::div')
-    assert actual == expected_result("""
+    expected = expected_result("""
     <div>
      <section>
       <div>
@@ -172,6 +173,9 @@ def test_ancestor_axis_selects_all_matching_ancestors():
       text
      </p>
     </div>""")
+
+    assert query_html_doc(html_body, '//p/ancestor::div') == expected
+    assert query_html_doc(html_body, '//p/^::div') == expected
 
 
 def test_ancestor_axis_produces_all_ancestors_and_only_ancestors():
@@ -207,7 +211,7 @@ def test_ancestor_or_self_axis_produces_ancestors_and_self_when_node_test_is_a_m
     <div>
         <div>foo</div>
     </div>"""
-    assert query_html_doc(html_body, '/html/body/div/div/ancestor-or-self::div') == expected_result("""
+    expected = expected_result("""
     <div>
      <div>
       foo
@@ -216,6 +220,9 @@ def test_ancestor_or_self_axis_produces_ancestors_and_self_when_node_test_is_a_m
     <div>
      foo
     </div>""")
+
+    assert query_html_doc(html_body, '/html/body/div/div/ancestor-or-self::div') == expected
+    assert query_html_doc(html_body, '/html/body/div/div/^^::div') == expected
 
 
 def test_following_sibling_axis_selects_all_following_siblings_and_only_following_siblings_that_match_name_test():
@@ -230,13 +237,16 @@ def test_following_sibling_axis_selects_all_following_siblings_and_only_followin
         <div></div>
         <p>curly</p>
     </section>"""
-    assert query_html_doc(html_body, '//div/following-sibling::p') == expected_result("""
+    expected = expected_result("""
     <p>
      moe
     </p>
     <p>
      curly
     </p>""")
+
+    assert query_html_doc(html_body, '//div/following-sibling::p') == expected
+    assert query_html_doc(html_body, '//div/>::p') == expected
 
 
 def test_following_sibling_axis_works_with_node_test():
@@ -258,10 +268,13 @@ def test_preceding_sibling_axis_works_with_name_test():
     <p>foo</p>
     <div></div>
     <p>bar</p>"""
-    assert query_html_doc(html_body, '//div/preceding-sibling::p') == expected_result("""
+    expected = expected_result("""
     <p>
      foo
     </p>""")
+
+    assert query_html_doc(html_body, '//div/preceding-sibling::p') == expected
+    assert query_html_doc(html_body, '//div/<::p') == expected
 
 
 def test_preceding_sibling_axis_works_with_node_test():
@@ -306,13 +319,16 @@ def test_following_axis_finds_all_following_nodes_that_match():
         </div>
     </section>
     <p>shemp</p>"""
-    assert query_html_doc(html_body, '//aside/following::p') == expected_result("""
+    expected = expected_result("""
     <p>
      curly
     </p>
     <p>
      shemp
     </p>""")
+
+    assert query_html_doc(html_body, '//aside/following::p') == expected
+    assert query_html_doc(html_body, '//aside/>>::p') == expected
 
 
 def test_preceding_axis_finds_all_preceding_nodes_that_match_node_test():
@@ -339,13 +355,16 @@ def test_preceding_axis_finds_all_preceding_nodes_that_match():
         </aside>
         <p>shemp</p>
     </section>"""
-    assert query_html_doc(html_body, '//aside/preceding::p') == expected_result("""
+    expected = expected_result("""
     <p>
      moe
     </p>
     <p>
      larry
     </p>""")
+
+    assert query_html_doc(html_body, '//aside/preceding::p') == expected
+    assert query_html_doc(html_body, '//aside/<<::p') == expected
 
 
 def test_preceding_axis_produces_results_in_document_order_and_also_works_with_node_test():
@@ -407,3 +426,20 @@ def test_self_axis_applies_only_to_self():
      <div>
      </div>
     </div>""")
+
+
+def test_css_class_axis_finds_elements_based_on_their_css_classes():
+    html_body = """
+    <p class="foo">foo</p>
+    <p class="foo bar">foo bar</p>
+    <p class="bar">bar</p>"""
+    expected = expected_result("""
+    <p class="foo bar">
+     foo bar
+    </p>
+    <p class="bar">
+     bar
+    </p>""")
+
+    assert query_html_doc(html_body, '//class::bar') == expected
+    assert query_html_doc(html_body, '//.::bar') == expected

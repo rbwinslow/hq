@@ -3,6 +3,7 @@ from enum import Enum
 
 
 class Axis(Enum):
+    # standard
     ancestor            = 1
     ancestor_or_self    = 2
     attribute           = 3
@@ -15,9 +16,37 @@ class Axis(Enum):
     preceding           = 10
     preceding_sibling   = 11
     self                = 12
+    # extended
+    css_class           = 13
 
     def is_reverse_order(self):
         return self in (Axis.ancestor, Axis.ancestor_or_self, Axis.preceding, Axis.preceding_sibling)
 
     def token(self):
         return self.name.replace('_', '-')
+
+    @classmethod
+    def abbreviations(self):
+        return _abbreviations.keys()
+
+    @classmethod
+    def canonicalize(cls, name):
+        if name in _abbreviations.keys():
+            result = _abbreviations[name]
+        else:
+            result = name.replace('-', '_')
+        return result
+
+
+_abbreviations = {
+    '^': 'ancestor',
+    '^^': 'ancestor_or_self',
+    '@': 'attribute',
+    '.': 'css_class',
+    'class': 'css_class',
+    '~': 'descendant',
+    '>>': 'following',
+    '>': 'following_sibling',
+    '<<': 'preceding',
+    '<': 'preceding_sibling',
+}

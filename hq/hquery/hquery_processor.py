@@ -53,6 +53,13 @@ def _pick_token_for_computed_constructor_reserved_word(parse_interface, value, p
         return ConstructorReservedWordToken(parse_interface, value)
 
 
+def _pick_token_for_if_or_else(parse_interface, value, previous_token):
+    if _is_name_test_predecessor(previous_token):
+        return NameTestToken(parse_interface, value)
+    else:
+        return IfElseToken(parse_interface, value)
+
+
 def _pick_token_for_flwor_reserved_word(parse_interface, value, previous_token):
     if _is_name_test_predecessor(previous_token):
         return NameTestToken(parse_interface, value)
@@ -98,6 +105,7 @@ token_config = [
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)(?![a-zA-Z])', _pick_token_for_div_or_mod),
     (r'(and|or)(?![a-zA-Z])', _pick_token_for_and_or_or),
+    (r'(if|else)(?![a-zA-Z])', _pick_token_for_if_or_else),
     (r'(to)(?![a-zA-Z])', _pick_token_for_to),
     (r'([a-z][a-z\-]*[a-z])\(', FunctionCallToken),
     (r'(\()', OpenParenthesisToken),
@@ -127,6 +135,9 @@ class ParseInterface:
 
     def flwor(self, first_token):
         return self.processor.parse_flwor(first_token)
+
+    def if_then_else(self):
+        return self.processor.parse_if_then_else()
 
     def is_on(self, *token_classes):
         return self.processor.token_is(*token_classes)
@@ -195,7 +206,7 @@ class HqueryProcessor():
 
     def advance_over_name(self):
         accept_token_that_looks_like_a_name_with_no_grammar_role_of_its_own = NameTestToken
-        return self.advance_if(accept_token_that_looks_like_a_name_with_no_grammar_role_of_its_own)
+        return self.advance(accept_token_that_looks_like_a_name_with_no_grammar_role_of_its_own).value
 
 
     def advance(self, *expected_classes):
@@ -217,7 +228,7 @@ class HqueryProcessor():
 
 
     def parse_computed_attribute_constructor(self):
-        constructor = ComputedHtmlAttributeConstructor(self.advance_over_name().value)
+        constructor = ComputedHtmlAttributeConstructor(self.advance_over_name())
         self.advance(OpenCurlyBraceToken)
 
         if not isinstance(self.token, CloseCurlyBraceToken):
@@ -239,7 +250,7 @@ class HqueryProcessor():
 
 
     def parse_computed_element_constructor(self):
-        constructor = ComputedHtmlElementConstructor(self.advance_over_name().value)
+        constructor = ComputedHtmlElementConstructor(self.advance_over_name())
         self.advance(OpenCurlyBraceToken)
 
         if not isinstance(self.token, CloseCurlyBraceToken):
@@ -262,6 +273,30 @@ class HqueryProcessor():
 
         self.advance(CloseCurlyBraceToken)
         return constructor
+
+
+    def parse_if_then_else(self):
+        verbose_print('Parsing if/then/else condition', indent_after=True)
+        self.advance(OpenParenthesisToken)
+        condition = self.expression()
+        self.advance(CloseParenthesisToken)
+        verbose_print('Parsing if/then/else "then" clause', outdent_before=True, indent_after=True)
+        then = self.advance_over_name()
+        if then.lower() != 'then':
+            raise HquerySyntaxError('if/then/else expected "then" after condition; got "{0}"'.format(then))
+        then_expr = self.expression()
+        verbose_print('Parsing if/then/else "else" clause', outdent_before=True, indent_after=True)
+        self._cannot_eat_else_same_as_then_because_else_needs_lower_lbp_so_then_expr_knows_when_to_stop()
+        else_expr = self.expression()
+        verbose_print('Finished parsing if/then/else', outdent_before=True)
+
+        def evaluate():
+            if boolean(condition()):
+                return then_expr()
+            else:
+                return else_expr()
+
+        return evaluate
 
 
     def parse_flwor(self, first_token):
@@ -288,9 +323,9 @@ class HqueryProcessor():
     def parse_flwor_for(self, flwor):
         variable_name = self.advance(VariableToken).value
 
-        in_token = self.advance_over_name()
-        if in_token.value.lower() != 'in':
-            raise HquerySyntaxError('FLWOR expected reserved word "in," got "{0}"'.format(in_token.value))
+        in_keyword = self.advance_over_name()
+        if in_keyword.lower() != 'in':
+            raise HquerySyntaxError('FLWOR expected reserved word "in," got "{0}"'.format(in_keyword))
 
         iteration_expression = self.expression()
 
@@ -417,3 +452,11 @@ class HqueryProcessor():
             left = t.led(left)
         verbose_print('finished expression', outdent_before=True)
         return left
+
+
+    def _cannot_eat_else_same_as_then_because_else_needs_lower_lbp_so_then_expr_knows_when_to_stop(self):
+        else_token = self.advance(IfElseToken)
+        if else_token.value.lower() != 'else':
+            raise HquerySyntaxError('if/then/else expected "else" after "then" expression; got "{0}"'.format(
+                else_token.value
+            ))

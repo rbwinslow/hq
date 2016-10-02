@@ -341,6 +341,17 @@ class FunctionCallToken(Token):
 
 
 
+class IfElseToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(if-reserved-word)'
+
+    def nud(self):
+        return self.parse_interface.if_then_else()
+
+
+
 class InterpolatedStringToken(Token):
     lbp = LBP.nothing
 

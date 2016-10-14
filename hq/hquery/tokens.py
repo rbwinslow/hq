@@ -1,6 +1,7 @@
 import re
 from html.entities import name2codepoint
 
+from hq.hquery.computed_constructors.hash_key_value import ComputedHashKeyValueConstructor
 from hq.hquery.equality_operators import equals, not_equals
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.flwor import Flwor
@@ -8,7 +9,7 @@ from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
 from hq.hquery.node_test import NodeTest
-from hq.hquery.object_type import make_node_set, object_type_name, sequence_concat
+from hq.hquery.object_type import make_node_set, object_type_name, sequence_concat, debug_dump_anything
 from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.hquery.syntax_error import HquerySyntaxError
@@ -341,6 +342,19 @@ class FunctionCallToken(Token):
 
 
 
+class HashKeyToken(Token):
+    lpb = LBP.nothing
+
+    def __str__(self):
+        return '(hash-key "{0}")'.format(self.value)
+
+    def nud(self):
+        constructor = ComputedHashKeyValueConstructor(self.value)
+        constructor.set_value(self.parse_interface.expression(LBP.sequence))
+        return constructor.evaluate
+
+
+
 class IfElseToken(Token):
     lbp = LBP.nothing
 
@@ -356,7 +370,7 @@ class InterpolatedStringToken(Token):
     lbp = LBP.nothing
 
     def __init__(self, parse_interface, value, **kwargs):
-        super(InterpolatedStringToken, self).__init__(parse_interface, html_entity_decode(value[1:-1]), **kwargs)
+        super(InterpolatedStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
 
     def __str__(self):
         return '(interpolated-string "{0}")'.format(self.value)
@@ -365,11 +379,16 @@ class InterpolatedStringToken(Token):
         return parse_interpolated_string(self.value, self.parse_interface)
 
 
+
 class LeftBraceToken(Token):
-    lbp = LBP.nothing
+    lbp = LBP.location_step
 
     def __str__(self):
         return '(left-brace)'
+
+    def led(self, left):
+        path = self.parse_interface.location_path(self, root_expression=left)
+        return path.evaluate
 
 
 
@@ -603,7 +622,7 @@ class VariableToken(Token):
 
         def evaluate():
             result = value_of_variable(self.value)
-            self._gab('reference evaluating to value {0}'.format(debug_dump_long_string(str(result))))
+            self._gab('reference evaluating to value {0}'.format(debug_dump_anything(result)))
             return result
 
         return evaluate

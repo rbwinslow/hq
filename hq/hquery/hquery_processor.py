@@ -1,5 +1,6 @@
 from hq.hquery.computed_constructors.html_attribute import ComputedHtmlAttributeConstructor
 from hq.hquery.computed_constructors.html_element import ComputedHtmlElementConstructor
+from hq.hquery.computed_constructors.json_array import ComputedJsonArrayConstructor
 from hq.hquery.computed_constructors.json_hash import ComputedJsonHashConstructor
 from hq.hquery.evaluation_in_context import evaluate_in_context
 from hq.hquery.location_path import LocationPath
@@ -101,7 +102,7 @@ token_config = [
     (r'\$([_\w][\w_\-]*)', VariableToken),
     (r'(:=)', AssignmentOperatorToken),
     (r'(for|let|return)(?!\w)', _pick_token_for_flwor_reserved_word),
-    (r'(attribute|element|hash)(?!\w)', _pick_token_for_computed_constructor_reserved_word),
+    (r'(array|attribute|element|hash)(?!\w)', _pick_token_for_computed_constructor_reserved_word),
     (r'(node|text|comment)\(\)', NodeTestToken),
     (r'(div|mod)(?![a-zA-Z])', _pick_token_for_div_or_mod),
     (r'(and|or)(?![a-zA-Z])', _pick_token_for_and_or_or),
@@ -112,6 +113,7 @@ token_config = [
     (r'({[a-z]{1,3}(?::[^:]*)*:})', ComputedConstructorFiltersToken),
     (r'(\{)', OpenCurlyBraceToken),
     (r'(\})', CloseCurlyBraceToken),
+    (r'(\w[\w_]*)\s*:', HashKeyToken),
     (r'(\w[\w\-]*)', NameTestToken),
 ]
 
@@ -227,6 +229,17 @@ class HqueryProcessor():
         return evaluation_fn
 
 
+    def parse_computed_array_constructor(self):
+        constructor = ComputedJsonArrayConstructor()
+        self.advance(OpenCurlyBraceToken)
+
+        if not isinstance(self.token, CloseCurlyBraceToken):
+            constructor.set_contents(self.expression())
+
+        self.advance(CloseCurlyBraceToken)
+        return constructor
+
+
     def parse_computed_attribute_constructor(self):
         constructor = ComputedHtmlAttributeConstructor(self.advance_over_name())
         self.advance(OpenCurlyBraceToken)
@@ -245,7 +258,7 @@ class HqueryProcessor():
         verbose_print('Parsing computed constructor "{0}"'.format(first_token.value), indent_after=True)
         result = getattr(self, 'parse_computed_{0}_constructor'.format(first_token.value))()
 
-        verbose_print('Finished parsing computed constructor', outdent_before=True)
+        verbose_print('Finished parsing computed constructor "{0}"'.format(first_token.value), outdent_before=True)
         return result
 
 
@@ -269,7 +282,7 @@ class HqueryProcessor():
             self.advance(OpenCurlyBraceToken)
 
         if not isinstance(self.token, CloseCurlyBraceToken):
-            constructor.set_content(self.expression())
+            constructor.set_contents(self.expression())
 
         self.advance(CloseCurlyBraceToken)
         return constructor
@@ -379,6 +392,13 @@ class HqueryProcessor():
         elif isinstance(first_token, ContextNodeToken):
             predicates = self.parse_location_path_predicates()
             path = LocationPath(Axis.self, NodeTest('node'), predicates)
+        elif isinstance(first_token, LeftBraceToken):
+            if root_expression is None:
+                raise HquerySyntaxError('a predicate (left brace) must follow an expression that yields a node set')
+            path = LocationPath(Axis.self,
+                                NodeTest('node'),
+                                self.parse_location_path_predicates(already_inside_brace=True),
+                                root_expression=root_expression)
         else:
             if not (isinstance(first_token, NameTestToken) or isinstance(first_token, NodeTestToken)):
                 raise HquerySyntaxError('Unexpected token {0}'.format(first_token))
@@ -431,9 +451,10 @@ class HqueryProcessor():
         return (axis, node_test)
 
 
-    def parse_location_path_predicates(self):
+    def parse_location_path_predicates(self, already_inside_brace=False):
         expressions = []
-        while self.advance_if(LeftBraceToken):
+        while already_inside_brace or self.advance_if(LeftBraceToken):
+            already_inside_brace = False
             verbose_print('parsing predicate expression starting with {0}'.format(self.token))
             expressions.append(self.expression())
             self.advance(RightBraceToken)
@@ -443,15 +464,26 @@ class HqueryProcessor():
     def expression(self, rbp=LBP.nothing):
         t = self.token
         verbose_print('parsing expression starting with {0} (RBP={1})'.format(t, rbp), indent_after=True)
-        self.token = self.next_token()
-        left = t.nud()
-        while rbp < self.token.lbp:
-            t = self.token
-            verbose_print('continuing expression at {0} (LBP={1})'.format(t, self.token.lbp))
+        try:
+
             self.token = self.next_token()
-            left = t.led(left)
-        verbose_print('finished expression', outdent_before=True)
-        return left
+            left = t.nud()
+            while rbp < self.token.lbp:
+                t = self.token
+                verbose_print('continuing expression at {0} (LBP={1})'.format(t, self.token.lbp))
+                self.token = self.next_token()
+                left = t.led(left)
+            verbose_print('finished expression', outdent_before=True)
+            return left
+
+        except AttributeError as err:
+            attr = re.match(r"'(\w+)'", err.args[0]).group(1)
+            if attr == 'nud':
+                raise HquerySyntaxError('unexpected token {0} found at beginning of expression'.format(t))
+            elif attr == 'led':
+                raise HquerySyntaxError('unexpected token {0} encountered in expression'.format(t))
+            else:
+                raise
 
 
     def _cannot_eat_else_same_as_then_because_else_needs_lower_lbp_so_then_expr_knows_when_to_stop(self):

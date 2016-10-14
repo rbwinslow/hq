@@ -125,6 +125,11 @@ def test_string_function_returns_expected_results_for_various_objects():
     assert query_html_doc('', 'string(1 = -1)') == expected_result('false')
 
 
+def test_string_value_of_an_element_with_mixed_content_inserts_proper_spaces_between_text_runs():
+    html_body = '<p>once <a href>twice</a> thrice</p>'
+    assert query_html_doc(html_body, 'string(//p)') == expected_result('once twice thrice')
+
+
 def test_string_length_function_returns_expected_values():
     assert query_html_doc('', 'string-length("foo")') == expected_result('3')
     assert query_html_doc('', 'string-length("")') == expected_result('0')
@@ -137,5 +142,6 @@ def test_various_functions_use_context_node_when_no_argument_passed():
     <p>last</p>"""
 
     assert query_html_doc(html_body, '//p[string() = "first"]/text()') == expected_result('first')
-    assert query_html_doc(html_body, '//p[normalize-space() = "foo bar"]/text()') == expected_result('foo   bar')
+    assert query_html_doc(html_body, '//p[normalize-space() = "foo bar"]/text()', preserve_space=True) == \
+           expected_result('foo   bar')
     assert query_html_doc(html_body, '//p[string-length() = 4]/text()') == expected_result('last')

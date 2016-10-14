@@ -1,10 +1,11 @@
 import re
+from builtins import str
 from html.entities import name2codepoint
 from past.builtins import unichr
 
 
 def html_entity_decode(s):
-    result = re.sub('&(%s);' % '|'.join(name2codepoint), lambda m: unichr(name2codepoint[m.group(1)]), s)
+    result = re.sub('&(%s);' % '|'.join(name2codepoint), lambda m: str(unichr(name2codepoint[m.group(1)])), s)
     result = re.sub(r'&#(\d{2,3});', lambda m: chr(int(m.group(1))), result)
     return result
 

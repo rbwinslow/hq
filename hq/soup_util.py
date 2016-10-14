@@ -1,3 +1,4 @@
+import re
 from builtins import str
 from bs4 import BeautifulSoup
 
@@ -13,9 +14,6 @@ class AttributeNode:
 
     def __repr__(self):
         return 'AttributeNode("{0}", "{1}")'.format(self.name, self.value)
-
-    def __str__(self):
-        return u'{0}="{1}"'.format(self.name, self.value)
 
     @classmethod
     def enumerate(cls, node):
@@ -42,6 +40,23 @@ def debug_dump_node(obj):
         return u'COMMENT "{0}"'.format(debug_dump_long_string(obj.string))
     else:
         return 'NODE type {0}'.format(obj.__class__.__name__)
+
+
+def derive_text_from_node(obj, preserve_space=False):
+    if is_tag_node(obj) or is_root_node(obj):
+        result = ' '.join(obj.strings if preserve_space else obj.stripped_strings)
+    elif is_attribute_node(obj):
+        result = obj.value
+    elif is_text_node(obj):
+        result = str(obj)
+    else:
+        raise RuntimeError("don't know how to derive test from {0}".format(debug_dump_node(obj)))
+
+    if not preserve_space:
+        result = re.sub(u'\u00a0', ' ', result)
+        result = re.sub(r'\s+', ' ', result).strip()
+
+    return result
 
 
 def is_any_node(obj):

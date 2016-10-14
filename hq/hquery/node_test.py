@@ -29,6 +29,7 @@ class NodeTest:
     def __init__(self, value, name_test=False):
         value = value.lower()
         self.repr = value
+        self.is_name_test = name_test
 
         if name_test:
             self.accept_fn = _make_name_accept_fn(value)

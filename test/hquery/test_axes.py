@@ -2,6 +2,9 @@ import os
 import re
 import sys
 
+from hq.hquery.syntax_error import HquerySyntaxError
+from pytest import raises
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 from ..common_test_util import expected_result
@@ -443,3 +446,8 @@ def test_css_class_axis_finds_elements_based_on_their_css_classes():
 
     assert query_html_doc(html_body, '//class::bar') == expected
     assert query_html_doc(html_body, '//.::bar') == expected
+
+
+def test_css_class_axis_can_only_be_followed_by_name_test():
+    with raises(HquerySyntaxError):
+        assert query_html_doc('', '/.::node()')

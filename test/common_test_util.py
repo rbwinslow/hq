@@ -3,15 +3,10 @@ from textwrap import dedent
 from hq.soup_util import make_soup
 
 
-def capture_stderr_output(capsys):
-    _, output = capsys.readouterr()
-    return eliminate_blank_lines(output.strip())
-
-
-def capture_stdout_output(capsys, strip=True):
-    output, _ = capsys.readouterr()
+def capture_console_output(capsys, strip=True):
+    output, errors = capsys.readouterr()
     output = output.rstrip('\n')
-    return eliminate_blank_lines(output.strip()) if strip else output
+    return eliminate_blank_lines(output.strip()) if strip else output, eliminate_blank_lines(errors.strip())
 
 
 def eliminate_blank_lines(s):

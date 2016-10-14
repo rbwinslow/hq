@@ -1,7 +1,7 @@
 import os
 import sys
 
-from hq.output import result_object_to_text
+from hq.output import convert_results_to_output_text
 from hq.soup_util import make_soup
 from hq.hquery.hquery_processor import HqueryProcessor
 
@@ -36,7 +36,7 @@ def test_name_test_at_root_ignores_all_but_root_element():
     <html id="root">
     </html>"""
     raw_result = HqueryProcessor('/html').query(make_soup(html))
-    actual = result_object_to_text(raw_result)
+    actual = convert_results_to_output_text(raw_result)
     assert actual == expected_result("""
     <html id="root">
     </html>""")

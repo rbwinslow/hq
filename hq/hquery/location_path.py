@@ -1,3 +1,4 @@
+from hq.hquery.axis import Axis
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_node, soup_from_any_tag, debug_dump_long_string
 from hq.verbosity import verbose_print
@@ -29,6 +30,8 @@ class LocationPath:
 
 
     def append_step(self, axis, node_test, predicates):
+        if axis == Axis.css_class and not node_test.is_name_test:
+            raise HquerySyntaxError('CSS class axis must be followed by a name test, not a node test')
         self.steps.append(LocationPathStep(axis, node_test, predicates))
 
 

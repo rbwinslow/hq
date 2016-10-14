@@ -9,7 +9,8 @@ Usage:
 
 Options:
   --preserve    Preserve extra whitespace in string values derived from HTML contents. The default behavior is to
-                automatically apply normalize-string to all string values derived from HTML elements and attributes.
+                automatically apply normalize-string to all string values derived from HTML elements and attributes,
+                and to convert non-breaking spaces into plain spaces.
   -u, --ugly    Do not pretty-print HTML markup on output.
   -v            Print verbose query parsing and evaluation information to stderr.
   --version     Display the installed HQ version.
@@ -23,7 +24,7 @@ from __future__ import print_function
 from docopt import docopt
 
 from .hquery.hquery_processor import HqueryEvaluationError, HqueryProcessor, HquerySyntaxError
-from .output import result_object_to_text
+from .output import convert_results_to_output_text
 from .soup_util import make_soup
 from .verbosity import verbose_print, set_verbosity
 
@@ -34,6 +35,7 @@ def main():
     from sys import stderr, stdin   # So py.tests have a chance to hook stdout & stderr
 
     args = docopt(__doc__, version='HQ {0}'.format(__version__))
+    preserve_space = bool(args['--preserve'])
     set_verbosity(bool(args['-v']))
 
     try:
@@ -43,11 +45,11 @@ def main():
 
         expression = args['<expression>']
         if len(expression) > 0:
-            result = HqueryProcessor(expression, bool(args['--preserve'])).query(soup)
+            result = HqueryProcessor(expression, preserve_space).query(soup)
         else:
             result = [soup]
 
-        print(result_object_to_text(result, pretty=(not args['--ugly'])))
+        print(convert_results_to_output_text(result, pretty=(not args['--ugly']), preserve_space=preserve_space))
 
     except HquerySyntaxError as error:
         print('\nSYNTAX ERROR: {0}\n'.format(str(error)), file=stderr)

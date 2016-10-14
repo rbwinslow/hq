@@ -5,6 +5,7 @@ context_stack = []
 
 
 class ExpressionContext:
+
     def __init__(self, node, position=1, size=1, preserve_space=None):
         self.node = node
         self.position = position
@@ -23,6 +24,7 @@ class ExpressionContext:
 
 class ExpressionStackEmptyError(RuntimeError):
     pass
+
 
 
 def get_context_node():

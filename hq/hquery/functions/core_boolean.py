@@ -29,6 +29,9 @@ class boolean:
     def __eq__(self, other):
         return is_boolean(other) and self.value == other.value
 
+    def __repr__(self):
+        return 'boolean({0})'.format(self.value)
+
 
 def false():
     return boolean(False)

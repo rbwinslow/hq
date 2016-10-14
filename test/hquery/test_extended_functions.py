@@ -59,3 +59,22 @@ def test_matches_function_extends_to_using_context_node_when_passed_no_input_str
     <p>foo</p>"""
 
     assert query_html_doc(html_body, '//p[matches("^f.+")]/text()') == expected_result('foo')
+
+
+def test_even_and_odd_functions_select_the_appropriate_elements_based_on_position():
+    html_body = """
+    <p>You</p>
+    <p>I</p>
+    <p>are</p>
+    <p>am</p>
+    <p>odd.</p>
+    <p>even.</p>"""
+
+    assert query_html_doc(html_body, '//p[even()]/text()') == expected_result("""
+    I
+    am
+    even.""")
+    assert query_html_doc(html_body, '//p[odd()]/text()') == expected_result("""
+    You
+    are
+    odd.""")

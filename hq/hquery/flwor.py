@@ -1,4 +1,4 @@
-from hq.hquery.object_type import make_sequence, sequence_concat, make_node_set
+from hq.hquery.object_type import make_sequence, sequence_concat, make_node_set, debug_dump_anything
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.hquery.variables import push_variable, variable_scope
 from hq.soup_util import debug_dump_long_string
@@ -42,7 +42,7 @@ class Flwor:
         else:
             result = self._evaluate_without_iteration()
 
-        verbose_print('FLWOR evaluation completed; returning {0}'.format(debug_dump_long_string(str(result))),
+        verbose_print('FLWOR evaluation completed; returning {0}'.format(debug_dump_anything(result)),
                       outdent_before=True)
         return result
 
@@ -69,13 +69,13 @@ class Flwor:
             result = []
 
             for item in sequence:
-                verbose_print('Visiting item {0}'.format(debug_dump_long_string(str(item))), indent_after=True)
+                verbose_print('Visiting item {0}'.format(debug_dump_anything(item)), indent_after=True)
 
                 with variable_scope():
                     push_variable(self.sequence_variable, make_sequence(item))
                     self._push_iteration_variables()
                     this_result = make_sequence(self.return_expression())
-                    verbose_print('Return clause yielded {0} reults for this visit'.format(len(this_result)))
+                    verbose_print('Return clause yielded {0} results for this visit'.format(len(this_result)))
                     result = sequence_concat(result, this_result)
 
                 verbose_print('Visit finished', outdent_before=True)

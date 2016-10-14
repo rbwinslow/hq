@@ -1,10 +1,10 @@
 from hq.hquery.evaluation_error import HqueryEvaluationError
-from hq.hquery.expression_context import get_context_node
+from hq.hquery.expression_context import get_context_node, peek_context
 from hq.hquery.functions.core_boolean import boolean
 from hq.soup_util import is_tag_node
 
 
-exports = ['class_']
+exports = ['class_', 'even', 'odd']
 
 
 def class_(*args):
@@ -19,3 +19,11 @@ def class_(*args):
         raise HqueryEvaluationError('class() expects one or two arguments; got {0}'.format(len(args)))
 
     return boolean(name in tag['class'])
+
+
+def even():
+    return boolean(peek_context().position % 2 == 0)
+
+
+def odd():
+    return boolean(peek_context().position % 2 == 1)

@@ -1,3 +1,4 @@
+from hq.hquery.object_type import debug_dump_anything
 from hq.soup_util import debug_dump_long_string
 from hq.verbosity import verbose_print
 
@@ -15,7 +16,7 @@ class variable_scope:
 
 def push_variable(name, value):
     global variable_stack
-    verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_long_string(str(value))))
+    verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_anything(value)))
     variable_stack.append((name, value))
 
 
@@ -24,8 +25,8 @@ def value_of_variable(name):
         for index in range(len(variable_stack) - 1, -1, -1):
             if variable_stack[index][NAME] == name:
                 reverse_index = len(variable_stack) - (index + 1)
-                verbose_print('Variable "{0}" found on stack (position {1}).'.format(name, reverse_index))
+                verbose_print('Variable "${0}" found on stack (position {1}).'.format(name, reverse_index))
                 return variable_stack[index][VALUE]
 
-    verbose_print('Variable "{0}" NOT FOUND on variable stack.'.format(name))
+    verbose_print('Variable "${0}" NOT FOUND on variable stack.'.format(name))
     return None

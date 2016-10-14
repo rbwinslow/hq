@@ -74,6 +74,9 @@ class number:
     def __lt__(self, other):
         return self.value < self._value_of_other_operand(other)
 
+    def __repr__(self):
+        return 'number({0})'.format(str(self.value))
+
     @staticmethod
     def _int_or_float(numeric_value):
         if isinstance(numeric_value, int) or numeric_value % 1 != 0:

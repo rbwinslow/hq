@@ -18,11 +18,25 @@ The remainder of this documentation assumes that you already know XPath_ (go che
 Why HQuery?
 ===========
 
-XPath is a very flexible path language for querying XML and (X)HTML documents, and it's not entirely unknown to Web developers. XQuery, on the other hand, is a not-very-popular functional programming language tightly focused around the task of manipulating XML data. It has very powerful features for solving problems in this space, but it's also too wordy, obscure and complex to appeal to developers in search of a low-investment/high-yield solution for HTML processing, which is what ``hq`` is intended to be. So I wondered how it might work out to just borrow the simplest and most useful features from XQuery, decoupled from XML complexities like namespaces and the schema-based type system, sprinkle on some syntactic sugar to shorten things up a bit, and maybe add a few features, particularly interpolated strings, to enhance the language's ability to build flexible output with very little syntax.
+HQuery includes XPath and borrows from XQuery, but it introduces new stuff, too, and even deviates in small ways from those standards. How come?
 
-It worked out quite well, I think!
+XPath seems counter-intuitive for a CLI because it's wordier than CSS selectors and less popular among Web developers, but its semantics are a superset of those in CSS and I wanted maximum querying power. My motivating examples included queries that couldn't be done as selectors without scripting logic. So I went with the ugly duckling and added non-standard features to make it less wordy (like abbreviated axes) and to borrow desirable features from CSS selectors (like the class axis).
 
-As an example, let's consider a problem involving the export of data embedded on a Web page in the form of a CSV_ file. The data are all of the episodes from the first season of Breaking Bad, the Web page is the season's Wikipedia_page_, and the CSV file that we want to produce is a little complicated because we want to include in every record a truncated plot "teaser" derived from the plot summaries in the episode table from the Web page. Each of those plot summaries in the Wikipedia episode table occupies its own entire row, right below the row where all of the other details for that episode sit. So the table on the Wikipedia page looks like this:
+XQuery_ is a functional programming language designed specifically for manipulating XML data. It's quite unpopular, even among developers who do a lot of work with XML, because it's wordy, obscure and laden with XML-ecosystem complexities like namespaces and a type system based on `XML Schemata`_. But I wanted power on the results-producing side of the picture as well, and XQuery has powerful features and semantics that are particularly well suited to the task. So HQuery borrows the simplest and most useful features from XQuery, decoupling them from those XML complexities and sprinkling them with some syntactic sugar to shorten things up a bit.
+
+To top things off, HQuery adds a few original features, particularly interpolated strings, that enhance the language's ability to do really flexible querying, manipulation and output with very little syntax. Low investment, high yield. Don't you want to delete all that script code and turn it into just one expression on a command line, like jq_ allows you to do if you're crunching JSON? I know, I know, "Then I'll have `two problems`_."
+
+.. _XQuery: https://www.w3.org/XML/Query/
+.. _XML Schemata: https://www.w3.org/XML/Schema
+.. _jq: https://stedolan.github.io/jq/
+.. _two problems: https://blog.codinghorror.com/regular-expressions-now-you-have-two-problems/
+
+Examples
+--------
+
+Consider some examples that illustrate what the language can do. These examples are all based on the contents of the Wikipedia (English) page for the first season of `Breaking Bad`_. The page contains a table of episodes that looks a little like this:
+
+.. _Breaking Bad: https://en.wikipedia.org/wiki/Breaking_Bad_(season_1)
 
     +-----+-----------------------+----------------+----------------+
     | No. | Title                 | Director       | Writer         |
@@ -31,115 +45,200 @@ As an example, let's consider a problem involving the export of data embedded on
     +-----+-----------------------+----------------+----------------+
     | Walter White, a 50-year-old chemistry teacher, secretly . . . |
     | . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . |
+    | . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . |
     +-----+-----------------------+----------------+----------------+
     | 2   | "Cat's in the bag..." | Adam Bernstein | Vince Gilligan |
     +-----+-----------------------+----------------+----------------+
     | Walt and Jesse try to dispose of . . . . . . . . . . . . . .  |
     | . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . |
+    | . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . |
     +---------------------------------------------------------------+
 
-.. _CSV: http://edoceo.com/utilitas/csv-file-format
-.. _Wikipedia_page: https://en.wikipedia.org/wiki/Breaking_Bad_(season_1)
+The real table has more columns than this, and the dots, here, are intended to signify a long paragraph of text (including spoilers!). Otherwise, this is a simple HTML ``table``, with ``tr`` rows and ``td`` cells.
 
-The hyphen lines separate rows in the table, and the dots are intended to signify a long paragraph of text (including spoilers!). Now here is the kind of CSV output we're looking for::
+Listing Directors
+~~~~~~~~~~~~~~~~~
 
-    "No.","Title","Director","Writer","Plot Tease"
-    "1","Pilot","Vince Gilligan","Vince Gilligan","Walter White, a 50-year-old chemistry..."
-    "2","Cat's in the bag...","Adam Bernstein","Vince Gilligan","Walt and Jesse try to dispose of..."
+If all we want to do is list directors, one per line, the excellent CSS-based query tool pup_ can totally do the job:
 
-Notice the "Plot Tease" column we've appended to the list of fields, and the truncated plot summary text that we've added to each CSV record. To produce such output, we need to query the page for the contents of the header row and each episode row in the episode table, as well as the interleaved rows containing just the plot summaries, we need to truncate the plot summaries, and we need to synthesize all of these contents into the CSV records depicted above, with the truncated plots following the other episode details in each record.
+.. _pup: https://github.com/ericchiang/pup
 
-If you were using just an HTML query tool with no capability to assemble or synthesize outputs programmatically, you would have to write a script in your favorite scripting language to do this part of the work. In the XML world, you might find yourself solving such a problem in XQuery, in which case your solution might look something like this:
+.. code-block:: bash
 
-.. code-block:: xquery
+    curl -s 'https://en.wikipedia.org/wiki/Breaking_Bad_(season_1)' |
+        pup '.wikiepisodetable tr:nth-child(even) td:nth-of-type(3) text{}' | uniq
 
-    let $heads := (for $h in //tr[1]/th return concat('"', normalize-space($h), '",'), '"Plot Tease"')
-    let $recs :=
-        for $ep in //tr[position() mod 2 = 0]
-        let $cols := for $col in $ep/* return concat('"', normalize-space($col), '",')
-        let $plot := substring(normalize-space($ep/following-sibling::tr[1]/td), 1, 50)
-        return concat("&#10;", string-join($cols), '"', $plot, '..."')
-    return concat(string-join($heads), string-join($recs))
+I had to add a line break because of the long URL. From now on, let's just start these commands with ``curl_cmd |``.
 
-This is a relatively short and simplistic solution. It doesn't even truncate the plot summaries properly, at word boundaries, but instead just chops off at the fiftieth character and sticks on an ellipsis. Notice how wordy function calls like ``normalize-space``, the laborious ``concat`` and ``substring`` work, and even the verbose ``following-sibling`` XPath axis contribute to the overall length of this code sample.
+The nice, terse ``pup`` script is just a CSS selector plus pup's ``text{}`` generator, which produces only the text content of HTML nodes instead of their full HTML representation. ``uniq`` deals with the duplicates (Adam Bernstein directed two episodes). The output looks like this::
 
-If you're a sharp observer of XQuery code, you might suspect that we could lose the ``let $cols :=`` and even the ``let $heads :=`` lines altogether by collapsing them into the ``string-join`` calls later in the FLWOR, but there are line-breaking whitespaces in the original content that necessitate the ``normalize-space`` calls in these ``let`` declarations, so it's not so easy. If you're *not* a sharp observer of XQuery code, don't worry too much about the details; this sample is here just to illustrate the volume of code required to solve this problem in a language that was made for HTML-like data manipulation.
+    Vince Gilligan
+    Adam Bernstein
+    Jim McKay
+    Tricia Brock
+    Bronwen Hughes
+    Tim Hunter
 
-Here is the HQuery equivalent, with a few line breaks added for readability::
+Can HQuery do any better? As it turns out, *not particularly*...:
 
-    concat(
-        `"${j:","://.::wikiepisodetable/tr[1]/th}","Plot Tease"&#10;`,
-        //.::wikiepisodetable/tr[position()mod2=0] -> `"${j:",":$_/*}","${t:50:...:$_/>::tr[1]/td}"&#10;`
-    )
+.. code-block:: bash
 
-To me, this seems like a reasonable volume of code to pass along at the command-line to accomplish this task, while the XQuery sample above would not be. Here is a quick breakdown of this expression and the HQuery features on which it's based::
+    curl_cmd | hq '//.::wikiepisodetable//tr[even()]/td[3]//text()' | uniq
 
-    `"${j:","://.::wikiepisodetable/tr[1]/th}","Plot Tease"&#10;`
+It's shorter, but it's maybe a little uglier (though beauty is in the eye of the beholder). There are clear parallels between the structure of the ``pup`` query and this one, but the syntax here is less familiar to Web developers. This example makes use of the abbreviated class axis feature and the ``even`` function in HQuery, which are helping to keep the command short but not doing too much to improve the aesthetics. If all I want to do is list these directors, and I'm not an XPath fanatic, then I probably don't give ``hq`` a second look.
 
-This is where we put the table's column headings together, manufacturing the initial "header" record in the CSV output. The backticks at the beginning and end of this expression denote an interpolated string, a feature very popular among_ dynamic_ languages_ today. Here are some simpler examples of string interpolation in HQuery::
+Producing JSON
+~~~~~~~~~~~~~~
 
-    1. `Variable x contains value $x`
-    2. `Four plus four is ${4 + 4}`
+What if we wanted to transform the episode records in this table into JSON? ``pup`` has a nice, terse ``json{}`` output transformer, like ``text{}``:
 
-.. _among: https://en.wikibooks.org/wiki/Ruby_Programming/Syntax/Literals#Interpolation
-.. _dynamic: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
-.. _languages: http://docs.groovy-lang.org/latest/html/documentation/index.html#_string_interpolation
+.. code-block:: bash
 
-I should note that in HQuery, as in XQuery, all variable names begin with a dollar sign. When a simple variable name appears in an interpolated string, as in example (1), it will be replaced with its value, interpreted as a string. The "interpreted as a string" part is important, because XPath has very specific_rules_ about how node sets and other kinds of data are converted into strings, and HQuery adds the further step of normalizing_whitespace_ in those strings when they are derived from text content derived from the HTML document. This makes interpolated strings a nice shortcut for all of those ``normalize-space`` calls.
+    curl_cmd | pup '.wikiepisodetable tr:nth-child(even) json{}'
 
-.. _specific_rules: https://www.w3.org/TR/xpath/#function-string
-.. _normalizing_whitespace: https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/normalize-space
+``pup`` produces a general and very exhaustive JSON representation of the HTML markup, so this command produces almost six hundred lines of output. The first two cells from the HTML table come out looking like this:
 
-As with interpolated strings found in other languages, you can use curly braces after the dollar sign to embed a more complicated expression in an interpolated string. This is illustrated in example (2) above, and it brings us back to what we see when we look inside the "headers" interpolated string. Let's break it up so we can talk about each piece::
+.. code-block:: json
 
-    ` " ${j:",": //.::wikiepisodetable/tr[1]/th }  ","Plot Tease" &#10; `
-     -- -------- ------------------------------ -- -------------- -----
-     #1    #2                 #3                #2       #4        #5
+    {
+        "tag": "td",
+        "text": "1"
+    },
+    {
+        "children": [
+            {
+                "href": "/wiki/Pilot_(Breaking_Bad)",
+                "tag": "a",
+                "text": "Pilot",
+                "title": "Pilot (Breaking Bad)"
+            }
+        ],
+        "class": "summary",
+        "style": "text-align:left",
+        "tag": "td",
+        "text": "\u0026#34; \u0026#34;"
+    },
 
-The very first character, #1, is just the initial double quote that appears at the very beginning of the output.
+The structure is starkly different between the two cells, because the actual markup looks different:
 
-#2 is an expression of the ``${<expr>}`` form embedded in the interpolated string, so it will be replaced with the evaluated result of the expression, converted to a string as necessary. But there's more going on at the beginning of this ``${}`` than just the dollar sign and the curly braces. That little colon-delimited clause at the beginning of the embedded expression, ``j:",":``, is called a *filter.*
+.. code-block:: html
 
-Filters are a shorthand for various transformation functions that are useful to apply to the evaluated result of an embedded expression, and this is the "j" for "join" filter, which performs a string-join operation on the contents of a sequence (assuming the expression produces a sequence). The ``","`` argument between the colons is inserted between each item in the sequence that the join filter concatenates together.
+    <td>1</td>
+    <td class="summary" style="text-align:left">
+        "<a href="/wiki/Pilot_(Breaking_Bad)" title="Pilot (Breaking Bad)">Pilot</a>"
+    </td>
 
-#3 is the actual expression part of the embedded expression, and it looks *kind of like* a standard XPath, but a little different. The first location step in the path, ``.::wikiepisodetable``, utilizes a novel axis that HQuery adds to the set of standard XPath axes: the ``class`` axis. The ``class`` axis selects HTML elements whose ``class`` attribute contains the name in the name test part of the location step (which *has to* be a name test; you can't use a node test like ``node()`` here). Combined with the double-slash at the beginning of the path, this clause selects all of the elements in the entire HTML document that references the given CSS class name. On the *Breaking Bad* page, this matches the ``table`` element with all of the episodes in it.
+There are cells that deviate in other ways, including descendants two generations deep. Fortunately, there's another excellent tool, jq_, that does a superheroic job of slicing and dicing JSON, so it can consome this raw JSON and produce something more reasonable. Here's an expanded command making use of ``jq``:
 
-I could also have written ``class::wikiepisodetable`` here instead, because the ``class`` axis (like other XPath axes) has an unabbreviated name, but the dot is shorter and reminiscent of class-based selection in CSS. HQuery provides abbreviated versions of all of the useful axes from XPath, but unlike XPath's own "@" shorthand for the ``attribute`` axis, all of these HQuery-proprietary abbreviations must be followed by the double-colon just to keep the parsing simple.
+.. _jq: https://stedolan.github.io/jq/
 
-The remainder of this location path, ``tr[1]/th``, is all standard XPath. It selects all of the ``th`` element children inside the first ``tr`` element that's a child of the ``table`` selected in the first step. The location path produces, as a result, all of the header cells in the first row of the episode table. Combined with the join filter and the automatic string normalization HQuery performs on string values derived from HTML content, this succinctly constructs all of the header names with double quotes and commas in between.
+.. code-block:: bash
 
-#4 and #5 are both just more literal text included in the interpolated string, with #4 providing the last close double quote for the list of header names produced by the embedded expression as well as the extra heading for the "Plot Tease" column. #5 is an escape that adds a line feed at the end, getting us ready for the records produced by the second argument to the outer ``concat`` function call::
+    curl_cmd | pup '.wikiepisodetable tr:nth-child(even) json{}' |
+        jq 'map({number: .children[1].text, title: .children[2].children[0].text,
+        director: (.children[3].text + .children[3].children[0].text),
+        author: (.children[4].text + .children[4].children[0].text), aired: .children[5].text})'
 
-    //.::wikiepisodetable/tr[position()mod2=0] -> `"${j:",":$_/*}","${t:50:...:$_/>::tr[1]/td}"&#10;`
+I added line breaks for clarity, of course. The command produces nice JSON:
 
-XQuery programmers (anybody there?) may not recognize this as an XQuery FLWOR_ statement, but that is what it is. The ``->`` operator is the HQuery iteration operator, and it maps to the semantics of XQuery FLWORs::
+.. code-block:: json
 
-    <expr> -> <other-expr>  ::=  for $_ in <expr> return <other-expr>
+    [
+        {
+            "number": "1",
+            "title": "Pilot",
+            "director": "Vince Gilligan",
+            "author": "Vince Gilligan",
+            "aired": "January 20, 2008"
+        },
 
-.. _FLWOR: http://allthingsoracle.com/xquery-for-absolute-beginners-part-3-flwor/
+And so on...
 
-As you might have guessed, XQuery background or no, this is a construct for iterating over the sequence of items produced by ``<expr>``, producing a new sequence composed of all of the results from evaluating ``<other-expr>`` on each iteration, with the item from ``<expr>`` being iterated over supplied to ``<other-expr>`` as a variable named ``$_``. With this overall structure in mind, let's start understanding this expression by deconstructing the expression that produces the items to be iterated over::
+The ``jq`` command is long but mostly readable. Even if you haven't used the tool or read the documentation, you can kind of tell from the curly braces and the attribute-like "name: expression" structure that most of the command is concerned with assembling the JSON hash for each episode. The longer expressions for "director" and "author" are needed because those cells sometimes contain hyperlinks with the names inside, sometimes not.
 
-    //.::wikiepisodetable /tr [ position() mod 2 = 0 ]
-    --------------------- --- ------------------------
-              #1          #2            #3
+If the markup structure were more irregular than this, or we needed to deal with discontinuous text surrounding child elements (which ``pup``'s ``json{}`` generator wants to mash together), we might have a considerably more difficult time. But it's not! So far, so good.
 
-We've already encountered #1 before; it selects the episode ``table`` element. #2 moves the selection down into the set of ``tr`` child elements inside the ``table``, but in this case we are selecting a different set of rows by using the all-standard-XPath predicate #3. This predicate causes us to select only those ``tr`` elements at even-numbered positions, ignoring both the header row (at position 1) and all of the plot summary rows (at positions 3, 5, 7, etc.). So this FLWOR is going to iterate over all of the row elements from the ``table`` that contain episode details. Now let's examine the other expression, where all the action is::
+How about ``hq``?
 
-    -> `  "  ${j:",": $_/* }  "," ${t:50:...: $_/>::tr[1]/td  } "&#10;  `
-       -- -- -------- ---- -- --- ----------- -------------- -- ------ --
-       #1 #2    #3     #4  #3 #5      #6            #7       #6   #8   #1
+.. code-block:: bash
 
-#1 is the surrounding backticks that make this whole expression an interpolated string.
+    curl_cmd | hq 'array { //.::wikiepisodetable//tr[even()] ->
+        hash {number: $_/td[1], title: $_/td[2]/a, director: $_/td[3],
+              author: $_/td[4], aired: $_/td[5]/text()}}'
 
-#2, like the double quote at the beginning of the previous interpolated string we just looked at, is just a literal double quote that's going to end up at the beginning of each record in the CSV output.
+Now we're starting to get somewhere. This solution is less code, uses one tool instead of two, and once you get the idea that there's an iteration going on here that's producing all of the hashes inside the array (that's what the ``->`` is doing), it's significantly easier to relate the JSON output to the HTML input. The repetitive '.children[#].children[#]' stuff obscures that relationship when we're chaining ``pup`` and ``jq``.
 
-#3 is another embedded expression with a "join" filter just like the one we saw above, that stitched all of the headings together with surrounding double quotes and commas in between. This one is doing the same thing for all of the detail cells in the row we're iterating over, which are produced by the expression #4. In #4 we see our first use of the ``$_`` variable that the abbreviated FLWOR automatically declares, whose value is the ``tr`` element node surrounding all of the detail cells. Those cells are the only element children within that ``tr``, so the XPath is pretty simple: match all element children of the ``tr`` with ``/*``.
+This example uses several features unique to ``hq``, including computed JSON array and hash construction, the abbreviated class axis and the abbreviated FLWOR iteration.
 
-#5 is another static literal part of the string, inserting a comma and double quotes to separate the end of the details list from the last item in the record, the truncated "plot tease."
+Adding Plot Summaries
+~~~~~~~~~~~~~~~~~~~~~
 
-#6 is another embedded expression, this time using a filter we haven't seen: the "t" for "truncate" filter. Where the "join" filter accepted one colon-delimited argument, this one accepts two: a maximum length at which to truncate the string value of the embedded expression, and a string to use as a suffix at the end of the truncated string. This takes care of the plot tease truncation for us, and does so at a proper word boundary.
+Now things get interesting, because we're going to try to include the plot summaries from the episode table. As you may recall, those summaries are contained in separate rows, each following the row with the corresponding episode details in it.
 
-#7 is an expression that produces the plot summary corresponding to the details row in ``$_``. This XPath takes advantage of one of the abbreviated axes mentioned above: in this case, ``>::`` is used as an abbreviation for ``following-sibling::``. The rest of the expression is standard XPath, and it selects the one cell in the row that follows the details row in ``$_``.
+Since ``pup`` is a pure query tool, and CSS selectors lack a means of representing "cousin" relationships, the only way to put these contents together is through the advanced functional programming features provided by ``jq``. There is probably more than one way to solve this problem in a powerful tool like ``jq``, but here's what I came up with:
 
-#8, finally, is the last literal part of the interpolated string, consisting of a final double quote (to match the one before the plot tease) and a line feed, so that the next record will appear on a new line.
+.. code-block:: bash
+
+    curl_cmd | jq 'reduce .[] as $row ([];
+        if ($row.children | length) > 1 then
+            . + [{no: $row.children[1].text, title: $row.children[2].children[0].text,
+            director: ($row.children[3].text + $row.children[3].children[0].text),
+            author: ($row.children[4].text + $row.children[4].children[0].text), aired: $row.children[5].text}]
+        else last.plot = $row.children[0].text end)'
+
+I've added line breaks and indentation to enhance clarity, obviously. This example uses ``jq``'s ``reduce`` and ``if-then-else`` syntax to build a new JSON array by adding episode details from episode rows, much as we were doing before, but stitching on the plot summaries rather than adding new array entries when we're iterating over a plot row (which we decide based on the number of cells in the row).
+
+This solution has two problems, and one of them is a deal-breaker. That problem has to do with the presence of hyperlinks in the original HTML plot summaries. ``pup`` turned those hyperlinks into nested ``children`` array contents, stitching the remaining (non-hyperlink) text all together so that it's impossible to know where the hyperlink text was originally located in the overall cell text. Here's the HTML:
+
+.. code-block:: html
+
+    <td class="description" colspan="7" style="border-bottom:solid 3px #2FAAC3">
+        Walter White, a 50-year-old chemistry teacher, secretly begins making crystallized
+        <a href="/wiki/Methamphetamine" title="Methamphetamine">methamphetamine</a>
+        to support his family after learning that he has terminal lung cancer. He teams up
+
+        ... et cetera, et cetera ...
+    </td>
+
+For this ``td`` element, ``pup`` produces the following JSON:
+
+.. code-block:: json
+
+    {
+        "children": [
+        {
+            "href": "/wiki/Methamphetamine",
+            "tag": "a",
+            "text": "methamphetamine",
+            "title": "Methamphetamine"
+        },
+        {
+            "href": "/wiki/Recreational_vehicle",
+            "tag": "a",
+            "text": "RV",
+            "title": "Recreational vehicle"
+        }
+        ],
+        "class": "description",
+        "colspan": "7",
+        "style": "border-bottom:solid 3px #2FAAC3",
+        "tag": "td",
+        "text": "Walter White, a 50-year-old chemistry teacher, secretly begins making
+                 crystallized to support his family after learning that he has terminal
+                 lung cancer. He teams up ... et cetera, et cetera ..."
+    }
+
+Notice how the word "methamphetamine" exists only in the ``children`` object representing the ``a`` tag that contained it in the HTML, and not after the word "crystallized" in the text that we are actually capturing in the command illustrated above. There's no way to put these back together again, and that's a deal breaker.
+
+The other issue with this solution is its narrow applicability to JSON. ``jq`` happens to be an incredibly powerful tool, enabling this kind of manipulation logic because it's not just build for simple querying or reporting. But what if we were trying to solve this kind of problem with HTML as our input and some other representation as our output, like YAML or CSV or LaTeX or just differently structured HTML? As I mentioned above, we're already having to work with a data structure that is only indirectly tied to the original HTML, making our little script harder to read and relate to that content and also leading to fundamental limitations like the fragmented text problem we've run into.
+
+To solve the immediate problem in ``hq``, we need only add one more clause to the hash:
+
+.. code-block:: bash
+
+    <curl_cmd> | jq 'array {//.::wikiepisodetable//tr[even()] -> hash {
+        number: $_/td[1], title: $_/td[2]/a, director: $_/td[3],
+        author: $_/td[4], aired: $_/td[5]/text(), plot: $_/>::tr[1]/td}}'
+
+That very last hash key and value, ``plot: $_/>::tr[1]/td``, is all that was required to reach over into the next ``tr`` element (``>::`` is ``hq``'s abbreviated ``following-sibling`` axis, and the ``tr[1]`` part makes sure we get the first ``tr`` that follows the current one) and pluck out the text of its one-and-only ``td`` child. In this case, all of the plot text comes out unbroken, with the hyperlink text inserted in the right places, because ``hq``'s query and manipulation semantics are all based directly on HTML.
+

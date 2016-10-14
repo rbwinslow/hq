@@ -38,13 +38,27 @@ def test_join_filter_defaults_to_empty_string_delimiter():
 
 
 def test_truncate_filter_elides_contents():
-    html_body = "<p>The quick brown fox jumped over the lazy dog.</p>"
+    html_body = '<p>The quick brown fox jumped over the lazy dog.</p>'
     assert query_html_doc(html_body, '`${t:23:?://p}`') == expected_result('The quick brown fox?')
 
 
 def test_truncate_filter_defaults_to_no_suffix():
-    html_body = "<p>short, sharp shock</p>"
+    html_body = '<p>short, sharp shock</p>'
     assert query_html_doc(html_body, '`${t:15:://p}`') == expected_result('short, sharp')
+
+
+def test_regex_replace_filter_replaces_stuff_with_other_stuff():
+    html_body = '<span>May 25, 1979<span>'
+    assert query_html_doc(html_body, r'`${rr:(\w+) (\d+)(, \d+):\2th of \1\3:://span}`') == '25th of May, 1979'
+
+
+def test_use_of_escapes_for_forbidden_characters_in_regex_replace_patterns():
+    assert query_html_doc('', r"""`it's ${rr:\w{3&#125;:dog::"a cat's"} life`""") == "it's a dog's life"
+    assert query_html_doc('', r'`${rr:&#58; ::: let $x := "re: " return concat($x, "search")}`') == 'research'
+
+
+def test_regex_replace_filter_can_be_used_to_replace_unicode_characters():
+    assert query_html_doc('', u'`${rr:&nbsp;: :: "non-breaking\u00a0space"}`') == 'non-breaking space'
 
 
 def test_filters_chain_left_to_right():
@@ -53,3 +67,8 @@ def test_filters_chain_left_to_right():
     <p>two</p>
     <p>three</p>"""
     assert query_html_doc(html_body, '`${j:, :t:12: ...://p} whatever!`') == expected_result('one, two, ... whatever!')
+
+
+def test_character_escape_is_not_prematurely_decoded_in_interpolated_string():
+    query = 'let $x := "foo" return `Variable "&#36;x" contains value $x`'
+    assert query_html_doc('', query) == 'Variable "$x" contains value foo'  # Not 'Variable "foo" contains...'

@@ -1,11 +1,14 @@
 import re
 
-from hq.hquery.functions.extend_string import join
+from hq.hquery.functions.extend_string import join, _xpath_flags_to_re_flags
 from hq.hquery.object_type import string_value
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_long_string
-from hq.string_util import truncate_string
+from hq.string_util import truncate_string, html_entity_decode
 from hq.verbosity import verbose_print
+
+
+clauses_pattern = re.compile(r'(\$\{(?:[a-z]{1,3}(?:[^:]*:)*:)*[^\}]+\})|(\$[a-zA-Z_]\w*)|((?:[^\$]+))')
 
 
 def _join_filter_link(arguments):
@@ -15,9 +18,23 @@ def _join_filter_link(arguments):
         delimiter = arguments[0]
 
     def construct(eval_fn):
-        def evaluate():
-            return join(eval_fn(), delimiter)
-        return evaluate
+        return lambda: join(eval_fn(), delimiter)
+
+    return construct
+
+
+def _regex_replace_filter_link(arguments):
+    if arguments is None or len(arguments) < 2:
+        msg = 'interpolated string regex replace filter expects three arguments; got {0}'
+        raise HquerySyntaxError(msg.format(arguments))
+
+    if len(arguments) == 3:
+        flags = _xpath_flags_to_re_flags(arguments[2])
+    else:
+        flags = 0
+
+    def construct(eval_fn):
+        return lambda: re.sub(arguments[0], arguments[1], string_value(eval_fn()), flags=flags)
 
     return construct
 
@@ -37,6 +54,7 @@ def _truncate_filter_link(arguments):
 
 filters = {
     r'j:([^:]*):': _join_filter_link,
+    r'rr:([^:]+):([^:]*):([i]*):': _regex_replace_filter_link,
     r't:(\d+):([^:]*):': _truncate_filter_link,
 }
 
@@ -45,7 +63,7 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
     for pattern in filters:
         match = re.match(pattern, remainder)
         if match is not None:
-            filter_constructor = filters[pattern](match.groups())
+            filter_constructor = filters[pattern]([html_entity_decode(arg) for arg in match.groups()])
             remainder = remainder[match.span()[1]:]
             if chain is None:
                 return reduce_filters_and_expression(remainder, parse_interface, filter_constructor)
@@ -63,32 +81,18 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
 
 def parse_interpolated_string(source, parse_interface):
     verbose_print('Parsing interpolated string contents `{0}`'.format(source), indent_after=True)
+
     expressions = []
-    clauses = _split_at_embedding_dollars_but_not_dollars_inside_expressions(source)
-    if len(clauses[0]) > 0:
-        verbose_print('Adding static evaluator for substring "{0}"'.format(debug_dump_long_string(clauses[0])))
-        expressions.append(lambda: clauses[0])
-    for clause in clauses[1:]:
-        if clause[0] == '{':
-            inside, _, outside = clause[1:].partition('}')
-            verbose_print('Parsing embedded expression "{0}"'.format(inside))
-            expressions.append(reduce_filters_and_expression(inside, parse_interface))
-            if len(outside) > 0:
-                verbose_print('Adding static evaluator for substring "{0}"'.format(debug_dump_long_string(outside)))
-                expressions.append(_make_static_literal_evaluator(outside))
+    for embedded_expr, embedded_var, literal in clauses_pattern.findall(source):
+        if embedded_expr:
+            verbose_print('Adding embedded expression: {0}'.format(embedded_expr))
+            expressions.append(reduce_filters_and_expression(embedded_expr[2:-1], parse_interface))
+        elif embedded_var:
+            verbose_print('Adding embedded variable reference: {0}'.format(embedded_var))
+            expressions.append(parse_interface.parse_in_new_processor(embedded_var))
         else:
-            name_match = re.match(r'[_\w][_\w\-]*', clause)
-            if name_match is None:
-                msg = 'Invalid character "{0}" following "$" in interpolated string'
-                raise HquerySyntaxError(msg.format(clause[0]))
-            outside_index = name_match.span()[1]
-            verbose_print('Parsing variable reference "${0}"'.format(clause[:outside_index]))
-            expressions.append(parse_interface.parse_in_new_processor('${0}'.format(clause[:outside_index])))
-            if outside_index < len(clause):
-                verbose_print('Adding static evaluator for substring "{0}"'.format(
-                    debug_dump_long_string(clause[outside_index:])
-                ))
-                expressions.append(_make_static_literal_evaluator(clause[outside_index:]))
+            verbose_print('Adding literal string contents "{0}"'.format(literal))
+            expressions.append(_make_literal_identity_closure(literal))
 
     def evaluate():
         chunks = [string_value(exp()) for exp in expressions]
@@ -106,27 +110,5 @@ def parse_interpolated_string(source, parse_interface):
     return evaluate
 
 
-def _make_static_literal_evaluator(value):
-    return lambda: value
-
-
-def _split_at_embedding_dollars_but_not_dollars_inside_expressions(source):
-    result = []
-    stitching_together = None
-    splits = source.split('$')
-    result.append(splits[0])
-
-    for split in splits[1:]:
-        if len(split) > 0:
-            if stitching_together is None:
-                if split[0] != '{' or split.find('}') > 0:
-                    result.append(split)
-                else:
-                    stitching_together = split
-            else:
-                stitching_together = '{0}${1}'.format(stitching_together, split)
-                if split.find('}') >= 0:
-                    result.append(stitching_together)
-                    stitching_together = None
-
-    return result
+def _make_literal_identity_closure(value):
+    return lambda: html_entity_decode(value)

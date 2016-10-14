@@ -96,3 +96,102 @@ def test_hash_constructor_mapping_filter_renames_attributes_derived_from_element
     assert 'div' not in actual
     assert actual['paragraph'] == 'foo'
     assert actual['other'] == 'bar'
+
+
+def test_hash_constructor_can_contain_a_sequence_assembled_from_node_sets():
+    html_body = """
+    <p>foo</p>
+    <div>bar</div>"""
+
+    actual = json.loads(query_html_doc(html_body, 'hash { /html/body/p, /html/body/div }'))
+
+    assert 'p' in actual
+    assert 'div' in actual
+    assert actual['p'] == 'foo'
+    assert actual['div'] == 'bar'
+
+
+def test_hash_keys_can_be_used_to_define_attributes_in_a_constructed_hash():
+    actual = json.loads(query_html_doc('', 'hash {foo: "bar", moe: "larry"}'))
+
+    assert 'foo' in actual
+    assert actual['foo'] == 'bar'
+    assert 'moe' in actual
+    assert actual['moe'] == 'larry'
+
+
+def test_hash_keys_can_be_mixed_with_other_types_of_content_in_a_constructed_hash():
+    html_body = """
+    <moe>Wake up and go back to sleep!</moe>
+    <curly>I'm trying to think, but nothing happens!</curly>"""
+
+    actual = json.loads(query_html_doc(html_body, 'hash {//moe, larry: "The pain goes away on payday.", //curly}'))
+
+    assert 'moe' in actual
+    assert 'larry' in actual
+    assert 'curly' in actual
+    assert actual['moe'] == 'Wake up and go back to sleep!'
+    assert actual['larry'] == 'The pain goes away on payday.'
+    assert actual['curly'] == "I'm trying to think, but nothing happens!"
+
+
+def test_non_string_types_survive_conversion_to_json():
+    actual = json.loads(query_html_doc('', 'hash { integer: 1, float: 1.1, boolean: true() }'))
+
+    assert all(name in actual for name in ('integer', 'float', 'boolean'))
+    assert isinstance(actual['integer'], int)
+    assert isinstance(actual['float'], float)
+    assert isinstance(actual['boolean'], bool)
+
+
+def test_hash_can_contain_key_values_that_are_other_computed_json_objects():
+    actual = json.loads(query_html_doc('', 'hash {a_hash: hash {foo: "bar"}, an_array: array {"one", 2}}'))
+
+    assert 'a_hash' in actual
+    assert 'an_array' in actual
+    assert isinstance(actual['a_hash'], dict)
+    assert isinstance(actual['an_array'], list)
+    assert 'foo' in actual['a_hash']
+    assert actual['a_hash']['foo'] == 'bar'
+    assert len(actual['an_array']) == 2
+    assert actual['an_array'][0] == 'one'
+    assert actual['an_array'][1] == 2
+
+
+def test_element_value_in_hash_key_is_transformed_into_string_value_by_default():
+    html_body = '<p>you are <a href>here</a></p>'
+
+    actual = json.loads(query_html_doc(html_body, 'hash { placement: //p }')) == 'You are here'
+
+
+def test_array_constructor_uses_string_value_of_elements_when_given_node_sets_as_contents():
+    html_body = """
+    <p>one</p>
+    <div>two</div>
+    <p>three</p>"""
+
+    actual = json.loads(query_html_doc(html_body, 'array { //p, //div }'))
+
+    assert len(actual) == 3
+    assert actual[0] == 'one'
+    assert actual[1] == 'three'
+    assert actual[2] == 'two'
+
+
+def test_array_constructor_properly_handles_hash_constructors_as_contents():
+    actual = json.loads(query_html_doc('', 'array { (0 to 2) -> hash {value: $_} }'))
+
+    assert len(actual) == 3
+    assert all('value' in hash for hash in actual)
+    assert all(actual[i]['value'] == i for i in range(0, 3))
+
+
+def test_text_content_normalization_is_applied_to_attribute_values_in_hash_constructor():
+    preserved = u'\u00a0non\u00a0breaking\u00a0spaces '
+    html_body = u'<p>{0}</p>'.format(preserved)
+
+    actual = json.loads(query_html_doc(html_body, 'hash {para: //p/text()}'))
+    assert actual['para'] == 'non breaking spaces'
+
+    actual = json.loads(query_html_doc(html_body, 'hash {para: //p/text()}', preserve_space=True))
+    assert actual['para'] == preserved

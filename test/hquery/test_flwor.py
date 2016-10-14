@@ -129,3 +129,21 @@ def test_abbreviated_flowr_provides_expected_iteration_variable_in_value_clause(
     one
     two
     three""")
+
+
+def test_nested_abbreviated_flwors_evaluate_as_expected():
+    html_body = """
+    <div>
+        <p>one</p>
+        <p>two</p>
+    </div>
+    <div>
+        <p>three</p>
+        <p>four</p>
+        <p>five</p>
+    </div>"""
+
+    assert query_html_doc(html_body, '//div -> $_/p[odd()] -> $_/text()') == expected_result("""
+    one
+    three
+    five""")

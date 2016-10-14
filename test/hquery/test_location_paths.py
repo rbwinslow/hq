@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-from hq.output import result_object_to_text
+from hq.output import convert_results_to_output_text
 from hq.soup_util import make_soup
 from hq.hquery.hquery_processor import HqueryProcessor
 
@@ -30,7 +30,7 @@ def test_path_to_root_tag_succeeds_despite_other_root_level_objects():
         <!-- inside -->
     </html>"""
     raw_result = HqueryProcessor('/*').query(make_soup(html))
-    actual = result_object_to_text(raw_result)
+    actual = convert_results_to_output_text(raw_result)
     assert actual == expected_result("""
     <html>
      <!-- inside -->
@@ -174,4 +174,14 @@ def test_double_slash_works_within_path():
     </p>
     <p>
      shemp
+    </p>""")
+
+
+def test_predicate_can_be_applied_to_variable_containing_node_set():
+    html_body = """
+    <p>not selected</p>
+    <p id="foo">selected</p>"""
+    assert query_html_doc(html_body, 'let $x := //p return $x[@id="foo"]') == expected_result("""
+    <p id="foo">
+     selected
     </p>""")

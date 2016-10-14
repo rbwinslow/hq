@@ -1,14 +1,31 @@
+import re
+
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import get_context_node
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
+from hq.hquery.functions.extend_string import _xpath_flags_to_re_flags
 from hq.hquery.object_type import string_value, normalize_content, is_string
 
-exports = ['concat', 'normalize_space', 'starts_with', 'string', 'string_length']
+exports = ['concat', 'contains', 'normalize_space', 'starts_with', 'string', 'string_length']
 
 
 def concat(*args):
     return ''.join(string_value(arg) for arg in args)
+
+
+def contains(*args):
+    argc = len(args)
+    if argc < 2 or argc > 3:
+        raise HqueryEvaluationError('contains() function expects two or three arguments; {0} passed'.format(argc))
+    if argc == 3:
+        flags = args[2]
+    else:
+        flags = ''
+
+    pattern = re.escape(string_value(args[1]))
+    to_search = string_value(args[0])
+    return boolean(bool(re.search(pattern, to_search, flags=_xpath_flags_to_re_flags(flags))))
 
 
 def normalize_space(*args):

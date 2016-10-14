@@ -80,31 +80,31 @@ def reduce_filters_and_expression(remainder, parse_interface, chain=None):
 
 
 def parse_interpolated_string(source, parse_interface):
-    verbose_print('Parsing interpolated string contents `{0}`'.format(source), indent_after=True)
+    verbose_print(u'Parsing interpolated string contents `{0}`'.format(source), indent_after=True)
 
     expressions = []
     for embedded_expr, embedded_var, literal in clauses_pattern.findall(source):
         if embedded_expr:
-            verbose_print('Adding embedded expression: {0}'.format(embedded_expr))
+            verbose_print(u'Adding embedded expression: {0}'.format(embedded_expr))
             expressions.append(reduce_filters_and_expression(embedded_expr[2:-1], parse_interface))
         elif embedded_var:
             verbose_print('Adding embedded variable reference: {0}'.format(embedded_var))
             expressions.append(parse_interface.parse_in_new_processor(embedded_var))
         else:
-            verbose_print('Adding literal string contents "{0}"'.format(literal))
+            verbose_print(u'Adding literal string contents "{0}"'.format(literal))
             expressions.append(_make_literal_identity_closure(literal))
 
     def evaluate():
         chunks = [string_value(exp()) for exp in expressions]
         verbose_print(u'Interpolated string evaluation assembling {0} chunks{1}.'.format(
             len(chunks),
-            '' if len(chunks) == 0 else u' ("{0}")'.format('", "'.join(chunks)))
+            '' if len(chunks) == 0 else u' ("{0}")'.format(u'", "'.join(chunks)))
         )
         return ''.join(chunks)
 
     verbose_print(
-        'Finished parsing interpolated string "{0}" ({1} chunks found)'.format(debug_dump_long_string(source),
-                                                                               len(expressions)),
+        u'Finished parsing interpolated string "{0}" ({1} chunks found)'.format(debug_dump_long_string(source),
+                                                                                len(expressions)),
         outdent_before=True
     )
     return evaluate

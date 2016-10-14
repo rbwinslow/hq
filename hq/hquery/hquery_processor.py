@@ -167,7 +167,7 @@ class HqueryProcessor():
 
 
     def query(self, starting_node):
-        verbose_print('PARSING HQUERY "{0}"'.format(debug_dump_long_string(self.source)), indent_after=True)
+        verbose_print(u'PARSING HQUERY "{0}"'.format(debug_dump_long_string(self.source)), indent_after=True)
         expression_fn = self.parse()
         verbose_print('EVALUATING HQUERY', indent_after=True, outdent_before=True)
         result = evaluate_in_context(starting_node, expression_fn, preserve_space=self.preserve_space)
@@ -463,7 +463,7 @@ class HqueryProcessor():
 
     def expression(self, rbp=LBP.nothing):
         t = self.token
-        verbose_print('parsing expression starting with {0} (RBP={1})'.format(t, rbp), indent_after=True)
+        verbose_print(u'parsing expression starting with {0} (RBP={1})'.format(t, rbp), indent_after=True)
         try:
 
             self.token = self.next_token()

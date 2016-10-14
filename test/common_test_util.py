@@ -35,4 +35,4 @@ def soup_with_body(contents):
 
 
 def wrap_html_body(contents):
-    return '<html><body>{0}</body></html>'.format(contents)
+    return u'<html><body>{0}</body></html>'.format(contents)

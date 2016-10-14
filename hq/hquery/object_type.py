@@ -59,7 +59,8 @@ def is_sequence(obj):
 
 
 def is_string(obj):
-    return isinstance(obj, str) or obj.__class__.__name__.endswith('unicode')
+    class_name = obj.__class__.__name__
+    return class_name.endswith('str') or class_name.endswith('unicode')
 
 
 def make_node_set(node_set, reverse=False):

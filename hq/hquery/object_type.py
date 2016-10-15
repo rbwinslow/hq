@@ -138,7 +138,7 @@ def string_value(obj):
     elif is_number(obj) or is_boolean(obj):
         return str(obj)
     elif is_node_set(obj):
-        return string_value(obj[0])
+        return string_value(obj[0]) if len(obj) > 0 else ''
     elif is_sequence(obj):
         return ''.join(string_value(item) for item in obj)
     elif is_string(obj):

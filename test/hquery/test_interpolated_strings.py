@@ -39,12 +39,12 @@ def test_join_filter_defaults_to_empty_string_delimiter():
 
 def test_truncate_filter_elides_contents():
     html_body = '<p>The quick brown fox jumped over the lazy dog.</p>'
-    assert query_html_doc(html_body, '`${t:23:?://p}`') == expected_result('The quick brown fox?')
+    assert query_html_doc(html_body, '`${tru:23:?://p}`') == expected_result('The quick brown fox?')
 
 
 def test_truncate_filter_defaults_to_no_suffix():
     html_body = '<p>short, sharp shock</p>'
-    assert query_html_doc(html_body, '`${t:15:://p}`') == expected_result('short, sharp')
+    assert query_html_doc(html_body, '`${tru:15:://p}`') == expected_result('short, sharp')
 
 
 def test_regex_replace_filter_replaces_stuff_with_other_stuff():
@@ -66,7 +66,7 @@ def test_filters_chain_left_to_right():
     <p>one</p>
     <p>two</p>
     <p>three</p>"""
-    assert query_html_doc(html_body, '`${j:, :t:12: ...://p} whatever!`') == expected_result('one, two, ... whatever!')
+    assert query_html_doc(html_body, '`${j:, :tru:12: ...://p} whatever!`') == 'one, two, ... whatever!'
 
 
 def test_character_escape_is_not_prematurely_decoded_in_interpolated_string():

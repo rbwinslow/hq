@@ -185,3 +185,9 @@ def test_predicate_can_be_applied_to_variable_containing_node_set():
     <p id="foo">
      selected
     </p>""")
+
+
+def test_no_space_between_text_runs_crossing_element_boundaries_in_element_string_value_if_there_was_none_in_doc():
+    html_body = """<p>"<span>so-called</span>" Klingon  </p>"""
+    assert query_html_doc(html_body, 'string(//p)') == '"so-called" Klingon'
+    assert query_html_doc('<p>one <span>two</span></p>', 'string(//p)') == 'one two'

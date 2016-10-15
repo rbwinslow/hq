@@ -1,14 +1,14 @@
 import re
 
 from hq.hquery.functions.extend_string import join, _xpath_flags_to_re_flags
-from hq.hquery.object_type import string_value
+from hq.hquery.object_type import string_value, is_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_long_string
 from hq.string_util import truncate_string, html_entity_decode
 from hq.verbosity import verbose_print
 
 
-clauses_pattern = re.compile(r'(\$\{(?:[a-z]{1,3}(?:[^:]*:)*:)*[^\}]+\})|(\$[a-zA-Z_]\w*)|((?:[^\$]+))')
+clauses_pattern = re.compile(r'(\$\{[^\}]+\})|(\$[a-zA-Z_]\w*)|((?:[^\$]+))')
 
 
 def _join_filter_link(arguments):
@@ -34,7 +34,13 @@ def _regex_replace_filter_link(arguments):
         flags = 0
 
     def construct(eval_fn):
-        return lambda: re.sub(arguments[0], arguments[1], string_value(eval_fn()), flags=flags)
+        def evaluate():
+            value = eval_fn()
+            if is_sequence(value):
+                return [re.sub(arguments[0], arguments[1], string_value(item), flags=flags) for item in value]
+            else:
+                return re.sub(arguments[0], arguments[1], string_value(value), flags=flags)
+        return evaluate
 
     return construct
 
@@ -55,7 +61,7 @@ def _truncate_filter_link(arguments):
 filters = {
     r'j:([^:]*):': _join_filter_link,
     r'rr:([^:]+):([^:]*):([i]*):': _regex_replace_filter_link,
-    r't:(\d+):([^:]*):': _truncate_filter_link,
+    r'tru:(\d+):([^:]*):': _truncate_filter_link,
 }
 
 
@@ -91,7 +97,7 @@ def parse_interpolated_string(source, parse_interface):
             verbose_print('Adding embedded variable reference: {0}'.format(embedded_var))
             expressions.append(parse_interface.parse_in_new_processor(embedded_var))
         else:
-            verbose_print(u'Adding literal string contents "{0}"'.format(literal))
+            verbose_print(u'Adding literal string contents `{0}`'.format(literal))
             expressions.append(_make_literal_identity_closure(literal))
 
     def evaluate():
@@ -103,7 +109,7 @@ def parse_interpolated_string(source, parse_interface):
         return ''.join(chunks)
 
     verbose_print(
-        u'Finished parsing interpolated string "{0}" ({1} chunks found)'.format(debug_dump_long_string(source),
+        u'Finished parsing interpolated string `{0}` ({1} chunks found)'.format(debug_dump_long_string(source),
                                                                                 len(expressions)),
         outdent_before=True
     )

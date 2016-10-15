@@ -373,7 +373,7 @@ class InterpolatedStringToken(Token):
         super(InterpolatedStringToken, self).__init__(parse_interface, value[1:-1], **kwargs)
 
     def __str__(self):
-        return u'(interpolated-string "{0}")'.format(self.value)
+        return u'(interpolated-string `{0}`)'.format(self.value)
 
     def nud(self):
         return parse_interpolated_string(self.value, self.parse_interface)

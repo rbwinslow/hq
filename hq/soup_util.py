@@ -44,7 +44,23 @@ def debug_dump_node(obj):
 
 def derive_text_from_node(obj, preserve_space=False):
     if is_tag_node(obj) or is_root_node(obj):
-        result = ' '.join(obj.strings if preserve_space else obj.stripped_strings)
+        result = u''
+        strings = list(obj.strings)
+        cursor = 0
+        for run in (strings if preserve_space else obj.stripped_strings):
+            if preserve_space:
+                add_space = False
+            else:
+                while cursor < len(strings):
+                    if run in strings[cursor]:
+                        break
+                    else:
+                        cursor += 1
+                if cursor < len(strings):
+                    add_space = strings[cursor][0].isspace() or (cursor > 0 and strings[cursor - 1][-1].isspace())
+                else:
+                    add_space = False
+            result += u'{0}{1}'.format(' ' if add_space else '', run)
     elif is_attribute_node(obj):
         result = obj.value
     elif is_text_node(obj):

@@ -69,7 +69,7 @@ class Flwor:
             result = []
 
             for item in sequence:
-                verbose_print('Visiting item {0}'.format(debug_dump_anything(item)), indent_after=True)
+                verbose_print(u'Visiting item {0}'.format(debug_dump_anything(item)), indent_after=True)
 
                 with variable_scope():
                     push_variable(self.sequence_variable, make_sequence(item))

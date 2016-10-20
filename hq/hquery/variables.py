@@ -16,7 +16,7 @@ class variable_scope:
 
 def push_variable(name, value):
     global variable_stack
-    verbose_print('Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_anything(value)))
+    verbose_print(u'Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_anything(value)))
     variable_stack.append((name, value))
 
 

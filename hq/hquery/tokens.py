@@ -82,7 +82,7 @@ class Token(object):
 
 
     def _gab(self, msg, **kwargs):
-        verbose_print('{0} {1}'.format(self, msg), **kwargs)
+        verbose_print(u'{0} {1}'.format(self, msg), **kwargs)
 
 
 
@@ -622,7 +622,7 @@ class VariableToken(Token):
 
         def evaluate():
             result = value_of_variable(self.value)
-            self._gab('reference evaluating to value {0}'.format(debug_dump_anything(result)))
+            self._gab(u'reference evaluating to value {0}'.format(debug_dump_anything(result)))
             return result
 
         return evaluate

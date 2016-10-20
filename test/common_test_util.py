@@ -18,7 +18,16 @@ def expected_result(contents):
 
 
 def simulate_args_dict(**kwargs):
-    args = {'<expression>': '', '--preserve': False, '-u': False, '--ugly': False, '-v': False}
+    args = {
+        '<expression>': '',
+        '-f': False,
+        '--file': False,
+        '--preserve': False,
+        '-u': False,
+        '--ugly': False,
+        '-v': False,
+        '--verbose': False
+    }
     for key, value in kwargs.items():
         if key == 'expression':
             format_string = '<{0}>'

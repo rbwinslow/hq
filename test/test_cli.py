@@ -1,5 +1,10 @@
 import re
 
+try:
+    from mock import mock_open
+except ImportError:
+    from unittest.mock import mock_open
+
 from hq.hq import main
 from test.common_test_util import simulate_args_dict, wrap_html_body, capture_console_output
 
@@ -63,3 +68,13 @@ def test_query_error_prints_proper_error_message(capsys, mocker):
 
     _, actual = capture_console_output(capsys)
     assert re.match(r'^query error.+unknown function.+no-such-function', actual.lower())
+
+
+def test_reading_input_from_a_file_instead_of_stdin(capsys, mocker):
+    mocker.patch('hq.hq.docopt').return_value = simulate_args_dict(expression='//p/text()', file='filename.html')
+    mocker.patch('hq.hq.open', mock_open(read_data=wrap_html_body('<p>foo</p>')), create=True)
+
+    main()
+
+    actual, _ = capture_console_output(capsys)
+    assert actual == 'foo'

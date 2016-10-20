@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""hq - Beautiful HTML querying, filtering, slicing and dicing!
+"""hq - Powerful HTML querying, filtering, slicing and dicing!
 
 Usage:
   hq.py [options] <expression>
@@ -8,12 +8,16 @@ Usage:
   hq.py (-h | --help)
 
 Options:
-  --preserve    Preserve extra whitespace in string values derived from HTML contents. The default behavior is to
-                automatically apply normalize-string to all string values derived from HTML elements and attributes,
-                and to convert non-breaking spaces into plain spaces.
-  -u, --ugly    Do not pretty-print HTML markup on output.
-  -v            Print verbose query parsing and evaluation information to stderr.
-  --version     Display the installed HQ version.
+  -f, --file <file>  Read HTML input from a file rather than stdin.
+  --preserve         Preserve extra whitespace in string values derived from
+                     HTML contents. The default behavior is to automatically
+                     apply normalize-string to all string values derived from
+                     HTML elements and attributes, and to convert non-breaking
+                     spaces into plain spaces.
+  -u, --ugly         Do not pretty-print HTML markup on output.
+  -v, --verbose      Print verbose query parsing and evaluation information to
+                     stderr.
+  --version          Display the installed HQ version.
 
 HTML is read from stdin.
 
@@ -36,10 +40,14 @@ def main():
 
     args = docopt(__doc__, version='HQ {0}'.format(__version__))
     preserve_space = bool(args['--preserve'])
-    set_verbosity(bool(args['-v']))
+    set_verbosity(bool(args['--verbose']))
 
     try:
-        source = stdin.read()
+        if args['--file']:
+            with open(args['--file']) as file:
+                source = file.read()
+        else:
+            source = stdin.read()
         verbose_print('Read {0} characters of input'.format(len(source)))
         soup = make_soup(source)
 

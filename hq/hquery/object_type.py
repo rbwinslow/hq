@@ -64,14 +64,14 @@ def is_string(obj):
 
 
 def make_node_set(node_set, reverse=False):
-    ids = []
+    ids = set()
 
     def is_unique_id(node):
         node_id = id(node)
         if node_id in ids:
             return False
         else:
-            ids.append(node_id)
+            ids.add(node_id)
             return True
 
     if not isinstance(node_set, list):

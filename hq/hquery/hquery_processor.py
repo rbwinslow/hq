@@ -357,7 +357,7 @@ class HqueryProcessor():
 
 
     def parse_flwor_return(self, flwor):
-        flwor.set_return_expression(self.expression())
+        flwor.set_return_expression(self.expression(LBP.sequence))
 
 
     def parse_location_path(self, first_token, root_expression=None):

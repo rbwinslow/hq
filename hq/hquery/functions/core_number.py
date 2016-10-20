@@ -1,7 +1,7 @@
 from hq.soup_util import is_any_node
-from hq.hquery.object_type import is_number, is_node_set, string_value, is_boolean
+from hq.hquery.object_type import is_number, is_node_set, string_value, is_boolean, make_sequence
 
-exports = ['number']
+exports = ['number', 'sum']
 
 
 class number:
@@ -87,3 +87,22 @@ class number:
     @staticmethod
     def _value_of_other_operand(other):
         return other.value if is_number(other) else other
+
+
+def sum(*args):
+    if len(args) >= 1:
+        sequence = make_sequence(args[0])
+    else:
+        sequence = make_sequence([])
+    if len(args) >= 2:
+        zero = args[1]
+    else:
+        zero = number(0)
+
+    if len(sequence) == 0:
+        return zero
+    else:
+        result = number(0)
+        for item in sequence:
+            result += number(item)
+        return result

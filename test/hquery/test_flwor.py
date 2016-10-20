@@ -147,3 +147,12 @@ def test_nested_abbreviated_flwors_evaluate_as_expected():
     one
     three
     five""")
+
+
+def test_comma_as_sequence_cat_operator_does_not_bind_at_end_of_return_clause():
+    assert query_html_doc('', 'for $x in (1 to 2) return $x, "!"') == expected_result("""
+    1
+    2
+    !""")
+    assert query_html_doc('', 'sum(for $x in //span return $x, "zero")') == 'zero'
+    assert query_html_doc('', 'sum(//span -> $_, "zero")') == 'zero'

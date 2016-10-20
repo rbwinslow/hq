@@ -6,7 +6,7 @@ from hq.hquery.expression_context import get_context_node
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.object_type import string_value
 
-exports = ['join', 'matches']
+exports = ['join', 'matches', 'string_join']
 
 
 def join(sequence, delimiter):
@@ -30,6 +30,10 @@ def matches(*args):
             flags = _xpath_flags_to_re_flags(args[2])
 
     return boolean(re.search(pattern, input, flags))
+
+
+def string_join(sequence, delimiter):
+    return join(sequence, delimiter)
 
 
 def _xpath_flags_to_re_flags(flags):

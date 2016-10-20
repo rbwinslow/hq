@@ -93,7 +93,7 @@ class AbbreviatedFlworOperatorToken(Token):
         return '(abbreviated-FLWOR-operator)'
 
     def led(self, left):
-        right = self.parse_interface.expression()
+        right = self.parse_interface.expression(LBP.sequence)
 
         flwor = Flwor()
         flwor.set_iteration_expression('_', left)

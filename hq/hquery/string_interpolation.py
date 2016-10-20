@@ -109,8 +109,8 @@ def parse_interpolated_string(source, parse_interface):
         return ''.join(chunks)
 
     verbose_print(
-        u'Finished parsing interpolated string `{0}` ({1} chunks found)'.format(debug_dump_long_string(source),
-                                                                                len(expressions)),
+        u'Finished parsing interpolated string `{0}` ({1} chunk(s) found)'.format(debug_dump_long_string(source),
+                                                                                  len(expressions)),
         outdent_before=True
     )
     return evaluate

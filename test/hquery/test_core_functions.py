@@ -135,6 +135,20 @@ def test_string_length_function_returns_expected_values():
     assert query_html_doc('', 'string-length("")') == expected_result('0')
 
 
+def test_sum_function_sums_number_interpretation_of_items_in_sequence():
+    html_body = """
+    <span>30</span>
+    <div value="10.42"></div>
+    <span>2</span>"""
+
+    assert query_html_doc(html_body, 'sum(//span)') == '32'
+    assert query_html_doc(html_body, 'sum((//span, //div/@value))') == '42.42'
+
+
+def test_sum_function_supports_zero_value_for_empty_sequence_as_second_argument():
+    assert query_html_doc('', 'sum(//span, "zero")') == 'zero'
+
+
 def test_various_functions_use_context_node_when_no_argument_passed():
     html_body = """
     <p>first</p>

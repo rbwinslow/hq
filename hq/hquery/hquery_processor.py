@@ -15,7 +15,11 @@ def _is_name_test_predecessor(token):
 
 
 def _pick_token_based_on_numeric_context(parse_interface, value, previous_token, numeric_class, other_class):
-    numeric_predecessors = [LiteralNumberToken, CloseParenthesisToken]
+    numeric_predecessors = [CloseSquareBraceToken,
+                            CloseParenthesisToken,
+                            LiteralNumberToken,
+                            NameTestToken,
+                            VariableToken]
     if any(isinstance(previous_token, token_class) for token_class in numeric_predecessors):
         return numeric_class(parse_interface, value)
     else:
@@ -81,8 +85,8 @@ _all_axes = [value.token() for value in Axis] + [re.escape(a) for a in Axis.abbr
 token_config = [
     (r'(//)', DoubleSlashToken),
     (r'(/)', SlashToken),
-    (r'(\[)', LeftBraceToken),
-    (r'(\])', RightBraceToken),
+    (r'(\[)', OpenSquareBraceToken),
+    (r'(\])', CloseSquareBraceToken),
     (r'({0})::'.format('|'.join(_all_axes)), AxisToken),
     (r'(\.\.)', ParentNodeToken),
     (r'(\.)', ContextNodeToken),
@@ -392,7 +396,7 @@ class HqueryProcessor():
         elif isinstance(first_token, ContextNodeToken):
             predicates = self.parse_location_path_predicates()
             path = LocationPath(Axis.self, NodeTest('node'), predicates)
-        elif isinstance(first_token, LeftBraceToken):
+        elif isinstance(first_token, OpenSquareBraceToken):
             if root_expression is None:
                 raise HquerySyntaxError('a predicate (left brace) must follow an expression that yields a node set')
             path = LocationPath(Axis.self,
@@ -453,11 +457,11 @@ class HqueryProcessor():
 
     def parse_location_path_predicates(self, already_inside_brace=False):
         expressions = []
-        while already_inside_brace or self.advance_if(LeftBraceToken):
+        while already_inside_brace or self.advance_if(OpenSquareBraceToken):
             already_inside_brace = False
             verbose_print('parsing predicate expression starting with {0}'.format(self.token))
             expressions.append(self.expression())
-            self.advance(RightBraceToken)
+            self.advance(CloseSquareBraceToken)
         return expressions
 
 

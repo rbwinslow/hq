@@ -195,6 +195,14 @@ class CloseParenthesisToken(Token):
 
 
 
+class CloseSquareBraceToken(Token):
+    lbp = LBP.nothing
+
+    def __str__(self):
+        return '(right-brace)'
+
+
+
 class CommaToken(Token):
     lbp = LBP.sequence
 
@@ -380,18 +388,6 @@ class InterpolatedStringToken(Token):
 
 
 
-class LeftBraceToken(Token):
-    lbp = LBP.location_step
-
-    def __str__(self):
-        return '(left-brace)'
-
-    def led(self, left):
-        path = self.parse_interface.location_path(self, root_expression=left)
-        return path.evaluate
-
-
-
 class LiteralNumberToken(Token):
     lbp = LBP.nothing
 
@@ -490,6 +486,18 @@ class OpenParenthesisToken(Token):
 
 
 
+class OpenSquareBraceToken(Token):
+    lbp = LBP.location_step
+
+    def __str__(self):
+        return '(left-brace)'
+
+    def led(self, left):
+        path = self.parse_interface.location_path(self, root_expression=left)
+        return path.evaluate
+
+
+
 class OrOperatorToken(Token):
     lbp = LBP.or_op
 
@@ -559,14 +567,6 @@ class RelationalOperatorToken(Token):
             return result
 
         return evaluate
-
-
-
-class RightBraceToken(Token):
-    lbp = LBP.nothing
-
-    def __str__(self):
-        return '(right-brace)'
 
 
 

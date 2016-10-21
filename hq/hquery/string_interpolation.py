@@ -53,7 +53,15 @@ def _truncate_filter_link(arguments):
             suffix = ''
         else:
             suffix = arguments[1]
-        return lambda: truncate_string(string_value(eval_fn()), length, suffix=suffix)
+
+        def evaluate():
+            value = eval_fn()
+            if is_sequence(value):
+                return [truncate_string(string_value(item), length, suffix=suffix) for item in value]
+            else:
+                return truncate_string(string_value(value), length, suffix=suffix)
+
+        return evaluate
 
     return construct
 

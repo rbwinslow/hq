@@ -72,3 +72,11 @@ def test_filters_chain_left_to_right():
 def test_character_escape_is_not_prematurely_decoded_in_interpolated_string():
     query = 'let $x := "foo" return `Variable "&#36;x" contains value $x`'
     assert query_html_doc('', query) == 'Variable "$x" contains value foo'  # Not 'Variable "foo" contains...'
+
+
+def test_filters_are_applied_to_all_items_in_sequence_when_input_is_not_atomic():
+    html_body = """
+    <p>Hello, world!</p>
+    <p>Goodbye, world!</p>"""
+    assert query_html_doc(html_body, '`${tru:8:://p}`') == 'Hello,Goodbye,'
+    assert query_html_doc(html_body, '`${rr:world:test:://p}`') == 'Hello, test!Goodbye, test!'

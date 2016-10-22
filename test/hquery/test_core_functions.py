@@ -26,6 +26,66 @@ def test_boolean_function_converts_strings_according_to_w3c_rules():
     assert query_html_doc('', 'boolean(" ")') == expected_result('true')
 
 
+def test_id_function_returns_node_set_where_node_ids_match_any_names_in_whitespace_separated_list():
+    html_body = """
+    <p id="one">one</p>
+    <p id="two">two</p>
+    <p id="3">three</p>"""
+    assert query_html_doc(html_body, 'id("one")') == expected_result("""
+    <p id="one">
+     one
+    </p>""")
+    assert query_html_doc(html_body, 'id("one 3")') == expected_result("""
+    <p id="one">
+     one
+    </p>
+    <p id="3">
+     three
+    </p>""")
+    assert query_html_doc(html_body, 'id(3)') == expected_result("""
+    <p id="3">
+     three
+    </p>""")
+
+
+def test_id_function_crazy_use_case_where_id_values_are_derived_from_string_values_of_nodes_in_node_set():
+    html_body = """
+    <ul>
+        <li>one</li>
+        <li>2</li>
+    </ul>
+    <p id="one">one</p>
+    <p id="2">two</p>"""
+    assert query_html_doc(html_body, 'id(//li)') == expected_result("""
+    <p id="one">
+     one
+    </p>
+    <p id="2">
+     two
+    </p>""")
+
+
+def test_name_function_returns_tag_name_of_given_element_or_first_element_if_given_a_node_set():
+    html_body = '<div></div><p></p>'
+    assert query_html_doc(html_body, 'name(/html/body/*)') == 'div'
+
+
+def test_name_function_returns_name_of_context_node_if_passed_no_argument():
+    html_body = """
+    <div>not selected</div>
+    <p>selected</p>"""
+    assert query_html_doc(html_body, '/html/body/*[name() = "p"]') == expected_result("""
+    <p>
+     selected
+    </p>""")
+
+
+def test_name_function_returns_empty_string_if_passed_a_node_that_is_not_an_element():
+    html_body = 'Text comes first <span>then element</span>'
+    assert query_html_doc(html_body, 'name(/html/body/node()[1])') == ''
+    assert query_html_doc(html_body, 'name(/html/body/node()[2])') == 'span'
+
+
 def test_not_function_produces_expected_results():
     assert query_html_doc('', 'not(false())') == expected_result('true')
     assert query_html_doc('', 'not(not("foo" = "bar"))') == expected_result('false')

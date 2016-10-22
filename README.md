@@ -1,5 +1,5 @@
 # hq
-**Powerful HTML slicing and dicing in the form of a console tool**
+**Powerful HTML slicing and dicing at the command line.**
 
 [![Build Status](https://travis-ci.org/rbwinslow/hq.svg?branch=master)](https://travis-ci.org/rbwinslow/hq) [![Coverage Status](https://coveralls.io/repos/github/rbwinslow/hq/badge.svg?branch=master)](https://coveralls.io/github/rbwinslow/hq?branch=master)
 
@@ -46,6 +46,10 @@ The [wiki](https://github.com/rbwinslow/hq/wiki) discusses the [motivations](htt
 
     py.test
     
-If you want to turn verbosity on, you need the `--gabby` flag. You'll probably also want to run just one test at a time, because `--gabby` is way gabby:
+The "dev.txt" dependencies also include [pytest-cov](https://pypi.python.org/pypi/pytest-cov), so you can generate a nice coverage report (which you'll find in the `htmlcov` directory):
+
+    py.test --cov=hq --cov-report html
+    
+If you want to turn verbosity on to figure out what's going on in a test, you need the `--gabby` flag (since `py.test` owns its own `-v` flag). You'll probably also want to run just one test at a time, because `--gabby` is way gabby:
 
     py.test --gabby -vv -k some_particular_test_function

@@ -486,7 +486,7 @@ class HqueryProcessor():
             return left
 
         except AttributeError as err:
-            attr = re.match(r"'(\w+)'", err.args[0]).group(1)
+            attr = re.search(r"has no attribute '(\w+)'", err.args[0]).group(1)
             if attr == 'nud':
                 raise HquerySyntaxError('unexpected token {0} found at beginning of expression'.format(t))
             elif attr == 'led':

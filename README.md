@@ -1,7 +1,7 @@
 # hq
 **Powerful HTML slicing and dicing in the form of a console tool**
 
-[![Build Status](https://travis-ci.org/rbwinslow/hq.svg?branch=master)](https://travis-ci.org/rbwinslow/hq)
+[![Build Status](https://travis-ci.org/rbwinslow/hq.svg?branch=master)](https://travis-ci.org/rbwinslow/hq) [![Coverage Status](https://coveralls.io/repos/github/rbwinslow/hq/badge.svg?branch=master)](https://coveralls.io/github/rbwinslow/hq?branch=master)
 
 `hq` is a Python-based command-line tool for querying HTML and producing results as HTML, JSON or any other textual format. Pass `hq` an expression written in its compact, flexible HQuery expression language, along with an HTML file, and it will find the content you're seeking, shape it and emit it in whatever form you want.
 

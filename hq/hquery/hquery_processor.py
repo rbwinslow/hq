@@ -333,6 +333,8 @@ class HqueryProcessor():
             if token is None:
                 break
 
+        if flwor.return_expression is None:
+            raise HquerySyntaxError('no "return" clause at end of FLWOR')
         verbose_print('Finished parsing FLWOR {0}'.format(flwor.debug_dump()), outdent_before=True)
         return flwor
 
@@ -352,8 +354,11 @@ class HqueryProcessor():
     def parse_flwor_let(self, flwor):
         variable_token = self.advance(VariableToken)
         self.advance(AssignmentOperatorToken)
-        expression = self.expression()
+        expression = self.expression(LBP.sequence)
         flwor.append_let(variable_token.value, expression)
+
+        if self.advance_if(CommaToken):
+            self.parse_flwor_let(flwor)
 
 
     def parse_flwor_return(self, flwor):

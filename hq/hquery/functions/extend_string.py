@@ -1,5 +1,4 @@
 import re
-from functools import reduce
 
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import get_context_node

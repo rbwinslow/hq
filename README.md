@@ -3,12 +3,12 @@
 
 [![Build Status](https://travis-ci.org/rbwinslow/hq.svg?branch=master)](https://travis-ci.org/rbwinslow/hq) [![Coverage Status](https://coveralls.io/repos/github/rbwinslow/hq/badge.svg?branch=master)](https://coveralls.io/github/rbwinslow/hq?branch=master)
 
-`hq` is a Python-based command-line tool for querying HTML and producing results as HTML, JSON or any other textual format. Pass `hq` an expression written in its compact, flexible HQuery expression language, along with an HTML file, and it will find the content you're seeking, shape it and emit it in whatever form you want.
+`hq` is a Python-based command-line tool for querying HTML, manipulating data and producing results as HTML, JSON or any other format. It's based on a compact, flexible expression language that started out as an XPath implementation but ended up going a few different places, so I'm going ahead and calling it HQuery.
 
-HQuery, the little language in `hq`, is based on [XPath](https://www.w3.org/TR/xpath/), and is compliant with the XPath 1.0 standard, minus some features not applicable to HTML. That's nice for querying, but you need more power to take control of the shape and format of the data you produce. To that end, HQuery also includes...
+HQuery is 99% compliant with the [XPath 1.0](https://www.w3.org/TR/xpath/) standard, minus some features not applicable to HTML. That's nice for querying, but you need more power to take control of the shape and format of the data you produce. To that end, HQuery also includes...
 
 * **Nuggets of XQuery** &mdash; only a few of the good parts! Just enough for iteration, branching and the like.
-* **XPath expansions for HTML** &mdash; including a `class::` axis and `class()` function to simplify querying with CSS classes.
+* **XPath expansions for HTML** &mdash; including a `class::` axis and `class()` function, plus abbreviated axes to keep things terse.
 * **Super-charged string interpolation** &mdash; with powerful filters that you can chain together to transform data as you produce it.
 * **Computed constructors for HTML and JSON** &mdash; so you can programmatically assemble and output new HTML or JSON objects and arrays.
 

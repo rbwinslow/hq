@@ -156,3 +156,12 @@ def test_comma_as_sequence_cat_operator_does_not_bind_at_end_of_return_clause():
     !""")
     assert query_html_doc('', 'sum(for $x in //span return $x, "zero")') == 'zero'
     assert query_html_doc('', 'sum(//span -> $_, "zero")') == 'zero'
+
+
+def test_lack_of_return_at_end_of_flwor_is_a_syntax_error():
+    with raises(HquerySyntaxError):
+        query_html_doc('', 'let $nil := "nothing"')
+
+
+def test_comma_can_be_used_to_declare_multiple_variables_in_a_let_clause():
+    assert query_html_doc('', 'let $foo := "foo", $bar := "bar" return join(($foo, $bar), " ")') == 'foo bar'

@@ -1,12 +1,3 @@
-#
-# from distutils.core import setup
-#
-# setup(name='hq',
-#       version='0.1',
-#       description='Beautiful HTML querying, filtering, slicing and dicing!',
-#       author_email='richard.b.winslow@gmail.com',
-#       py_modules=['hq'])
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -16,7 +7,7 @@ from setuptools import setup, find_packages
 version = re.search("^__version__\s*=\s*'(.*)'", open('hq/hq.py').read(), re.M).group(1)
 
 
-with open('README.rst', 'rb') as f:
+with open('README.md', 'rb') as f:
     long_description = f.read().decode('utf-8')
 
 classifiers = [

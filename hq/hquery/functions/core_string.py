@@ -59,9 +59,9 @@ def substring(*args):
         raise HqueryEvaluationError('substring() expects at least 2 arguments; {0} were passed'.format(len(args)))
     value = args[0]
     start_index = args[1].value
-    start = round(start_index) - 1
+    start = int(round(start_index) - 1)
     if len(args) >= 3:
-        end = start + round(args[2].value)
+        end = start + int(round(args[2].value))
     else:
         end = len(value) - start + 1
     return value[start if start >= 0 else 0:end]

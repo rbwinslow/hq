@@ -1,7 +1,10 @@
+import math
+
+from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.soup_util import is_any_node
 from hq.hquery.object_type import is_number, is_node_set, string_value, is_boolean, make_sequence
 
-exports = ['number', 'sum']
+exports = ('ceiling', 'floor', 'number', 'round_', 'sum')
 
 
 class number:
@@ -87,6 +90,24 @@ class number:
     @staticmethod
     def _value_of_other_operand(other):
         return other.value if is_number(other) else other
+
+
+def ceiling(value):
+    return number(math.ceil(value.value))
+
+
+def floor(value):
+    return number(math.floor(value.value))
+
+
+def round_(*args):
+    if len(args) == 0:
+        raise HqueryEvaluationError('round() function requires at least one argument')
+    value = args[0]
+    if math.isnan(value.value):
+        return value
+    else:
+        return number(round(value.value, 0 if len(args) < 2 else args[1].value))
 
 
 def sum(*args):

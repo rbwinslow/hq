@@ -5,7 +5,7 @@ from hq.hquery.expression_context import get_context_node
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.object_type import string_value
 
-exports = ['join', 'matches', 'string_join']
+exports = ('join', 'matches', 'string_join')
 
 
 def join(sequence, delimiter):

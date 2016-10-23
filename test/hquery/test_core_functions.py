@@ -26,6 +26,16 @@ def test_boolean_function_converts_strings_according_to_w3c_rules():
     assert query_html_doc('', 'boolean(" ")') == expected_result('true')
 
 
+def test_ceiling_returns_expected_integer_values_baserd_on_xpath_3_examples():
+    assert query_html_doc('', 'ceiling(10.5)') == '11'
+    assert query_html_doc('', 'ceiling(-10.5)') == '-10'
+
+
+def test_floor_returns_expected_integer_values_baserd_on_xpath_3_examples():
+    assert query_html_doc('', 'floor(10.5)') == '10'
+    assert query_html_doc('', 'floor(-10.5)') == '-11'
+
+
 def test_id_function_returns_node_set_where_node_ids_match_any_names_in_whitespace_separated_list():
     html_body = """
     <p id="one">one</p>
@@ -112,6 +122,41 @@ def test_number_function_converts_node_set_based_on_string_value_of_first_node_i
     </div>
     <p>24</p>"""
     assert query_html_doc(html_body, 'number(//p)') == expected_result('98.6')
+
+
+def test_round_function_follows_xpath_1_rules_for_positive_numbers_but_python_rules_for_negative_ones():
+    """
+    Not fooling with positive or negative infinity or zero, nor the numeric type business in the XPath 3.0 functions
+    spec.. Also not, as the test name attests, respecting XPath 1 rules for negative numbers, as Python rounds away
+    from zero and I anticipate some tiresome drudgery for no particular benefit (again, HQuery is not intended as an
+    execution target for existing XPath code).
+    """
+    assert query_html_doc('', 'round(5.49)') == '5'
+    assert query_html_doc('', 'round(5.5)') == '6'
+    assert query_html_doc('', 'round(1 div 0)') == 'NaN'
+    assert query_html_doc('', 'round(-5.5)') == '-6'
+    assert query_html_doc('', 'round(-5.49)') == '-5'
+
+
+def test_round_function_supports_an_optional_precision_argument():
+    assert query_html_doc('', 'round(3.456)') == '3'
+    assert query_html_doc('', 'round(3.456, 1)') == '3.5'
+    assert query_html_doc('', 'round(3.456, 2)') == '3.46'
+    assert query_html_doc('', 'round(3.456, 3)') == '3.456'
+
+
+def test_substring_function_behaves_reasonably_and_lets_agree_to_ignore_all_that_NaN_crap():
+    assert query_html_doc('', 'substring("12345", 1.5, 2.6)') == '234'
+    assert query_html_doc('', 'substring("12345", 0, 3)') == '12'
+    assert query_html_doc('', 'substring("12345", -1, 3)') == '1'
+    assert query_html_doc('', 'substring("12345", 5, 2)') == '5'
+
+
+def test_substring_after_and_substring_before_work_per_spec():
+    assert query_html_doc('', 'substring-after("1999/04/01", "/")') == '04/01'
+    assert query_html_doc('', 'substring-after("1999/04/01", ":")') == ''
+    assert query_html_doc('', 'substring-before("1999/04/01", "/")') == '1999'
+    assert query_html_doc('', 'substring-before("1999/04/01", ":")') == ''
 
 
 def test_true_and_false_functions_return_expected_values():

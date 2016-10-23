@@ -14,8 +14,6 @@ class FunctionSupport:
         self._load_all_functions()
 
         py_name = name.replace('-', '_')
-        if name in ('class', 'not'):
-            py_name += '_'
 
         try:
             fn = self.all_functions[py_name]
@@ -36,7 +34,7 @@ class FunctionSupport:
                     verbose_print('Found candidate module {0} -- loading.'.format(modname))
                     module = importer.find_module(modname).load_module(modname)
                     if hasattr(module, 'exports'):
-                        exports = {name: getattr(module, name) for name in getattr(module, 'exports')}
+                        exports = {name.rstrip('_'): getattr(module, name) for name in getattr(module, 'exports')}
                         verbose_print('Module {0} exports are: {1}'.format(modname, exports.keys()))
                         if any(not (isclass(obj) or isfunction(obj)) for obj in exports.values()):
                             raise RuntimeError('Non-class/function export(s) loaded from module {0}'.format(modname))

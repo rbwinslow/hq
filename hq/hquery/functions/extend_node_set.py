@@ -1,10 +1,8 @@
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import get_context_node, peek_context
 from hq.hquery.functions.core_boolean import boolean
-from hq.soup_util import is_tag_node
 
-
-exports = ['class_', 'even', 'odd']
+exports = ('class_', 'even', 'odd')
 
 
 def class_(*args):

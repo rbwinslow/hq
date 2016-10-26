@@ -5,7 +5,11 @@ from hq.hquery.expression_context import get_context_node
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.object_type import string_value
 
-exports = ('matches', 'string_join')
+exports = ('lower_case', 'matches', 'string_join', 'upper_case')
+
+
+def lower_case(value):
+    return string_value(value).lower()
 
 
 def matches(*args):
@@ -33,6 +37,10 @@ def string_join(sequence, *args):
     else:
         delimiter = ''
     return delimiter.join([string_value(x) for x in sequence])
+
+
+def upper_case(value):
+    return string_value(value).upper()
 
 
 def _xpath_flags_to_re_flags(flags):

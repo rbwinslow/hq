@@ -33,6 +33,11 @@ def test_even_and_odd_functions_select_the_appropriate_elements_based_on_positio
     odd.""")
 
 
+def test_lower_case_and_upper_case_change_string_case_as_expected():
+    assert query_html_doc('', 'lower-case("Foo BAR")') == 'foo bar'
+    assert query_html_doc('', 'upper-case("fOO bar")') == 'FOO BAR'
+
+
 def test_matches_function_performs_regex_matching_as_per_xpath_30_functions_spec():
     html_body = """
     <p>moe</p>

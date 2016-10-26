@@ -85,9 +85,35 @@ def test_matches_function_extends_to_using_context_node_when_passed_no_input_str
     assert query_html_doc(html_body, '//p[matches("^f.+")]/text()') == expected_result('foo')
 
 
+def test_replace_function_performs_regex_replacement_as_per_xpath_30_functions_spec():
+    assert query_html_doc('', 'replace("dog mattress dog", "^dog", "cat")') == 'cat mattress dog'
+
+
+def test_replace_function_extends_standard_by_taking_string_value_of_any_type_of_input_object():
+    assert query_html_doc('<p>hello</p>', 'replace(//p, "h", "j")') == 'jello'
+
+
 def test_string_join_function_accepts_sequence_as_first_parameter_and_delimiter_as_second():
     assert query_html_doc('', 'string-join(1 to 3, ", ")') == '1, 2, 3'
 
 
 def test_string_join_second_argument_is_optional():
     assert query_html_doc('', 'string-join(1 to 2)') == '12'
+
+
+def test_tokenize_function_breaks_up_strings_as_per_xpath_30_functions_spec():
+    assert query_html_doc('', 'tokenize("Moe:Larry:..Curly", ":\.*")') == expected_result("""
+    Moe
+    Larry
+    Curly""")
+    assert query_html_doc('', 'tokenize("HaxtaXpatience", "x", "i")') == expected_result("""
+    Ha
+    ta
+    patience""")
+    assert query_html_doc('', 'count(tokenize("haxtaxstax", "x"))') == '4'
+
+
+def test_tokenize_function_extends_standard_by_supporting_any_object_as_input():
+    assert query_html_doc('<p>foo,bar</p>', 'tokenize(//p, ",")') == expected_result("""
+    foo
+    bar""")

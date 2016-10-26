@@ -7,9 +7,9 @@ from hq.soup_util import root_tag_from_any_tag, is_tag_node
 exports = ('count', 'id', 'last', 'name', 'position')
 
 
-def count(nodes):
-    HqueryEvaluationError.must_be_node_set(nodes)
-    return number(len(nodes))
+def count(sequence):
+    HqueryEvaluationError.must_be_node_set_or_sequence(sequence)
+    return number(len(sequence))
 
 
 def id(ids):

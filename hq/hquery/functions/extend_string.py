@@ -5,7 +5,7 @@ from hq.hquery.expression_context import get_context_node
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.object_type import string_value
 
-exports = ('lower_case', 'matches', 'string_join', 'upper_case')
+exports = ('lower_case', 'matches', 'replace', 'string_join', 'tokenize', 'upper_case')
 
 
 def lower_case(value):
@@ -31,12 +31,43 @@ def matches(*args):
     return boolean(re.search(pattern, input, flags))
 
 
+def replace(*args):
+    argc = len(args)
+    if argc < 3 or argc > 4:
+        raise HqueryEvaluationError('replace() expects 3 or 4 arguments; was passed {0}'.format(argc))
+
+    input = string_value(args[0])
+    pattern = args[1]
+    replacement = args[2]
+    if argc == 4:
+        flags = _xpath_flags_to_re_flags(args[3])
+    else:
+        flags = 0
+
+    return re.sub(pattern, replacement, input, flags=flags)
+
+
 def string_join(sequence, *args):
     if len(args) > 0:
         delimiter = args[0]
     else:
         delimiter = ''
     return delimiter.join([string_value(x) for x in sequence])
+
+
+def tokenize(*args):
+    argc = len(args)
+    if argc < 2 or argc > 3:
+        raise HqueryEvaluationError('replace() expects 2 or 3 arguments; was passed {0}'.format(argc))
+
+    input = string_value(args[0])
+    pattern = args[1]
+    if argc == 3:
+        flags = _xpath_flags_to_re_flags(args[2])
+    else:
+        flags = 0
+
+    return re.split(pattern, input, flags=flags)
 
 
 def upper_case(value):

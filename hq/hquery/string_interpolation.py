@@ -1,6 +1,6 @@
 import re
 
-from hq.hquery.functions.extend_string import join, _xpath_flags_to_re_flags
+from hq.hquery.functions.extend_string import _xpath_flags_to_re_flags, string_join
 from hq.hquery.object_type import string_value, is_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_long_string
@@ -18,7 +18,7 @@ def _join_filter_link(arguments):
         delimiter = arguments[0]
 
     def construct(eval_fn):
-        return lambda: join(eval_fn(), delimiter)
+        return lambda: string_join(eval_fn(), delimiter)
 
     return construct
 

@@ -33,10 +33,6 @@ def test_even_and_odd_functions_select_the_appropriate_elements_based_on_positio
     odd.""")
 
 
-def test_join_function_accepts_sequence_as_first_parameter_and_delimiter_as_second():
-    assert query_html_doc('', 'join(1 to 3, ", ")') == '1, 2, 3'
-
-
 def test_matches_function_performs_regex_matching_as_per_xpath_30_functions_spec():
     html_body = """
     <p>moe</p>
@@ -84,5 +80,9 @@ def test_matches_function_extends_to_using_context_node_when_passed_no_input_str
     assert query_html_doc(html_body, '//p[matches("^f.+")]/text()') == expected_result('foo')
 
 
-def test_string_join_is_a_pseudonym_for_join():
-    assert query_html_doc('', 'string-join(1 to 3, ", ")') == query_html_doc('', 'join(1 to 3, ", ")')
+def test_string_join_function_accepts_sequence_as_first_parameter_and_delimiter_as_second():
+    assert query_html_doc('', 'string-join(1 to 3, ", ")') == '1, 2, 3'
+
+
+def test_string_join_second_argument_is_optional():
+    assert query_html_doc('', 'string-join(1 to 2)') == '12'

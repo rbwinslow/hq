@@ -1,4 +1,5 @@
 import os
+import re
 from inspect import isclass, isfunction
 from pkgutil import walk_packages
 
@@ -20,7 +21,13 @@ class FunctionSupport:
         except KeyError:
             raise HqueryEvaluationError('Unknown function name "{0}"'.format(name))
 
-        return fn(*args)
+        try:
+            return fn(*args)
+        except TypeError as err:
+            if re.search(r'\d+ (?:.+ )?argument', err.args[0]):
+                raise HqueryEvaluationError(err.args[0])
+            else:
+                raise
 
 
     def _load_all_functions(self):

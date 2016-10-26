@@ -1,9 +1,10 @@
 from operator import gt, lt, ge, le
 
+from hq.hquery.functions.core_string import string
 from hq.verbosity import verbose_print
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
-from hq.hquery.object_type import object_type
+from hq.hquery.object_type import object_type, is_boolean, is_number
 from hq.hquery.syntax_error import HquerySyntaxError
 
 
@@ -81,7 +82,12 @@ def _cmp_value_to_nodes(base_op, first, second):
 
 
 def _cmp_values(base_op, first, second):
-    return base_op(number(first), number(second))
+    if is_boolean(first) or is_boolean(second):
+        return base_op(1 if boolean(first) else 0, 1 if boolean(second) else 0)
+    elif is_number(first) or is_number(second):
+        return base_op(number(first), number(second))
+    else:
+        return base_op(string(first), string(second))
 
 
 comparison_method_table = (

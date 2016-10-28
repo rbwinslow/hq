@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import re
 from setuptools import setup, find_packages
 
 version = re.search("^__version__\s*=\s*'(.*)'", open('hq/hq.py').read(), re.M).group(1)
 
 
-with open('README.md', 'rb') as f:
-    long_description = f.read().decode('utf-8')
+long_description = 'Powerful HTML slicing and dicing at the command line.'
+if os.path.exists('README.md'):
+    with open('README.md', 'rb') as f:
+        long_description = f.read().decode('utf-8')
+
 
 classifiers = [
     'Development Status :: 2 - Pre-Alpha',
@@ -18,6 +22,7 @@ classifiers = [
     'Programming Language :: Python',
     'Topic :: Text Processing :: Markup :: HTML',
 ]
+
 
 setup(name='hq',
       packages=find_packages(exclude=['test']),
@@ -31,4 +36,4 @@ setup(name='hq',
       url='https://github.com/rbwinslow/hq',
       keywords='html xpath query xquery hquery jq cmdline cli',
       classifiers=classifiers,
-      install_requires=['beautifulsoup4', 'docopt'])
+      install_requires=['beautifulsoup4', 'docopt', 'enum34', 'future', 'wheel'])

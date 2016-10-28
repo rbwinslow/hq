@@ -15,8 +15,6 @@ HQuery is 99% compliant with the [XPath 1.0](https://www.w3.org/TR/xpath/) stand
 ## Installing `hq`
 
     pip install hq
-    
-*Needle scratch sound...* Oh, wait! I haven't actually released 0.0.1 yet! So it's not uploaded. You'll have to clone the repo and run the `hq_runner.py` script in place of `hq` until a release is up.
 
 ## Running `hq`
 

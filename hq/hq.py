@@ -32,7 +32,7 @@ from .output import convert_results_to_output_text
 from .soup_util import make_soup
 from .verbosity import verbose_print, set_verbosity
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 def main():

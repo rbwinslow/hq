@@ -18,11 +18,11 @@ HQuery is 99% compliant with the [XPath 1.0](https://www.w3.org/TR/xpath/) stand
 
 ## Running `hq`
 
-    cat /path/to/file.html | hq '`Hello, ${/html/head/title}`!'
+    cat /path/to/file.html | hq '`Hello, ${/html/head/title}!`'
 
 ...or...
 
-    hq -f /path/to/file.html '`Hello, ${/html/head/title}`!'
+    hq -f /path/to/file.html '`Hello, ${/html/head/title}!`'
     
 To print usage information:
 

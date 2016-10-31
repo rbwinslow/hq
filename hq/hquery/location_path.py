@@ -40,7 +40,7 @@ class LocationPath:
 
 
     def evaluate(self):
-        verbose_print('Evaluating location path {0}'.format(self.debug_dump()), indent_after=True)
+        verbose_print(lambda: 'Evaluating location path {0}'.format(self.debug_dump()), indent_after=True)
 
         if self.absolute:
             verbose_print('Switching context to root because this path is absolute.')
@@ -58,19 +58,18 @@ class LocationPath:
 
     def _evaluate_steps(self, remaining_steps):
         step = remaining_steps[0]
-        start_msg = 'Evaluating step {0}'.format(remaining_steps[0])
-        verbose_print(start_msg, indent_after=True)
+        verbose_print(lambda: 'Evaluating step {0}'.format(remaining_steps[0]), indent_after=True)
 
         result_set = make_node_set(step.node_test.apply(step.axis, get_context_node()),
                                    reverse=step.axis.is_reverse_order())
-        verbose_print('Axis and node test produced {0} matching nodes'.format(len(result_set)))
+        verbose_print(lambda: 'Axis and node test produced {0} matching nodes'.format(len(result_set)))
 
         for index, expression_fn in enumerate(step.predicates):
             def accept_context_node():
                 context = peek_context()
 
                 format_str = u'Evaluating predicate expression for context node at position {0} of {1}: {2}.'
-                verbose_print(format_str.format(context.position, context.size, debug_dump_node(context.node)))
+                verbose_print(lambda: format_str.format(context.position, context.size, debug_dump_node(context.node)))
 
                 value = expression_fn()
                 if is_number(value):
@@ -78,20 +77,22 @@ class LocationPath:
                 else:
                     accept = bool(value)
 
-                verbose_print(u'{0} node {1}'.format('Accepted' if accept else 'Rejected',
-                                                     debug_dump_node(context.node)))
+                verbose_print(lambda: u'{0} node {1}'.format('Accepted' if accept else 'Rejected',
+                                                             debug_dump_node(context.node)))
                 return [context.node] if accept else []
 
-            verbose_print('Evaluating predicate #{0} against {1} nodes'.format(index + 1, len(result_set)),
+            verbose_print(lambda: 'Evaluating predicate #{0} against {1} nodes'.format(index + 1, len(result_set)),
                           indent_after=True)
             result_set = evaluate_across_contexts(result_set, accept_context_node)
-            message = 'Evaluation of predicate #{0} complete; accepted {1} nodes.'.format(index + 1, len(result_set))
-            verbose_print(message, outdent_before=True)
+            verbose_print(
+                lambda: 'Evaluation of predicate #{0} complete; accepted {1} nodes.'.format(index + 1, len(result_set)),
+                outdent_before=True)
 
         if len(remaining_steps) > 1:
             result_set = evaluate_across_contexts(result_set, lambda: self._evaluate_steps(remaining_steps[1:]))
 
-        verbose_print('Step evaluation completed; returning {0} nodes.'.format(len(result_set)), outdent_before=True)
+        verbose_print(lambda: 'Step evaluation completed; returning {0} nodes.'.format(len(result_set)),
+                      outdent_before=True)
         return result_set
 
 

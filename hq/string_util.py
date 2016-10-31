@@ -10,6 +10,11 @@ def html_entity_decode(s):
     return result
 
 
+def is_a_string(obj):
+    class_name = obj.__class__.__name__
+    return class_name.endswith('str') or class_name.endswith('unicode')
+
+
 def truncate_string(s, length, one_line=True, suffix='...'):
     if len(s) <= length:
         result = s

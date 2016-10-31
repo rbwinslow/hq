@@ -84,19 +84,19 @@ def is_attribute_node(obj):
 
 
 def is_comment_node(obj):
-    return str(type(obj)).find('.Comment') > 0
+    return obj.__class__.__name__ == 'Comment'
 
 
 def is_root_node(obj):
-    return str(type(obj)).find('.BeautifulSoup') > 0
+    return obj.__class__.__name__ == 'BeautifulSoup'
 
 
 def is_tag_node(obj):
-    return str(type(obj)).find('.Tag') > 0
+    return obj.__class__.__name__ == 'Tag'
 
 
 def is_text_node(obj):
-    return str(type(obj)).find('.NavigableString') > 0
+    return obj.__class__.__name__ == 'NavigableString'
 
 
 def make_soup(source):

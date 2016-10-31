@@ -19,7 +19,7 @@ class ComputedHashKeyValueConstructor:
         value = self.value_fn()
 
         msg = u'Finished evaluating; value of constructed hash key "{0}" is {1}'
-        verbose_print(msg.format(self.key, debug_dump_anything(value)), outdent_before=True)
+        verbose_print(lambda: msg.format(self.key, debug_dump_anything(value)), outdent_before=True)
 
         return HashKeyValue(self.key, value)
 

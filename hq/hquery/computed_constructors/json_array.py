@@ -1,10 +1,10 @@
 import json
 
 from hq.hquery.evaluation_error import HqueryEvaluationError
-from hq.hquery.object_type import make_sequence, string_value, is_string, object_type_name, debug_dump_anything, is_hash, \
+from hq.hquery.object_type import make_sequence, string_value, is_string, debug_dump_anything, is_hash, \
     is_boolean, is_number
 from hq.hquery.syntax_error import HquerySyntaxError
-from hq.soup_util import is_tag_node, is_text_node, debug_dump_node, is_any_node, debug_dump_long_string
+from hq.soup_util import is_tag_node, is_text_node
 from hq.verbosity import verbose_print
 
 
@@ -43,22 +43,22 @@ class ComputedJsonArrayConstructor:
 
 
     def _make_array_item(self, value):
-        dump = debug_dump_anything(value)
         if is_tag_node(value):
-            self._gab('appending text contents of element "{0}" to array'.format(dump))
+            self._gab(lambda: 'appending text contents of element "{0}" to array'.format(debug_dump_anything(value)))
             return string_value(value)
         elif is_text_node(value) or is_string(value):
             value = string_value(value)
-            self._gab(u'appending text "{0}" to array'.format(dump))
+            self._gab(lambda: u'appending text "{0}" to array'.format(debug_dump_anything(value)))
             return value
         elif is_boolean(value) or is_number(value):
-            self._gab('appending {0} to array'.format(dump))
+            self._gab(lambda: 'appending {0} to array'.format(debug_dump_anything(value)))
             return value.value
         elif is_hash(value):
-            self._gab(u'appending JSON {0} to array'.format(dump))
+            self._gab(lambda: u'appending JSON {0} to array'.format(debug_dump_anything(value)))
             return value.contents
         else:
-            raise HqueryEvaluationError("Can't use {0} as contents in a computed JSON array constructor".format(dump))
+            raise HqueryEvaluationError("Can't use {0} as contents in a computed JSON array constructor".format(
+                debug_dump_anything(value)))
 
 
     def _gab(self, message):

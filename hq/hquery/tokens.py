@@ -1,6 +1,3 @@
-import re
-from html.entities import name2codepoint
-
 from hq.hquery.computed_constructors.hash_key_value import ComputedHashKeyValueConstructor
 from hq.hquery.equality_operators import equals, not_equals
 from hq.hquery.evaluation_error import HqueryEvaluationError
@@ -14,7 +11,7 @@ from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.hquery.variables import value_of_variable
-from hq.soup_util import soup_from_any_tag, debug_dump_node, debug_dump_long_string
+from hq.soup_util import soup_from_any_tag, debug_dump_node
 from hq.string_util import html_entity_decode
 from hq.verbosity import verbose_print
 
@@ -41,16 +38,6 @@ class Token(object):
     def __init__(self, parse_interface, value=None, **kwargs):
         self.parse_interface = parse_interface
         self.value = value
-
-
-    def _use_node_set_or_default_to_context_if_none(self, node_set_or_none):
-        if node_set_or_none is None:
-            node_set_or_none = [get_context_node()]
-            description = 'context node {0}'.format(debug_dump_node(node_set_or_none[0]))
-        else:
-            HqueryEvaluationError.must_be_node_set(node_set_or_none)
-            description = '{0} node(s)'.format(len(node_set_or_none))
-        return node_set_or_none, description
 
 
     def _evaluate_binary_operands(self,
@@ -622,7 +609,7 @@ class VariableToken(Token):
 
         def evaluate():
             result = value_of_variable(self.value)
-            self._gab(u'reference evaluating to value {0}'.format(debug_dump_anything(result)))
+            self._gab(lambda: u'reference evaluating to value {0}'.format(debug_dump_anything(result)))
             return result
 
         return evaluate

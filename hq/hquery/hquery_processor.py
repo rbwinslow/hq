@@ -1,3 +1,5 @@
+import re
+
 from hq.hquery.computed_constructors.html_attribute import ComputedHtmlAttributeConstructor
 from hq.hquery.computed_constructors.html_element import ComputedHtmlElementConstructor
 from hq.hquery.computed_constructors.json_array import ComputedJsonArrayConstructor
@@ -335,7 +337,7 @@ class HqueryProcessor():
 
         if flwor.return_expression is None:
             raise HquerySyntaxError('no "return" clause at end of FLWOR')
-        verbose_print('Finished parsing FLWOR {0}'.format(flwor.debug_dump()), outdent_before=True)
+        verbose_print(lambda: 'Finished parsing FLWOR {0}'.format(flwor.debug_dump()), outdent_before=True)
         return flwor
 
 

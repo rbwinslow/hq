@@ -3,7 +3,7 @@ from builtins import str
 
 from future.standard_library import install_aliases
 from hq.hquery.expression_context import peek_context
-from hq.string_util import truncate_string
+from hq.string_util import truncate_string, is_a_string
 
 install_aliases()
 
@@ -59,8 +59,7 @@ def is_sequence(obj):
 
 
 def is_string(obj):
-    class_name = obj.__class__.__name__
-    return class_name.endswith('str') or class_name.endswith('unicode')
+    return is_a_string(obj)
 
 
 def make_node_set(node_set, reverse=False):

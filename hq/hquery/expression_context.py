@@ -40,14 +40,12 @@ def peek_context():
 
 def pop_context():
     result = context_stack.pop()
-    verbose_print(u'Popping (node={0}, position={1}, size={2} off of context stack.'.format(debug_dump_node(result.node),
-                                                                                            result.position,
-                                                                                            result.size))
+    msg = u'Popping (node={0}, position={1}, size={2} off of context stack.'
+    verbose_print(lambda: msg.format(debug_dump_node(result.node), result.position, result.size))
     return result
 
 
 def push_context(node, position=1, size=1, preserve_space=None):
-    verbose_print(u'Pushing (node={0}, position={1}, size={2} on context stack.'.format(debug_dump_node(node),
-                                                                                        position,
-                                                                                        size))
+    msg = u'Pushing (node={0}, position={1}, size={2} on context stack.'
+    verbose_print(lambda: msg.format(debug_dump_node(node), position, size))
     context_stack.append(ExpressionContext(node=node, position=position, size=size, preserve_space=preserve_space))

@@ -1,5 +1,4 @@
 from hq.hquery.object_type import debug_dump_anything
-from hq.soup_util import debug_dump_long_string
 from hq.verbosity import verbose_print
 
 variable_stack = []
@@ -16,7 +15,7 @@ class variable_scope:
 
 def push_variable(name, value):
     global variable_stack
-    verbose_print(u'Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_anything(value)))
+    verbose_print(lambda: u'Pushing variable onto stack: let ${0} := {1}'.format(name, debug_dump_anything(value)))
     variable_stack.append((name, value))
 
 

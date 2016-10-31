@@ -1,4 +1,4 @@
-from hq.hquery.object_type import make_sequence, sequence_concat, make_node_set, debug_dump_anything
+from hq.hquery.object_type import make_sequence, sequence_concat, debug_dump_anything
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.hquery.variables import push_variable, variable_scope
 from hq.soup_util import debug_dump_long_string
@@ -42,7 +42,7 @@ class Flwor:
         else:
             result = self._evaluate_without_iteration()
 
-        verbose_print('FLWOR evaluation completed; returning {0}'.format(debug_dump_anything(result)),
+        verbose_print(lambda: 'FLWOR evaluation completed; returning {0}'.format(debug_dump_anything(result)),
                       outdent_before=True)
         return result
 
@@ -69,7 +69,7 @@ class Flwor:
             result = []
 
             for item in sequence:
-                verbose_print(u'Visiting item {0}'.format(debug_dump_anything(item)), indent_after=True)
+                verbose_print(lambda: u'Visiting item {0}'.format(debug_dump_anything(item)), indent_after=True)
 
                 with variable_scope():
                     push_variable(self.sequence_variable, make_sequence(item))

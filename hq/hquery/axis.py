@@ -19,8 +19,9 @@ class Axis(Enum):
     # extended
     css_class           = 13
 
+
     def is_reverse_order(self):
-        return self in (Axis.ancestor, Axis.ancestor_or_self, Axis.preceding, Axis.preceding_sibling)
+        return self in reverse_order_axes
 
     def token(self):
         return self.name.replace('_', '-')
@@ -50,3 +51,6 @@ _abbreviations = {
     '<<': 'preceding',
     '<': 'preceding_sibling',
 }
+
+
+reverse_order_axes = {Axis.ancestor, Axis.ancestor_or_self, Axis.preceding, Axis.preceding_sibling}

@@ -23,6 +23,7 @@ def simulate_args_dict(**kwargs):
         '-f': False,
         '--file': False,
         '--preserve': False,
+        '--program': '',
         '-u': False,
         '--ugly': False,
         '-v': False,

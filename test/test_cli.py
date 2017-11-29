@@ -71,10 +71,32 @@ def test_query_error_prints_proper_error_message(capsys, mocker):
 
 
 def test_reading_input_from_a_file_instead_of_stdin(capsys, mocker):
-    mocker.patch('hq.hq.docopt').return_value = simulate_args_dict(expression='//p/text()', file='filename.html')
-    mocker.patch('hq.hq.open', mock_open(read_data=wrap_html_body('<p>foo</p>')), create=True)
+    expected_filename = 'filename.html'
+    mocked_open = mock_open(read_data=wrap_html_body('<p>foo</p>'))
+    mocker.patch('hq.hq.docopt').return_value = simulate_args_dict(
+        expression='//p/text()', file=expected_filename)
+    mocker.patch('hq.hq.open', mocked_open, create=True)
 
     main()
 
     actual, _ = capture_console_output(capsys)
+    mocked_open.assert_called_with(expected_filename)
+    assert actual == 'foo'
+
+
+def test_program_flag_reads_hquery_program_from_file(capsys, mocker):
+    expected_filename = 'filename.hq'
+    mocked_open = mock_open(read_data='''
+                                        //p
+                                        ->
+                                        $_/text()''')
+    mocker.patch('hq.hq.docopt').return_value = simulate_args_dict(
+        program=expected_filename)
+    mocker.patch('sys.stdin.read').return_value = wrap_html_body('<p>foo</p>')
+    mocker.patch('hq.hq.open', mocked_open, create=True)
+
+    main()
+
+    actual, _ = capture_console_output(capsys)
+    mocked_open.assert_called_with(expected_filename)
     assert actual == 'foo'

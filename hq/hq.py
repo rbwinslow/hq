@@ -8,16 +8,18 @@ Usage:
   hq.py (-h | --help)
 
 Options:
-  -f, --file <file>  Read HTML input from a file rather than stdin.
-  --preserve         Preserve extra whitespace in string values derived from
-                     HTML contents. The default behavior is to automatically
-                     apply normalize-string to all string values derived from
-                     HTML elements and attributes, and to convert non-breaking
-                     spaces into plain spaces.
-  -u, --ugly         Do not pretty-print HTML markup on output.
-  -v, --verbose      Print verbose query parsing and evaluation information to
-                     stderr.
-  --version          Display the installed HQ version.
+  -f, --file <file>     Read HTML input from a file rather than stdin.
+  --preserve            Preserve extra whitespace in string values derived
+                        from HTML contents. The default behavior is to
+                        automatically apply normalize-string to all string
+                        values derived from HTML elements and attributes, and
+                        to convert non-breaking spaces into plain spaces.
+  -p, --program <file>  Read HQuery expression from a file instead of the
+                        command line.
+  -u, --ugly            Do not pretty-print HTML markup on output.
+  -v, --verbose         Print verbose query parsing and evaluation information
+                        to stderr.
+  --version             Display the installed HQ version.
 
 HTML is read from stdin.
 
@@ -51,7 +53,11 @@ def main():
         verbose_print('Read {0} characters of input'.format(len(source)))
         soup = make_soup(source)
 
-        expression = args['<expression>']
+        if args['--program']:
+            with open(args['--program']) as file:
+                expression = file.read()
+        else:
+            expression = args['<expression>']
         if len(expression) > 0:
             result = HqueryProcessor(expression, preserve_space).query(soup)
         else:

@@ -6,7 +6,8 @@ from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
 from hq.hquery.functions.core_number import number
 from hq.hquery.node_test import NodeTest
-from hq.hquery.object_type import make_node_set, object_type_name, sequence_concat, debug_dump_anything
+from hq.hquery.object_type import object_type_name, debug_dump_anything
+from hq.hquery.sequences import make_node_set, sequence_concat
 from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.hquery.syntax_error import HquerySyntaxError

@@ -5,7 +5,8 @@ from hq.verbosity import verbose_print
 from hq.hquery.expression_context import get_context_node, peek_context
 from hq.hquery.evaluation_in_context import evaluate_across_contexts, evaluate_in_context
 from hq.hquery.functions.core_number import number
-from hq.hquery.object_type import make_node_set, is_number
+from hq.hquery.object_type import is_number
+from hq.hquery.sequences import make_node_set
 
 
 class LocationPath:

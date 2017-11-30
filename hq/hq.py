@@ -4,6 +4,7 @@
 
 Usage:
   hq.py [options] <expression>
+  hq.py [options] -p <file>
   hq.py --version
   hq.py (-h | --help)
 

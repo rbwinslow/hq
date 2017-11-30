@@ -1,6 +1,6 @@
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import push_context, pop_context
-from hq.hquery.object_type import make_node_set
+from hq.hquery.sequences import make_node_set
 from hq.soup_util import is_any_node, debug_dump_long_string
 
 

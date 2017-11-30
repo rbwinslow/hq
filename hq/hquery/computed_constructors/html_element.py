@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from hq.hquery.evaluation_error import HqueryEvaluationError
-from hq.hquery.object_type import is_string, make_node_set, object_type_name, make_sequence, is_number, is_boolean
+from hq.hquery.object_type import is_string, object_type_name, is_number, is_boolean
+from hq.hquery.sequences import make_node_set, make_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_node, is_any_node, is_tag_node, is_attribute_node
 

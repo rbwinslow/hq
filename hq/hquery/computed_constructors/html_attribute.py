@@ -1,5 +1,6 @@
 from hq.hquery.evaluation_error import HqueryEvaluationError
-from hq.hquery.object_type import make_sequence, is_string, is_number, is_boolean, object_type_name, string_value
+from hq.hquery.object_type import is_string, is_number, is_boolean, object_type_name, string_value
+from hq.hquery.sequences import make_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import debug_dump_node, is_any_node, AttributeNode, is_attribute_node, is_tag_node
 

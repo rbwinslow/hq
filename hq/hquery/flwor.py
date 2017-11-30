@@ -1,4 +1,5 @@
-from hq.hquery.object_type import make_sequence, sequence_concat, debug_dump_anything
+from hq.hquery.object_type import debug_dump_anything
+from hq.hquery.sequences import make_sequence, sequence_concat
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.hquery.variables import push_variable, variable_scope
 from hq.soup_util import debug_dump_long_string

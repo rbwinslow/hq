@@ -5,8 +5,9 @@ from hq.hquery.computed_constructors.hash_key_value import HashKeyValue
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import peek_context
 from hq.hquery.functions.core_number import number
-from hq.hquery.object_type import make_sequence, string_value, object_type_name, is_string, is_number, is_boolean, \
+from hq.hquery.object_type import string_value, object_type_name, is_string, is_number, is_boolean, \
     is_hash, is_array, is_sequence
+from hq.hquery.sequences import make_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import is_tag_node, debug_dump_node, is_any_node, is_text_node, debug_dump_long_string
 from hq.verbosity import verbose_print

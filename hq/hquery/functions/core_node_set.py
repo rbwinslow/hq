@@ -1,7 +1,8 @@
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.expression_context import peek_context, get_context_node
 from hq.hquery.functions.core_number import number
-from hq.hquery.object_type import make_node_set, string_value, is_sequence, object_type_name
+from hq.hquery.object_type import string_value, is_sequence, object_type_name
+from hq.hquery.sequences import make_node_set
 from hq.soup_util import root_tag_from_any_tag, is_tag_node
 
 exports = ('count', 'id', 'last', 'name', 'position')

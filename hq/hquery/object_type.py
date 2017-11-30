@@ -1,13 +1,11 @@
 import re
 from builtins import str
-
 from future.standard_library import install_aliases
+
 from hq.hquery.expression_context import peek_context
 from hq.string_util import truncate_string, is_a_string
 
 install_aliases()
-
-from itertools import filterfalse
 
 from ..verbosity import verbose_print
 from ..soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node, debug_dump_node, \
@@ -60,42 +58,6 @@ def is_sequence(obj):
 
 def is_string(obj):
     return is_a_string(obj)
-
-
-def make_node_set(node_set, reverse=False):
-    ids = set()
-
-    def is_unique_id(node):
-        node_id = id(node)
-        if node_id in ids:
-            return False
-        else:
-            ids.add(node_id)
-            return True
-
-    if not isinstance(node_set, list):
-        node_set = [node_set]
-
-    node_set = list(sorted(filter(is_unique_id, node_set), key=lambda n: n.hq_doc_index, reverse=reverse))
-
-    non_node_member = next(filterfalse(is_any_node, node_set), False)
-    if non_node_member:
-        format_str = 'Constructed node set that includes {0} object "{1}"'
-        raise RuntimeError(format_str.format(object_type_name(non_node_member), non_node_member))
-
-    return node_set
-
-
-def make_sequence(sequence):
-    if not isinstance(sequence, list):
-        sequence = [sequence]
-    return sequence
-
-
-def sequence_concat(first, second):
-    first = make_sequence(first)
-    first.extend(make_sequence(second))
-    return first
 
 
 def normalize_content(value):

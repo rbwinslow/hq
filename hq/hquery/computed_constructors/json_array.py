@@ -1,8 +1,9 @@
 import json
 
 from hq.hquery.evaluation_error import HqueryEvaluationError
-from hq.hquery.object_type import make_sequence, string_value, is_string, debug_dump_anything, is_hash, \
+from hq.hquery.object_type import string_value, is_string, debug_dump_anything, is_hash, \
     is_boolean, is_number
+from hq.hquery.sequences import make_sequence
 from hq.hquery.syntax_error import HquerySyntaxError
 from hq.soup_util import is_tag_node, is_text_node
 from hq.verbosity import verbose_print

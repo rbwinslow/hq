@@ -2,7 +2,8 @@ import math
 
 from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.soup_util import is_any_node
-from hq.hquery.object_type import is_number, is_node_set, string_value, is_boolean, make_sequence
+from hq.hquery.object_type import is_number, is_node_set, string_value, is_boolean
+from hq.hquery.sequences import make_sequence
 
 exports = ('ceiling', 'floor', 'number', 'round_', 'sum')
 

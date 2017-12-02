@@ -11,6 +11,7 @@ HQuery is 99% compliant with the [XPath 1.0](https://www.w3.org/TR/xpath/) stand
 * **XPath expansions for HTML** &mdash; including a `class::` axis and `class()` function, plus abbreviated axes to keep things terse.
 * **Super-charged string interpolation** &mdash; with powerful filters that you can chain together to transform data as you produce it.
 * **Computed constructors for HTML and JSON** &mdash; so you can programmatically assemble and output new HTML or JSON objects and arrays.
+* **Out-of-left-field union decomposition** &mdash; enabling amazingly terse and powerful mappings from clauses in a union to different expressions.
 
 ## Installing `hq`
 

@@ -1,6 +1,5 @@
 from hq.hquery.computed_constructors.hash_key_value import ComputedHashKeyValueConstructor
 from hq.hquery.equality_operators import equals, not_equals
-from hq.hquery.evaluation_error import HqueryEvaluationError
 from hq.hquery.flwor import Flwor
 from hq.hquery.function_support import FunctionSupport
 from hq.hquery.functions.core_boolean import boolean
@@ -11,8 +10,9 @@ from hq.hquery.sequences import make_node_set, sequence_concat
 from hq.hquery.relational_operators import RelationalOperator
 from hq.hquery.string_interpolation import parse_interpolated_string
 from hq.hquery.syntax_error import HquerySyntaxError
+from hq.hquery.union_decomposition import UnionDecomposition
 from hq.hquery.variables import value_of_variable
-from hq.soup_util import soup_from_any_tag, debug_dump_node
+from hq.soup_util import soup_from_any_tag
 from hq.string_util import html_entity_decode
 from hq.verbosity import verbose_print
 
@@ -26,9 +26,10 @@ function_support = FunctionSupport()
 class LBP:
     """Left-binding precendence values."""
     (
-        nothing, sequence, union, range, abbrev_flwor, or_op, and_op, equality_op, relational_op, add_or_subtract,
-        mult_or_div, prefix_op, function_call, location_step, node_test, parenthesized_expr
-    ) = range(16)
+        nothing, sequence, union_decomp, union, range, abbrev_flwor, or_op,
+        and_op, equality_op, relational_op, add_or_subtract, mult_or_div,
+        prefix_op, function_call, location_step, node_test, parenthesized_expr
+    ) = range(17)
 
 assert LBP.sequence == LBP.nothing + 1
 
@@ -580,6 +581,33 @@ class SlashToken(Token):
 
 
 
+class UnionDecompositionToken(Token):
+    lbp = LBP.union_decomp
+
+    def __str__(self):
+        return '(union decomposition)'
+
+    def led(self, left):
+        decomp = UnionDecomposition()
+        mapping_generators = []
+
+        if self.parse_interface.advance_if(OpenParenthesisToken) is None:
+            while True:
+                mapping_generators.append(self.parse_interface.expression(LBP.union))
+                if self.parse_interface.advance_if(UnionOperatorToken) is None:
+                    break
+        else:
+            while (not isinstance(self.parse_interface.peek(), CloseParenthesisToken)):
+                mapping_generators.append(self.parse_interface.expression(LBP.union))
+                self.parse_interface.advance_if(UnionOperatorToken)
+            self.parse_interface.advance(CloseParenthesisToken)
+
+        decomp.set_union_expression(left)
+        decomp.set_mapping_generators(mapping_generators)
+        return decomp.evaluate
+
+
+
 class UnionOperatorToken(Token):
     lbp = LBP.union
 
@@ -587,14 +615,29 @@ class UnionOperatorToken(Token):
         return '(union operator)'
 
     def led(self, left):
+        if hasattr(left, 'union_index'):
+            left_union_index = left.union_index
+        else:
+            left_union_index = 0
+        right_union_index = left_union_index + 1
+
         right = self.parse_interface.expression(self.lbp)
 
         def evaluate():
             left_value, right_value = self._evaluate_binary_operands(left, right, type_name='node set')
+            for item in right_value:
+                if not isinstance(getattr(item, 'union_index', None), int):
+                    setattr(item, 'union_index', right_union_index)
+            if left_union_index == 0:
+                for item in left_value:
+                    if not isinstance(getattr(item, 'union_index', None), int):
+                        setattr(item, 'union_index', left_union_index)
             left_value.extend(right_value)
             result = make_node_set(left_value)
             self._gab('returning node set with {0} nodes'.format(len(result)))
             return result
+
+        setattr(evaluate, 'union_index', right_union_index)
 
         return evaluate
 

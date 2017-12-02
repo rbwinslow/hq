@@ -30,7 +30,8 @@ from __future__ import print_function
 
 from docopt import docopt
 
-from .hquery.hquery_processor import HqueryEvaluationError, HqueryProcessor, HquerySyntaxError
+from .hquery.evaluation_error import HqueryEvaluationError
+from .hquery.hquery_processor import HqueryProcessor, HquerySyntaxError
 from .output import convert_results_to_output_text
 from .soup_util import make_soup
 from .verbosity import verbose_print, set_verbosity

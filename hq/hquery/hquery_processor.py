@@ -93,6 +93,7 @@ token_config = [
     (r'(\.\.)', ParentNodeToken),
     (r'(\.)', ContextNodeToken),
     (r'(\))', CloseParenthesisToken),
+    (r'(=>)', UnionDecompositionToken),
     (r'(!=|=)', EqualityOperatorToken),
     (r'(`[^`]*`)', InterpolatedStringToken),
     (r'("[^"]*")', LiteralStringToken),

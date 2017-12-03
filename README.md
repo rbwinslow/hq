@@ -54,3 +54,17 @@ The "dev.txt" dependencies also include [pytest-cov](https://pypi.python.org/pyp
 If you want to turn verbosity on to figure out what's going on in a test, you need the `--gabby` flag (since `py.test` owns its own `-v` flag). You'll probably also want to run just one test at a time, because `--gabby` is way gabby:
 
     py.test --gabby -vv -k some_particular_test_function
+
+### Uploading to PyPI
+
+This and other aspects of project setup, including running the CLI locally and using setup.py, are covered in the blog post linked above. I'm copying the PyPI upload stuff here for my own convenience, but I ask, of course, that you please submit pull requests rather than uploading to PyPI yourself:
+
+    $ python setup.py sdist
+    $ ls dist
+    hq-0.0.4.tar.gz
+
+    $ pip install twine
+    $ twine upload dist/hq-0.0.4.tar.gz
+    Uploading distributions to https://pypi.python.org/pypi
+    Uploading hq-0.0.4.tar.gz
+    Finished

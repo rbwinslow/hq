@@ -41,6 +41,8 @@ The [wiki](https://github.com/rbwinslow/hq/wiki) discusses the [motivations](htt
 
     pip install -r requirements/dev.txt
 
+The parsing logic in `hquery_processor.py` is based on the [top-down operator precendence](https://www.crockford.com/javascript/tdop/tdop.html) approach.
+
 ### Running Tests
 
     py.test

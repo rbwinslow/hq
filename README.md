@@ -28,6 +28,14 @@ HQuery is 99% compliant with the [XPath 1.0](https://www.w3.org/TR/xpath/) stand
 To print usage information:
 
     hq --help
+    
+## Running `hq` in a container
+
+There's a Docker image [project](https://github.com/frioux/hq.dkr) available that makes it super-easy to try out `hq` without installing any software (aside from Docker):
+
+    cat /path/to/file.html | docker run -i frew/hq '//some/hquery'
+
+Thanks, Frew!
 
 ## Learning `hq`
 

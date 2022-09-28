@@ -48,11 +48,15 @@ def _construct_map_filter(mappings):
     mappings = {old: new for (old, _, new) in [m.partition('>') for m in mappings.split(',')]}
 
     def evaluate(hash):
+        to_replace = []
         for key, value in hash.items():
             if key in mappings:
                 verbose_print('JSON hash constructor mapping filter converting attribute name "{0}" to "{1}"'.format(key, value))
-                hash[mappings[key]] = hash[key]
-                del hash[key]
+                to_replace.append(key)
+
+        for key in to_replace:
+            hash[mappings[key]] = hash[key]
+            del hash[key]
 
     return evaluate
 

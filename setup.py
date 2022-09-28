@@ -36,4 +36,4 @@ setup(name='hq',
       url='https://github.com/rbwinslow/hq',
       keywords='html xpath query xquery hquery jq cmdline cli',
       classifiers=classifiers,
-      install_requires=['beautifulsoup4', 'docopt', 'enum34', 'future', 'wheel'])
+      install_requires=['beautifulsoup4', 'docopt', 'wheel'])

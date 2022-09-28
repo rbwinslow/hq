@@ -26,8 +26,6 @@ HTML is read from stdin.
 
 """
 
-from __future__ import print_function
-
 from docopt import docopt
 
 from .hquery.evaluation_error import HqueryEvaluationError

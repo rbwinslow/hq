@@ -1,11 +1,7 @@
 import re
-from builtins import str
-from future.standard_library import install_aliases
 
 from hq.hquery.expression_context import peek_context
 from hq.string_util import truncate_string, is_a_string
-
-install_aliases()
 
 from ..verbosity import verbose_print
 from ..soup_util import is_any_node, is_tag_node, is_text_node, is_attribute_node, debug_dump_node, \

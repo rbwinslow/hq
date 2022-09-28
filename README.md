@@ -43,7 +43,7 @@ The [wiki](https://github.com/rbwinslow/hq/wiki) discusses the [motivations](htt
 
 ## Contributing to `hq`
 
-`hq` is tested against Python 2.7 and recent generations of Python 3 (3.4 and 3.5, as of this writing). The file structure and `setup.py` script for the project are based on [this blog post](https://gehrcke.de/2014/02/distributing-a-python-command-line-application/).
+`hq` is tested against Pythons 3.5 through 3.9. The file structure and `setup.py` script for the project are based on [this blog post](https://gehrcke.de/2014/02/distributing-a-python-command-line-application/).
 
 `hq`'s dependencies are split into a "base" file, the subset needed to run the application, and a "dev" file providing the tools necessary to run tests and the like. To do development:
 
